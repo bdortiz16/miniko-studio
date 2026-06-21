@@ -310,7 +310,21 @@ function StepPhotos({
           if (photos.length + added.length >= maxPhotos) break;
           const fd = new FormData();
           fd.append("file", file);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
+          // Límite de tiempo: si tarda más de 45s, aborta y muestra error.
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 45000);
+          let res: Response;
+          try {
+            res = await fetch("/api/upload", {
+              method: "POST",
+              body: fd,
+              signal: ctrl.signal,
+            });
+          } catch {
+            throw new Error("La subida tardó demasiado. Reintenta con una imagen más ligera.");
+          } finally {
+            clearTimeout(timer);
+          }
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Error al subir.");
           added.push({ url: data.url, name: file.name });
