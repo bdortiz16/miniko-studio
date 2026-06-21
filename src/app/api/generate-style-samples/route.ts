@@ -34,12 +34,14 @@ const STYLE_LINES: Record<string, string> = {
     "A PHOTOREALISTIC lifelike statue of the character, real photograph quality: realistic skin texture, realistic hair and realistic fabric, ultra-detailed and refined, studio photography. NOT cartoon, NOT stylized, NOT a toy — looks like a real high-end lifelike figure, full body standing.",
 };
 
-// Fondo por estilo: Funko y Disney en gris; Realista en transparente.
+// Todas sin fondo (transparente) para que la figura flote limpia en el carrusel.
 const STYLE_BG: Record<string, string> = {
-  kawaii: GRAY_BG,
-  caricatura: GRAY_BG,
+  kawaii: NO_BG,
+  caricatura: NO_BG,
   realista: NO_BG,
 };
+// GRAY_BG se conserva por si en el futuro quieres fondo en alguna.
+void GRAY_BG;
 
 export async function GET(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -63,8 +65,7 @@ export async function GET(request: Request) {
       model: "gpt-image-1",
       prompt: BASE(STYLE_LINES[styleId], STYLE_BG[styleId]),
       size: "1024x1024",
-      // Realista con fondo transparente; los demás opacos.
-      background: styleId === "realista" ? "transparent" : "opaque",
+      background: "transparent", // las 3 sin fondo
     });
     const b64 = result.data?.[0]?.b64_json;
     if (!b64) throw new Error(`Sin imagen para ${styleId}`);
@@ -73,6 +74,7 @@ export async function GET(request: Request) {
       .upload(`samples/${styleId}.png`, Buffer.from(b64, "base64"), {
         contentType: "image/png",
         upsert: true,
+        cacheControl: "0", // sin caché: al regenerar se ve la nueva al instante
       });
     if (error) throw new Error(`${styleId}: ${error.message}`);
     const { data } = supabaseAdmin!.storage
