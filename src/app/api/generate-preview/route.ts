@@ -96,8 +96,10 @@ export async function POST(request: Request) {
         image: file,
         prompt,
         size: "1024x1536",
-        // moderation "low" reduce rechazos; el SDK aún no lo tipa.
-        ...({ moderation: "low" } as object),
+        // input_fidelity "high": preserva mucho mejor el rostro y detalles de la
+        // foto (lunares, tono de piel, vello facial). moderation "low" reduce
+        // rechazos. El SDK aún no tipa estos campos, por eso el spread.
+        ...({ moderation: "low", input_fidelity: "high" } as object),
       });
       const b64 = result.data?.[0]?.b64_json;
       if (!b64) throw new Error("La IA no devolvió una imagen.");
