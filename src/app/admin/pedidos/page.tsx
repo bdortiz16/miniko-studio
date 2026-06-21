@@ -49,8 +49,8 @@ export default function AdminPedidos() {
   }
 
   return (
-    <div className="section">
-      <div className="container-x">
+    <div>
+      <div className="mx-auto max-w-5xl">
         <h1 className="font-display text-3xl font-extrabold">Pedidos</h1>
         <p className="mt-2 text-ink/60">
           Pedidos pagados pendientes de preparar. Aquí ves la foto, el diseño IA

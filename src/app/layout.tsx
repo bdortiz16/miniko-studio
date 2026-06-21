@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins, Anton } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import LayoutChrome from "@/components/LayoutChrome";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,11 +42,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="es" className={`${inter.variable} ${poppins.variable} ${anton.variable}`}>
       <body className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <LayoutChrome>{children}</LayoutChrome>
       </body>
     </html>
   );

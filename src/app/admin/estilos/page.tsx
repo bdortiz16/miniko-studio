@@ -38,8 +38,8 @@ export default function AdminEstilos() {
   }
 
   return (
-    <div className="section">
-      <div className="container-x max-w-3xl">
+    <div>
+      <div className="mx-auto max-w-4xl">
         <h1 className="font-display text-3xl font-extrabold">Muestras de estilo</h1>
         <p className="mt-2 text-ink/60">
           Genera (o regenera) las 3 figuras de ejemplo con IA. Tarda ~40 segundos.

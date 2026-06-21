@@ -77,6 +77,57 @@ export default function Home() {
         </div>
       </section>
 
+      {/* MASCOTAS */}
+      <section id="mascotas" className="section bg-mist">
+        <div className="container-x">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-widest text-brand">
+                También tu mascota 🐾
+              </p>
+              <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">
+                Tu perro, gato o mascota, en figura
+              </h2>
+              <div className="mt-4 h-px w-16 bg-brand/70" />
+              <p className="mt-5 max-w-md text-ink/65">
+                No solo personas: sube la foto de tu mascota y la convertimos en
+                una figura 3D para pintar. Perros, gatos, conejos… el regalo
+                perfecto para los que aman a su compañero peludo.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Los 3 estilos también para mascotas: Funko Pop, Disney y Realista",
+                  "Tú o tu mascota, o ambos juntos en la misma base",
+                  "Un recuerdo único de tu mejor amigo",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-ink/75">
+                    <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-brand text-brand">
+                      ✓
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pedido" className="btn-primary mt-8">
+                Crear la figura de mi mascota →
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              {[
+                { e: "🐶", t: "Perros" },
+                { e: "🐱", t: "Gatos" },
+                { e: "🐰", t: "Y más" },
+              ].map((p) => (
+                <div key={p.t} className="rounded-2xl border border-line bg-white p-6">
+                  <div className="text-5xl">{p.e}</div>
+                  <p className="mt-3 text-sm font-semibold">{p.t}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA FINAL */}
       <section className="section pt-0">
         <div className="container-x">
