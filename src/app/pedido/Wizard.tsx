@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
@@ -137,21 +137,83 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   for (let i = 0; i < counts.pets; i++)
     figures.push({ kind: "mascota", index: i + 1, ofKind: counts.pets });
 
-  // Mantiene el array de vistas previas del tamaño correcto al cambiar el conteo.
-  useEffect(() => {
-    setPreviews((prev) => {
-      const next = Array<string | null>(totalFigures).fill(null);
-      for (let i = 0; i < Math.min(prev.length, totalFigures); i++) next[i] = prev[i];
-      return next;
-    });
-  }, [totalFigures]);
+  // ─── Generación de vistas previas EN SEGUNDO PLANO ───────────────
+  // Apenas se detectan las figuras, empezamos a generarlas mientras el cliente
+  // sigue con el email/envío. Si una falla, reintenta sola varias veces.
+  type GenStatus = "idle" | "loading" | "done" | "error";
+  const [genStatus, setGenStatus] = useState<GenStatus[]>([]);
 
-  const setPreviewAt = (i: number, url: string | null) =>
-    setPreviews((prev) => {
-      const next = [...prev];
-      next[i] = url;
-      return next;
+  // Refs con los valores actuales (evita closures obsoletos en el generador).
+  const figuresRef = useRef(figures);
+  figuresRef.current = figures;
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+  const styleIdRef = useRef(styleId);
+  styleIdRef.current = styleId;
+  const attemptsRef = useRef<number[]>([]);
+
+  // Firma de las entradas: si cambia (estilo, fotos o conteo), regeneramos todo.
+  const figuresKey = figures.map((f) => `${f.kind}${f.index}/${f.ofKind}`).join(",");
+  const photosKey = photos.map((p) => p.url).join(",");
+
+  useEffect(() => {
+    const n = figuresKey ? figuresKey.split(",").length : 0;
+    attemptsRef.current = Array(n).fill(0);
+    setPreviews(Array<string | null>(n).fill(null));
+    setGenStatus(Array<GenStatus>(n).fill("idle"));
+  }, [figuresKey, photosKey, styleId]);
+
+  const generateFigure = useCallback(async (i: number) => {
+    const fig = figuresRef.current[i];
+    const ph = photosRef.current;
+    const photoUrl = ph[Math.min(i, ph.length - 1)]?.url;
+    if (!fig || !photoUrl) return;
+    setGenStatus((p) => { const n = [...p]; n[i] = "loading"; return n; });
+    try {
+      const res = await fetch("/api/generate-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photoUrl,
+          styleId: styleIdRef.current,
+          tipo: fig.kind,
+          index: fig.index,
+          total: fig.ofKind,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "fallo");
+      setPreviews((p) => { const n = [...p]; n[i] = data.url; return n; });
+      setGenStatus((p) => { const n = [...p]; n[i] = "done"; return n; });
+    } catch {
+      const a = (attemptsRef.current[i] ?? 0) + 1;
+      attemptsRef.current[i] = a;
+      setGenStatus((p) => { const n = [...p]; n[i] = "error"; return n; });
+      // Reintenta sola en segundo plano (hasta 4 intentos).
+      if (a < 4) {
+        setTimeout(() => {
+          setGenStatus((p) => {
+            if (p[i] !== "error") return p;
+            const n = [...p]; n[i] = "idle"; return n;
+          });
+        }, 5000);
+      }
+    }
+  }, []);
+
+  // Lanza la generación de las figuras que estén "en cola" (idle).
+  useEffect(() => {
+    if (photos.length === 0) return;
+    genStatus.forEach((st, i) => {
+      if (st === "idle") generateFigure(i);
     });
+  }, [genStatus, photos.length, generateFigure]);
+
+  // Regenerar manualmente una figura (botón en la ventana).
+  const regenerate = (i: number) => {
+    attemptsRef.current[i] = 0;
+    setGenStatus((p) => { const n = [...p]; n[i] = "idle"; return n; });
+  };
 
   const variant = variantByPeople(totalFigures);
   const style = styleById(styleId)!;
@@ -218,12 +280,11 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
           )}
           {step === 3 && (
             <StepPreview
-              photos={photos}
               style={style}
-              styleId={styleId}
               figures={figures}
               previews={previews}
-              setPreviewAt={setPreviewAt}
+              genStatus={genStatus}
+              onRegenerate={regenerate}
             />
           )}
           {step === 4 && <StepShipping shipping={shipping} setShipping={setShipping} />}
@@ -816,21 +877,20 @@ function StepEmail({
 
 /* ─────────────────────────── Paso 4: Preview (IA) ─────────────────────────── */
 type Figure = { kind: "persona" | "mascota"; index: number; ofKind: number };
+type GenStatus = "idle" | "loading" | "done" | "error";
 
 function StepPreview({
-  photos,
   style,
-  styleId,
   figures,
   previews,
-  setPreviewAt,
+  genStatus,
+  onRegenerate,
 }: {
-  photos: Photo[];
   style: ReturnType<typeof styleById>;
-  styleId: StyleId;
   figures: Figure[];
   previews: (string | null)[];
-  setPreviewAt: (i: number, url: string | null) => void;
+  genStatus: GenStatus[];
+  onRegenerate: (i: number) => void;
 }) {
   const multiple = figures.length > 1;
   return (
@@ -840,7 +900,7 @@ function StepPreview({
         subtitle={
           multiple
             ? `Detectamos ${figures.length} figuras: cada una se genera e imprime por separado. Desliza para verlas todas →`
-            : "Esta es una vista previa orientativa de tu figura. Recibirás el render final a aprobar antes de imprimir."
+            : "Vista previa orientativa. Se genera sola; recibirás el render final a aprobar antes de imprimir."
         }
       />
 
@@ -853,13 +913,11 @@ function StepPreview({
           <PreviewWindow
             key={i}
             figure={fig}
-            number={i + 1}
             total={figures.length}
             styleName={style?.name || ""}
-            styleId={styleId}
-            photoUrl={photos[Math.min(i, photos.length - 1)]?.url || photos[0]?.url || ""}
             url={previews[i] ?? null}
-            onResult={(u) => setPreviewAt(i, u)}
+            status={genStatus[i] ?? "idle"}
+            onRegenerate={() => onRegenerate(i)}
           />
         ))}
       </div>
@@ -867,62 +925,24 @@ function StepPreview({
   );
 }
 
-// Una ventana = una figura. Se genera sola al aparecer si aún no existe.
+// Una ventana = una figura. Solo muestra el estado; la generación corre en
+// segundo plano desde el Wizard (con reintentos automáticos).
 function PreviewWindow({
   figure,
-  number,
   total,
   styleName,
-  styleId,
-  photoUrl,
   url,
-  onResult,
+  status,
+  onRegenerate,
 }: {
   figure: Figure;
-  number: number;
   total: number;
   styleName: string;
-  styleId: StyleId;
-  photoUrl: string;
   url: string | null;
-  onResult: (u: string | null) => void;
+  status: GenStatus;
+  onRegenerate: () => void;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const generate = useCallback(async () => {
-    if (!photoUrl) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/generate-preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          photoUrl,
-          styleId,
-          tipo: figure.kind,
-          index: figure.index,
-          total: figure.ofKind,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo generar la figura.");
-      onResult(data.url);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al generar la figura.");
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoUrl, styleId, figure.kind, figure.index, figure.ofKind]);
-
-  // Genera automáticamente al aparecer si aún no hay imagen.
-  useEffect(() => {
-    if (!url && !loading && !error && photoUrl) generate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  const busy = status === "loading" || (status === "idle" && !url);
   const label =
     total > 1
       ? `${figure.kind === "mascota" ? "Mascota" : "Persona"} ${figure.index}`
@@ -933,7 +953,6 @@ function PreviewWindow({
   return (
     <div className="w-[280px] shrink-0 snap-center">
       <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-xl shadow-ink/5">
-        {/* Barra superior tipo ventana */}
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-brand/70" />
@@ -946,9 +965,8 @@ function PreviewWindow({
           </span>
         </div>
 
-        {/* Lienzo de la figura */}
         <div className="relative aspect-[3/4] w-full bg-gradient-to-b from-mist to-white">
-          {loading && (
+          {busy && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/70 backdrop-blur-sm">
               <span className="h-9 w-9 animate-spin rounded-full border-2 border-line border-t-brand" />
               <p className="text-sm font-medium text-ink/70">Creando figura…</p>
@@ -965,41 +983,30 @@ function PreviewWindow({
               unoptimized={url.startsWith("data:")}
             />
           ) : (
-            !loading &&
-            photoUrl && (
-              <Image src={photoUrl} alt="Tu foto" fill sizes="280px" className="object-contain p-3 opacity-40" />
+            status === "error" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
+                <span className="text-2xl">⚠️</span>
+                <p className="text-xs text-ink/55">No se pudo generar. Reintentando sola…</p>
+              </div>
             )
           )}
         </div>
 
-        {/* Pie de la ventana */}
         <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-3">
           <p className="flex items-center gap-1.5 text-xs text-ink/55">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-            {loading ? "Generando…" : url ? "Orientativa" : "Lista"}
+            <span className={`h-1.5 w-1.5 rounded-full ${status === "error" ? "bg-amber-500" : "bg-brand"}`} />
+            {busy ? "Generando…" : url ? "Orientativa" : status === "error" ? "Reintentando…" : "En cola…"}
           </p>
           <button
-            onClick={generate}
-            disabled={loading || !photoUrl}
+            onClick={onRegenerate}
+            disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-sm font-semibold transition hover:border-ink/40 disabled:opacity-40"
           >
-            <span className={loading ? "animate-spin" : ""}>↻</span>
-            {loading ? "…" : url ? "Regenerar" : "Generar"}
+            <span className={busy ? "animate-spin" : ""}>↻</span>
+            {busy ? "…" : url ? "Regenerar" : "Reintentar"}
           </button>
         </div>
       </div>
-
-      {error && (
-        <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          <span>⚠️</span>
-          <p>
-            {error}{" "}
-            <button onClick={generate} className="font-semibold underline underline-offset-2">
-              Reintentar
-            </button>
-          </p>
-        </div>
-      )}
     </div>
   );
 }
