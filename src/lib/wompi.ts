@@ -19,7 +19,7 @@ function isSandbox(): boolean {
 }
 
 export function wompiApiBase(): string {
-  return isSandbox() ? "https://api-sandbox.co.uat.wompi.dev/v1" : "https://api.wompi.co/v1";
+  return isSandbox() ? "https://sandbox.wompi.co/v1" : "https://production.wompi.co/v1";
 }
 
 export function getSiteUrl(): string {
@@ -48,16 +48,20 @@ export function buildCheckoutUrl(opts: {
 }): string {
   const currency = opts.currency || "COP";
   const signature = integritySignature(opts.reference, opts.amountInCents, currency);
-  const params = new URLSearchParams({
-    "public-key": WOMPI_PUBLIC_KEY,
-    currency,
-    "amount-in-cents": String(opts.amountInCents),
-    reference: opts.reference,
-    "redirect-url": opts.redirectUrl,
-  });
-  if (opts.customerEmail) params.set("customer-data:email", opts.customerEmail);
-  // El nombre "signature:integrity" lleva dos puntos; se añade aparte.
-  return `https://checkout.wompi.co/p/?${params.toString()}&signature:integrity=${signature}`;
+  // Construimos la query a mano: las llaves con dos puntos (signature:integrity,
+  // customer-data:email) deben ir literales, no codificadas, como pide Wompi.
+  const parts = [
+    `public-key=${encodeURIComponent(WOMPI_PUBLIC_KEY)}`,
+    `currency=${currency}`,
+    `amount-in-cents=${opts.amountInCents}`,
+    `reference=${encodeURIComponent(opts.reference)}`,
+    `redirect-url=${encodeURIComponent(opts.redirectUrl)}`,
+    `signature:integrity=${signature}`,
+  ];
+  if (opts.customerEmail) {
+    parts.push(`customer-data:email=${encodeURIComponent(opts.customerEmail)}`);
+  }
+  return `https://checkout.wompi.co/p/?${parts.join("&")}`;
 }
 
 export interface WompiTransaction {
