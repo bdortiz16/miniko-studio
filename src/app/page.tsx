@@ -3,7 +3,6 @@ import Link from "next/link";
 import { STYLES } from "@/data/catalog";
 import StyleCard from "@/components/StyleCard";
 import HeroCarousel from "@/components/HeroCarousel";
-import ShowcaseGallery from "@/components/ShowcaseGallery";
 
 const STEPS = [
   { n: "1", title: "Elige tu estilo", desc: "Kawaii, realista o caricatura: tú decides el look.", icon: "🎨" },
@@ -34,29 +33,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* GALERÍA ANIMADA */}
-      <section className="section bg-mist">
-        <div className="container-x grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-brand">
-              Inspiración
-            </p>
-            <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">
-              Mira lo que podemos crear
-            </h2>
-            <div className="mt-4 h-px w-16 bg-brand/70" />
-            <p className="mt-5 max-w-md text-ink/65">
-              Funko Pop, Disney y más. Cada figura es única y hecha a partir de tu
-              foto. La que ves cambia sola — ¿imaginas la tuya?
-            </p>
-            <Link href="/pedido" className="btn-primary mt-8">
-              Crear la mía →
-            </Link>
-          </div>
-          <ShowcaseGallery />
         </div>
       </section>
 
