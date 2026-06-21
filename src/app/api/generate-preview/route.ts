@@ -7,7 +7,8 @@ export const maxDuration = 60;
 
 const BASE_PROMPT =
   "Create a clean studio product photo of a Funko Pop style collectible vinyl figurine based on the person in this photo. " +
-  "The figurine has an oversized head and a small stylized body, standing on a round display base, on a soft neutral white background. " +
+  "Use classic Funko Pop proportions: a large oversized head and a SMALL, SLIM, PETITE body with a narrow torso and short, thin limbs " +
+  "(the body is clearly smaller and slimmer than the head, not chubby or wide). Standing on a round display base, on a soft neutral white background. " +
   "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any. " +
   "Recreate the exact same outfit, clothing and colors the person is wearing in the photo, faithfully. " +
   "A single figurine, centered, high quality, soft studio lighting.";
