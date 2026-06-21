@@ -15,9 +15,12 @@ const CHARACTER =
   "wearing an olive-green field jacket over a blue-and-white striped shirt, " +
   "brown trousers and brown leather boots, holding a small closed laptop in one hand";
 
-const BASE = (styleLine: string) =>
-  `Full-body product photo, the ENTIRE figure visible head to feet, centered with generous margin so it fits in frame, ` +
-  `clean soft light-gray studio background. ${styleLine} The character: ${CHARACTER}.`;
+const BASE = (styleLine: string, bgLine: string) =>
+  `Full-body product photo, the ENTIRE figure visible head to feet, centered with generous margin so it fits in frame. ` +
+  `${bgLine} ${styleLine} The character: ${CHARACTER}.`;
+
+const GRAY_BG = "Clean soft light-gray studio background.";
+const NO_BG = "Isolated on a fully transparent background (no background at all, clean cut-out), nothing behind the figure.";
 
 const STYLE_LINES: Record<string, string> = {
   // Funko Pop
@@ -28,7 +31,14 @@ const STYLE_LINES: Record<string, string> = {
     "A DISNEY / PIXAR style 3D animated character figure: stylized full-body cartoon with friendly proportions, large expressive cartoon eyes, smooth polished 3D animation render, standing.",
   // Realista
   realista:
-    "A HYPER-REALISTIC lifelike collectible STATUE figure of the character: highly detailed realistic face, hair and clothing, refined and premium, full body standing on a small base.",
+    "A PHOTOREALISTIC lifelike statue of the character, real photograph quality: realistic skin texture, realistic hair and realistic fabric, ultra-detailed and refined, studio photography. NOT cartoon, NOT stylized, NOT a toy — looks like a real high-end lifelike figure, full body standing.",
+};
+
+// Fondo por estilo: Funko y Disney en gris; Realista en transparente.
+const STYLE_BG: Record<string, string> = {
+  kawaii: GRAY_BG,
+  caricatura: GRAY_BG,
+  realista: NO_BG,
 };
 
 export async function GET(request: Request) {
@@ -51,8 +61,10 @@ export async function GET(request: Request) {
   async function makeOne(styleId: string) {
     const result = await openai.images.generate({
       model: "gpt-image-1",
-      prompt: BASE(STYLE_LINES[styleId]),
+      prompt: BASE(STYLE_LINES[styleId], STYLE_BG[styleId]),
       size: "1024x1024",
+      // Realista con fondo transparente; los demás opacos.
+      background: styleId === "realista" ? "transparent" : "opaque",
     });
     const b64 = result.data?.[0]?.b64_json;
     if (!b64) throw new Error(`Sin imagen para ${styleId}`);
@@ -69,7 +81,9 @@ export async function GET(request: Request) {
     return data.publicUrl;
   }
 
-  const ids = Object.keys(STYLE_LINES);
+  // ?style=realista genera solo ese estilo (sin tocar los demás).
+  const only = new URL(request.url).searchParams.get("style");
+  const ids = only && STYLE_LINES[only] ? [only] : Object.keys(STYLE_LINES);
   const settled = await Promise.allSettled(ids.map(makeOne));
   const samples: Record<string, string> = {};
   const errors: Record<string, string> = {};
