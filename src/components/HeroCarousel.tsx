@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { STYLES } from "@/data/catalog";
@@ -66,6 +72,18 @@ export default function HeroCarousel() {
     setTimeout(() => {
       animating.current = false;
     }, 650);
+  }
+
+  // Arrastre con mouse / swipe táctil (sin flechas).
+  const dragX = useRef<number | null>(null);
+  function onPointerDown(e: ReactPointerEvent) {
+    dragX.current = e.clientX;
+  }
+  function onPointerUp(e: ReactPointerEvent) {
+    if (dragX.current === null) return;
+    const dx = e.clientX - dragX.current;
+    dragX.current = null;
+    if (Math.abs(dx) > 45) navigate(dx < 0 ? "next" : "prev");
   }
 
   const active = IMAGES[activeIndex];
@@ -185,6 +203,15 @@ export default function HeroCarousel() {
             </div>
           ))}
         </div>
+
+        {/* Capa para arrastrar/deslizar (mouse y táctil). Debajo de los botones. */}
+        <div
+          className="absolute inset-0"
+          style={{ zIndex: 40, touchAction: "pan-y", cursor: "grab" }}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerCancel={() => (dragX.current = null)}
+        />
 
         {/* Texto + navegación abajo izquierda */}
         <div
