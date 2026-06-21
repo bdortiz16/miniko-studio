@@ -8,10 +8,16 @@ import {
   VARIANTS,
   StyleId,
   formatCop,
-  shippingCop,
   styleById,
   variantById,
 } from "@/data/catalog";
+import {
+  Settings,
+  defaultSettings,
+  getSettings,
+  priceOf,
+  shipOf,
+} from "@/lib/settings";
 import StyleImage from "@/components/StyleImage";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
@@ -33,6 +39,7 @@ export default function Wizard() {
   const initStyle = (params.get("estilo") as StyleId) || STYLES[0].id;
 
   const [step, setStep] = useState(0);
+  const [settings, setSettings] = useState<Settings>(defaultSettings());
   const [styleId, setStyleId] = useState<StyleId>(
     STYLES.some((s) => s.id === initStyle) ? initStyle : STYLES[0].id
   );
@@ -49,10 +56,16 @@ export default function Wizard() {
     country: "Colombia",
   });
 
+  // Carga la configuración (precios/envío) editable desde el panel admin.
+  useEffect(() => {
+    getSettings().then(setSettings).catch(() => {});
+  }, []);
+
   const variant = variantById(variantId)!;
   const style = styleById(styleId)!;
-  const shipCents = shippingCop(variant.people);
-  const total = variant.priceCop + shipCents;
+  const price = priceOf(settings, variant.id, variant.priceCop);
+  const shipCents = shipOf(settings, variant.people);
+  const total = price + shipCents;
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
@@ -83,6 +96,7 @@ export default function Wizard() {
               setStyleId={setStyleId}
               variantId={variantId}
               setVariantId={setVariantId}
+              settings={settings}
             />
           )}
           {step === 1 && (
@@ -118,6 +132,7 @@ export default function Wizard() {
               email={email}
               photos={photos}
               previewUrl={previewUrl}
+              price={price}
               shipCents={shipCents}
               total={total}
             />
@@ -148,7 +163,7 @@ export default function Wizard() {
         <div className="mt-10 flex items-center justify-between border-t border-line pt-5 text-sm">
           <div className="flex items-center gap-5 text-ink/60">
             <span>👥 {variant.people}</span>
-            <span>📦 {formatCop(variant.priceCop)}</span>
+            <span>📦 {formatCop(price)}</span>
             <span>🚚 {shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
           </div>
           <div className="text-right">
@@ -218,11 +233,13 @@ function StepStyle({
   setStyleId,
   variantId,
   setVariantId,
+  settings,
 }: {
   styleId: StyleId;
   setStyleId: (id: StyleId) => void;
   variantId: string;
   setVariantId: (id: string) => void;
+  settings: Settings;
 }) {
   return (
     <div>
@@ -276,7 +293,9 @@ function StepStyle({
             >
               <span className="block font-semibold">{v.name}</span>
               <span className="block text-xs text-ink/50">{v.description}</span>
-              <span className="mt-1 block font-display font-bold">{formatCop(v.priceCop)}</span>
+              <span className="mt-1 block font-display font-bold">
+                {formatCop(priceOf(settings, v.id, v.priceCop))}
+              </span>
             </button>
           );
         })}
@@ -711,6 +730,7 @@ function StepPay({
   email,
   photos,
   previewUrl,
+  price,
   shipCents,
   total,
 }: {
@@ -720,6 +740,7 @@ function StepPay({
   email: string;
   photos: Photo[];
   previewUrl: string | null;
+  price: number;
   shipCents: number;
   total: number;
 }) {
@@ -767,7 +788,7 @@ function StepPay({
         </div>
         <div className={`${row} border-t border-line`}>
           <span className="text-ink/55">Kit</span>
-          <span className="font-medium">{formatCop(variant.priceCop)}</span>
+          <span className="font-medium">{formatCop(price)}</span>
         </div>
         <div className={`${row} border-t border-line`}>
           <span className="text-ink/55">Envío</span>

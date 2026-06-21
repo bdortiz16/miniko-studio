@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { VARIANTS, formatCop, SHIPPING, shippingCop } from "@/data/catalog";
+import { VARIANTS, formatCop } from "@/data/catalog";
+import { getSettings, priceOf, shipOf } from "@/lib/settings";
 
 export const metadata = {
   title: "Precios — miniko",
 };
+
+// Siempre con datos frescos: los precios se editan desde el panel admin.
+export const dynamic = "force-dynamic";
 
 const INCLUDED = [
   "Modelo 3D personalizado a partir de tu foto",
@@ -14,7 +18,8 @@ const INCLUDED = [
   "Caja lista para regalar",
 ];
 
-export default function PreciosPage() {
+export default async function PreciosPage() {
+  const settings = await getSettings();
   return (
     <div className="section">
       <div className="container-x">
@@ -29,7 +34,8 @@ export default function PreciosPage() {
 
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {VARIANTS.map((v, i) => {
-            const free = shippingCop(v.people) === 0;
+            const price = priceOf(settings, v.id, v.priceCop);
+            const free = shipOf(settings, v.people) === 0;
             return (
               <div
                 key={v.id}
@@ -45,11 +51,11 @@ export default function PreciosPage() {
                 <h3 className="font-display text-xl font-bold">{v.name}</h3>
                 <p className="mt-1 text-sm text-ink/55">{v.description}</p>
                 <div className="mt-5">
-                  <span className="font-display text-3xl font-extrabold">{formatCop(v.priceCop)}</span>
+                  <span className="font-display text-3xl font-extrabold">{formatCop(price)}</span>
                 </div>
                 <p className="mt-1 text-xs text-ink/45">{v.height}</p>
                 <p className="mt-2 text-xs font-semibold text-brand">
-                  {free ? "🚚 Envío GRATIS" : `+ envío ${formatCop(SHIPPING.flatCop)}`}
+                  {free ? "🚚 Envío GRATIS" : `+ envío ${formatCop(settings.shippingCop)}`}
                 </p>
                 <Link
                   href={`/pedido?variante=${v.id}`}
@@ -73,7 +79,7 @@ export default function PreciosPage() {
             ))}
           </ul>
           <p className="mt-6 text-center text-sm text-ink/55">
-            Envío {formatCop(SHIPPING.flatCop)} · GRATIS desde {SHIPPING.freeFromPeople} personajes
+            Envío {formatCop(settings.shippingCop)} · GRATIS desde {settings.freeFromPeople} personajes
           </p>
         </div>
       </div>

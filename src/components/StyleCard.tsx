@@ -4,7 +4,10 @@ import StyleImage from "@/components/StyleImage";
 
 export default function StyleCard({ style }: { style: FigureStyle }) {
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:-translate-y-1 hover:border-ink/30">
+    <Link
+      href={`/pedido?estilo=${style.id}`}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:-translate-y-1 hover:border-ink/30 hover:shadow-lg"
+    >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-mist">
         <StyleImage
           src={style.image}
@@ -23,17 +26,16 @@ export default function StyleCard({ style }: { style: FigureStyle }) {
         </span>
       </div>
       <div className="flex flex-1 flex-col p-6">
-        <h3 className="font-display text-xl font-bold">{style.name}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-xl font-bold">{style.name}</h3>
+          <span className="grid h-8 w-8 place-items-center rounded-full border border-line text-ink transition group-hover:border-brand group-hover:bg-brand group-hover:text-white">
+            →
+          </span>
+        </div>
         <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/55">
           {style.description}
         </p>
-        <Link
-          href={`/pedido?estilo=${style.id}`}
-          className="mt-5 inline-flex items-center gap-1 font-semibold text-ink underline decoration-brand decoration-2 underline-offset-4 transition hover:gap-2"
-        >
-          Elegir este estilo →
-        </Link>
       </div>
-    </div>
+    </Link>
   );
 }

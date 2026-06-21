@@ -37,6 +37,20 @@ export default function AdminDashboard() {
             Gestionar estilos →
           </span>
         </Link>
+
+        <Link
+          href="/admin/configuracion"
+          className="rounded-2xl border border-line bg-white p-6 transition hover:-translate-y-0.5 hover:border-ink/30"
+        >
+          <div className="text-3xl">⚙️</div>
+          <h2 className="mt-3 font-display text-xl font-bold">Configuración</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Cambia los precios (COP) de cada paquete y las reglas de envío.
+          </p>
+          <span className="mt-4 inline-block font-semibold text-ink underline decoration-brand decoration-2 underline-offset-4">
+            Editar precios →
+          </span>
+        </Link>
       </div>
     </div>
   );

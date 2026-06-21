@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { stripe, getSiteUrl } from "@/lib/stripe";
-import { variantById, styleById, SHIPPING, shippingCop } from "@/data/catalog";
+import { variantById, styleById, SHIPPING } from "@/data/catalog";
+import { getSettings, priceOf, shipOf } from "@/lib/settings";
 
 interface OrderPayload {
   styleId: string;
@@ -41,9 +42,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Producto no válido." }, { status: 400 });
   }
 
+  // Precios y envío vienen de la configuración editable del panel admin.
+  const settings = await getSettings();
   // Stripe usa la unidad menor: COP tiene 2 decimales en Stripe => x100.
-  const unitAmount = variant.priceCop * 100;
-  const shippingAmount = shippingCop(variant.people) * 100;
+  const unitAmount = priceOf(settings, variant.id, variant.priceCop) * 100;
+  const shippingAmount = shipOf(settings, variant.people) * 100;
 
   const photoUrls = (body.photoUrls ?? []).slice(0, 6);
   const s = body.shipping ?? {};
