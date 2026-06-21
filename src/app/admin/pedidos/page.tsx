@@ -18,7 +18,18 @@ interface Order {
   envio_direccion: string;
   fotos: string[];
   figura_ia: string;
+  fulfillment: string;
+  carrier: string;
+  tracking: string;
+  adminNote: string;
 }
+
+const FULFILLMENT: { key: string; label: string }[] = [
+  { key: "RECIBIDO", label: "Pedido recibido" },
+  { key: "EN_PRODUCCION", label: "En producción" },
+  { key: "ENVIADO", label: "Enviado" },
+  { key: "ENTREGADO", label: "Entregado" },
+];
 
 export default function AdminPedidos() {
   const [orders, setOrders] = useState<Order[] | null>(null);
@@ -149,6 +160,9 @@ export default function AdminPedidos() {
                   <p className="mt-2 text-xs text-ink/40">ID: {o.id}</p>
                 </div>
               </div>
+
+              {/* Seguimiento (lo ve el cliente en "Mis pedidos") */}
+              <Tracking order={o} />
             </div>
           ))}
         </div>
@@ -158,6 +172,71 @@ export default function AdminPedidos() {
             Pulsa &quot;Cargar pedidos&quot; para ver los pedidos pagados.
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Editor de seguimiento: estado, transportadora, guía y nota. Se guarda en el
+// pedido y el cliente lo ve en "Mis pedidos".
+function Tracking({ order }: { order: Order }) {
+  const [fulfillment, setFulfillment] = useState(order.fulfillment || "RECIBIDO");
+  const [carrier, setCarrier] = useState(order.carrier || "");
+  const [tracking, setTracking] = useState(order.tracking || "");
+  const [adminNote, setAdminNote] = useState(order.adminNote || "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/admin/order-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: order.id, fulfillment, carrier, tracking, adminNote }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const input = "w-full rounded-xl border border-line px-3 py-2 text-sm outline-none focus:border-ink";
+
+  return (
+    <div className="mt-5 rounded-xl border border-line bg-mist/60 p-4">
+      <p className="text-sm font-semibold">📦 Seguimiento del cliente</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <label className="text-xs font-medium text-ink/60">
+          Estado
+          <select value={fulfillment} onChange={(e) => setFulfillment(e.target.value)} className={`mt-1 ${input}`}>
+            {FULFILLMENT.map((f) => (
+              <option key={f.key} value={f.key}>{f.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-medium text-ink/60">
+          Transportadora
+          <input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="Servientrega…" className={`mt-1 ${input}`} />
+        </label>
+        <label className="text-xs font-medium text-ink/60">
+          Número de guía
+          <input value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="123456789" className={`mt-1 ${input}`} />
+        </label>
+      </div>
+      <label className="mt-3 block text-xs font-medium text-ink/60">
+        Nota para el cliente (opcional)
+        <input value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Tu figura está en producción 🎨" className={`mt-1 ${input}`} />
+      </label>
+      <div className="mt-3 flex items-center gap-3">
+        <button onClick={save} disabled={saving} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+          {saving ? "Guardando…" : "Guardar seguimiento"}
+        </button>
+        {saved && <span className="text-sm font-semibold text-green-600">✓ Guardado</span>}
       </div>
     </div>
   );

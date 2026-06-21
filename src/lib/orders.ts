@@ -30,7 +30,21 @@ export interface Order {
     country?: string;
   };
   transactionId?: string;
+  // Seguimiento (lo edita el admin):
+  fulfillment?: FulfillmentStatus; // estado de preparación/envío
+  carrier?: string; // transportadora (Servientrega, Coordinadora…)
+  tracking?: string; // número de guía
+  adminNote?: string; // nota opcional visible al cliente
 }
+
+// Estado de preparación del pedido (independiente del estado de pago).
+export type FulfillmentStatus = "RECIBIDO" | "EN_PRODUCCION" | "ENVIADO" | "ENTREGADO";
+export const FULFILLMENT_LABELS: Record<FulfillmentStatus, string> = {
+  RECIBIDO: "Pedido recibido",
+  EN_PRODUCCION: "En producción",
+  ENVIADO: "Enviado",
+  ENTREGADO: "Entregado",
+};
 
 const DIR = "orders";
 
@@ -100,4 +114,26 @@ export async function listOrders(): Promise<Order[]> {
   return orders
     .filter((o): o is Order => o !== null)
     .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+// Pedidos pagados (APPROVED) de un correo, para la zona "Mis pedidos".
+export async function listOrdersByEmail(email: string): Promise<Order[]> {
+  const e = email.toLowerCase().trim();
+  const all = await listOrders();
+  return all.filter((o) => o.status === "APPROVED" && (o.email || "").toLowerCase() === e);
+}
+
+// Actualiza los campos de seguimiento de un pedido (lo usa el admin).
+export async function updateOrderFulfillment(
+  reference: string,
+  fields: { fulfillment?: FulfillmentStatus; carrier?: string; tracking?: string; adminNote?: string }
+): Promise<Order | null> {
+  const order = await getOrder(reference);
+  if (!order) return null;
+  if (fields.fulfillment) order.fulfillment = fields.fulfillment;
+  if (fields.carrier !== undefined) order.carrier = fields.carrier;
+  if (fields.tracking !== undefined) order.tracking = fields.tracking;
+  if (fields.adminNote !== undefined) order.adminNote = fields.adminNote;
+  await saveOrder(order);
+  return order;
 }

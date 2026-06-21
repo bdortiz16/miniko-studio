@@ -29,6 +29,10 @@ export async function GET(request: Request) {
           .join(", "),
         fotos: o.photoUrls || [],
         figura_ia: o.previewUrl || "",
+        fulfillment: o.fulfillment || "RECIBIDO",
+        carrier: o.carrier || "",
+        tracking: o.tracking || "",
+        adminNote: o.adminNote || "",
       }));
     return NextResponse.json({ orders });
   } catch (err) {
