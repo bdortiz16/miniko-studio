@@ -57,30 +57,33 @@ export default function HeroCarousel() {
   }
 
   function styleFor(role: Role): CSSProperties {
+    // Caja cuadrada (igual que las imágenes) => la figura se ve completa, sin
+    // cortar la cabeza, con objectFit contain.
     const base: CSSProperties = {
       position: "absolute",
-      aspectRatio: "0.6 / 1",
-      transition: `transform 650ms ${EASE}, filter 650ms ${EASE}, opacity 650ms ${EASE}, left 650ms ${EASE}`,
+      aspectRatio: "1 / 1",
+      transition: `transform 650ms ${EASE}, filter 650ms ${EASE}, opacity 650ms ${EASE}, left 650ms ${EASE}, height 650ms ${EASE}`,
       willChange: "transform, filter, opacity",
     };
     if (role === "center") {
       return {
         ...base,
         left: "50%",
-        bottom: isMobile ? "22%" : 0,
-        height: isMobile ? "60%" : "92%",
-        transform: `translateX(-50%) scale(${isMobile ? 1.25 : 1.68})`,
+        bottom: isMobile ? "16%" : "2%",
+        height: isMobile ? "58%" : "90%",
+        transform: "translateX(-50%) scale(1)",
         filter: "none",
         opacity: 1,
         zIndex: 20,
       };
     }
+    const sideHeight = isMobile ? "24%" : "40%";
     if (role === "left") {
       return {
         ...base,
-        left: isMobile ? "20%" : "30%",
-        bottom: isMobile ? "32%" : "12%",
-        height: isMobile ? "16%" : "28%",
+        left: isMobile ? "16%" : "22%",
+        bottom: isMobile ? "30%" : "12%",
+        height: sideHeight,
         transform: "translateX(-50%) scale(1)",
         filter: "blur(2px)",
         opacity: 0.85,
@@ -89,9 +92,9 @@ export default function HeroCarousel() {
     }
     return {
       ...base,
-      left: isMobile ? "80%" : "70%",
-      bottom: isMobile ? "32%" : "12%",
-      height: isMobile ? "16%" : "28%",
+      left: isMobile ? "84%" : "78%",
+      bottom: isMobile ? "30%" : "12%",
+      height: sideHeight,
       transform: "translateX(-50%) scale(1)",
       filter: "blur(2px)",
       opacity: 0.85,
