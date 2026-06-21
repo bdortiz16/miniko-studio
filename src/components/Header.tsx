@@ -14,8 +14,13 @@ export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`font-display font-extrabold lowercase tracking-tight ${className}`}>
       <span className="text-brand">mini</span>
-      <span className="text-ink">ko</span>
-      <span className="text-brand">★</span>
+      <span className="text-ink">k</span>
+      <span className="relative inline-block text-ink">
+        o
+        <span className="absolute -top-[0.32em] left-1/2 -translate-x-1/2 text-[0.4em] leading-none text-brand">
+          ★
+        </span>
+      </span>
     </span>
   );
 }
