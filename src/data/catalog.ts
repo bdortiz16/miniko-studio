@@ -38,12 +38,21 @@ export interface Variant {
 export const STYLES: FigureStyle[] = [
   {
     id: "kawaii",
-    name: "Kawaii",
-    tagline: "Tierno y adorable",
+    name: "Funko Pop",
+    tagline: "Cabezón y adorable",
     description:
-      "Rasgos suaves, ojos grandes y proporciones achuchables. El estilo más dulce, perfecto para regalos entrañables.",
+      "Cabeza grande, cuerpo pequeño y esos ojos negros tan característicos. El estilo coleccionable más reconocible y divertido.",
     image: styleImage("kawaii", "/styles/kawaii.svg"),
     accent: "#e89ab0",
+  },
+  {
+    id: "caricatura",
+    name: "Disney",
+    tagline: "Estilo animación",
+    description:
+      "Acabado 3D tipo película de animación: gestos expresivos, mirada simpática y mucho encanto. Como sacado de tu peli favorita.",
+    image: styleImage("caricatura", "/styles/caricatura.svg"),
+    accent: "#d98c5f",
   },
   {
     id: "realista",
@@ -54,15 +63,6 @@ export const STYLES: FigureStyle[] = [
     image: styleImage("realista", "/styles/realista.svg"),
     accent: "#7e9e8a",
     premium: true,
-  },
-  {
-    id: "caricatura",
-    name: "Caricatura",
-    tagline: "Divertido y expresivo",
-    description:
-      "Cabezas grandes, gestos exagerados y mucha personalidad. El estilo más simpático y lleno de carácter.",
-    image: styleImage("caricatura", "/styles/caricatura.svg"),
-    accent: "#d98c5f",
   },
 ];
 

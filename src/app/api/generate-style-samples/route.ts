@@ -12,20 +12,23 @@ export const maxDuration = 120;
 const CHARACTER =
   "a cute fictional cartoon mascot toy character with brown hair, " +
   "wearing a blue t-shirt and beige pants and white sneakers, " +
-  "holding a small laptop as an accessory (to show that personal accessories can be added)";
+  "holding a small CLOSED laptop (shut flat like a notebook) as an accessory";
 
 const BASE = (styleLine: string) =>
-  `Product photography of a small handmade collectible vinyl TOY figurine (a sculpted toy, not a real person) of ${CHARACTER}. ` +
-  `A single toy figurine standing on a round display base, fully visible from head to base, centered with some margin around it, ` +
-  `soft neutral light-gray studio background, clean catalog product shot. ${styleLine}`;
+  `Product photography of a small handmade collectible vinyl TOY figurine (a sculpted toy, NOT a real person) of ${CHARACTER}. ` +
+  `A single toy figurine standing on a round display base, the ENTIRE figurine fully visible from head to base with generous empty margin around it (zoomed-out catalog product shot), ` +
+  `centered, soft neutral light-gray studio background. ${styleLine}`;
 
 const STYLE_LINES: Record<string, string> = {
+  // Funko Pop
   kawaii:
-    "Style: cute kawaii vinyl toy with a large oversized head and a small slim petite body, big round glossy eyes, simple adorable face.",
-  realista:
-    "Style: finely detailed hand-painted collectible toy figurine with neat proportions and refined paintwork (still clearly a stylized toy).",
+    "Style: classic Funko Pop vinyl figurine — large oversized square-ish head, small slim petite body, big round solid black eyes, minimal face.",
+  // Disney
   caricatura:
-    "Style: playful 3D cartoon toy figurine, big friendly expression, exaggerated fun proportions, vibrant colors.",
+    "Style: Disney / Pixar 3D animated movie character look — polished 3D animation style, big expressive friendly eyes, warm charming smile, soft rounded shapes, cinematic.",
+  // Realista
+  realista:
+    "Style: realistic detailed hand-painted collectible toy figurine with neat proportions and refined paintwork — but still clearly a small sculpted vinyl TOY on a base, NOT a photo of a real human; shown small with plenty of margin so the whole toy fits in frame.",
 };
 
 export async function GET(request: Request) {
