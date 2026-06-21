@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   STYLES,
   VARIANTS,
+  MASCOTS,
   StyleId,
   formatCop,
   styleById,
@@ -22,6 +23,12 @@ import StyleImage from "@/components/StyleImage";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
 
+// Imagen de mascota de ejemplo por estilo (perro Funko, gato Disney, perro
+// realista) para mostrarla en el selector cuando es un pedido de mascota.
+const mascotByStyle: Record<string, string> = Object.fromEntries(
+  MASCOTS.map((m) => [m.styleId, m.image])
+);
+
 interface Photo {
   url: string;
   name: string;
@@ -34,11 +41,11 @@ interface Shipping {
   country: string;
 }
 
-export default function Wizard() {
+export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}) {
   const params = useSearchParams();
   const initStyle = (params.get("estilo") as StyleId) || STYLES[0].id;
   // Flujo separado: "mascota" cambia los textos y se guarda en el pedido.
-  const isPet = params.get("tipo") === "mascota";
+  const isPet = forcePet || params.get("tipo") === "mascota";
 
   const [step, setStep] = useState(0);
   const [settings, setSettings] = useState<Settings>(defaultSettings());
@@ -284,7 +291,7 @@ function StepStyle({
               )}
               <div className="relative aspect-square w-full bg-mist">
                 <StyleImage
-                  src={s.image}
+                  src={isPet ? mascotByStyle[s.id] || s.image : s.image}
                   fallback={`/styles/${s.id}.svg`}
                   alt={s.name}
                   sizes="200px"

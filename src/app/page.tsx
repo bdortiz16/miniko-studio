@@ -110,7 +110,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pedido?tipo=mascota" className="btn-primary mt-8">
+              <Link href="/mascotas" className="btn-primary mt-8">
                 Crear la figura de mi mascota →
               </Link>
             </div>
@@ -118,7 +118,7 @@ export default function Home() {
               {MASCOTS.map((m) => (
                 <Link
                   key={m.id}
-                  href={`/pedido?tipo=mascota&estilo=${m.styleId}`}
+                  href={`/mascotas?estilo=${m.styleId}`}
                   className="group flex flex-col items-center rounded-2xl border border-line bg-white p-5 transition hover:-translate-y-1 hover:border-ink/30 hover:shadow-lg"
                 >
                   <div className="grid h-24 w-full place-items-center">
