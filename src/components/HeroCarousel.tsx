@@ -5,14 +5,37 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { STYLES } from "@/data/catalog";
 
-// 3 personajes = los 3 estilos (Funko Pop, Disney, Realista).
+// 3 slides = 3 colores de marca: blanco, rojo y negro (nada de naranja).
 const IMAGES = [
-  { style: STYLES[0], bg: "#F4845F", panel: "#F79B7F" }, // Funko Pop
-  { style: STYLES[1], bg: "#6EB5FF", panel: "#8DC4FF" }, // Disney
-  { style: STYLES[2], bg: "#6BBF7A", panel: "#85CC92" }, // Realista
+  {
+    style: STYLES[0], // Funko Pop
+    bg: "#ffffff",
+    ghost: "#efe9e7",
+    text: "#141414",
+    sub: "#141414",
+    btnBg: "#141414",
+    btnText: "#ffffff",
+  },
+  {
+    style: STYLES[1], // Disney
+    bg: "#E5322D",
+    ghost: "#ffffff",
+    text: "#ffffff",
+    sub: "#ffffff",
+    btnBg: "#ffffff",
+    btnText: "#E5322D",
+  },
+  {
+    style: STYLES[2], // Realista
+    bg: "#141414",
+    ghost: "#ffffff",
+    text: "#ffffff",
+    sub: "#ffffff",
+    btnBg: "#ffffff",
+    btnText: "#141414",
+  },
 ];
 const N = IMAGES.length;
-
 const EASE = "cubic-bezier(0.4,0,0.2,1)";
 
 type Role = "center" | "left" | "right";
@@ -29,7 +52,6 @@ export default function HeroCarousel() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Precarga de imágenes.
   useEffect(() => {
     IMAGES.forEach(({ style }) => {
       const img = new window.Image();
@@ -46,6 +68,7 @@ export default function HeroCarousel() {
     }, 650);
   }
 
+  const active = IMAGES[activeIndex];
   const center = activeIndex;
   const right = (activeIndex + 1) % N;
   const left = (activeIndex + 2) % N;
@@ -57,8 +80,6 @@ export default function HeroCarousel() {
   }
 
   function styleFor(role: Role): CSSProperties {
-    // Caja cuadrada (igual que las imágenes) => la figura se ve completa, sin
-    // cortar la cabeza, con objectFit contain.
     const base: CSSProperties = {
       position: "absolute",
       aspectRatio: "2 / 3",
@@ -69,7 +90,7 @@ export default function HeroCarousel() {
       return {
         ...base,
         left: "50%",
-        bottom: isMobile ? "18%" : "5%",
+        bottom: isMobile ? "16%" : "5%",
         height: isMobile ? "50%" : "76%",
         transform: "translateX(-50%) scale(1)",
         filter: "none",
@@ -78,21 +99,8 @@ export default function HeroCarousel() {
       };
     }
     const sideHeight = isMobile ? "24%" : "40%";
-    if (role === "left") {
-      return {
-        ...base,
-        left: isMobile ? "16%" : "22%",
-        bottom: isMobile ? "30%" : "12%",
-        height: sideHeight,
-        transform: "translateX(-50%) scale(1)",
-        filter: "blur(2px)",
-        opacity: 0.85,
-        zIndex: 10,
-      };
-    }
-    return {
+    const common = {
       ...base,
-      left: isMobile ? "84%" : "78%",
       bottom: isMobile ? "30%" : "12%",
       height: sideHeight,
       transform: "translateX(-50%) scale(1)",
@@ -100,21 +108,24 @@ export default function HeroCarousel() {
       opacity: 0.85,
       zIndex: 10,
     };
+    return role === "left"
+      ? { ...common, left: isMobile ? "16%" : "22%" }
+      : { ...common, left: isMobile ? "84%" : "78%" };
   }
 
-  const ghost = IMAGES[activeIndex].style.name.toUpperCase();
+  const ghost = active.style.name.toUpperCase();
 
   return (
     <div
       className="relative w-full overflow-hidden"
       style={{
-        backgroundColor: IMAGES[activeIndex].bg,
+        backgroundColor: active.bg,
         transition: `background-color 650ms ${EASE}`,
         fontFamily: "var(--font-sans), Inter, sans-serif",
       }}
     >
       <div className="relative w-full" style={{ height: "100vh", overflow: "hidden" }}>
-        {/* 1. Grano */}
+        {/* Grano */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -126,7 +137,7 @@ export default function HeroCarousel() {
           }}
         />
 
-        {/* 2. Texto fantasma gigante (nombre del estilo activo) */}
+        {/* Texto fantasma gigante */}
         <div
           className="absolute inset-x-0 flex items-center justify-center pointer-events-none select-none"
           style={{ zIndex: 2, top: "18%" }}
@@ -136,7 +147,8 @@ export default function HeroCarousel() {
               fontFamily: "var(--font-anton), sans-serif",
               fontSize: "clamp(70px, 22vw, 320px)",
               fontWeight: 900,
-              color: "#fff",
+              color: active.ghost,
+              transition: `color 650ms ${EASE}`,
               lineHeight: 1,
               textTransform: "uppercase",
               letterSpacing: "-0.02em",
@@ -147,7 +159,7 @@ export default function HeroCarousel() {
           </span>
         </div>
 
-        {/* 3. Carrusel */}
+        {/* Carrusel */}
         <div className="absolute inset-0" style={{ zIndex: 3 }}>
           {IMAGES.map(({ style }, i) => (
             <div key={style.id} style={styleFor(roleOf(i))}>
@@ -174,91 +186,56 @@ export default function HeroCarousel() {
           ))}
         </div>
 
-        {/* 5. Texto + navegación abajo izquierda */}
+        {/* Texto + navegación abajo izquierda */}
         <div
-          className="absolute bottom-6 left-4 sm:bottom-20 sm:left-24"
-          style={{ zIndex: 60, maxWidth: 340 }}
+          className="absolute bottom-6 left-4 sm:bottom-16 sm:left-16"
+          style={{ zIndex: 60, maxWidth: 360, color: active.text, transition: `color 650ms ${EASE}` }}
         >
-          <p
-            className="mb-2 sm:mb-3 text-base sm:text-[22px] font-bold uppercase tracking-widest text-white"
-            style={{ opacity: 0.95, letterSpacing: "0.02em" }}
-          >
-            Figuras miniko · {IMAGES[activeIndex].style.name}
+          <p className="mb-2 text-sm font-bold uppercase tracking-[0.25em]" style={{ opacity: 0.9 }}>
+            Figuras miniko
+          </p>
+          <p className="font-display text-2xl font-extrabold leading-none sm:text-4xl">
+            {active.style.name}
           </p>
           <p
-            className="hidden sm:block text-xs sm:text-sm text-white mb-4 sm:mb-5"
+            className="mt-3 hidden max-w-xs text-sm sm:block"
             style={{ opacity: 0.85, lineHeight: 1.6 }}
           >
             Sube tu foto y la convertimos en una figura 3D para pintar. Tres
-            estilos, un acabado impecable y lista para regalar. ¡Crea la tuya ahora!
+            estilos, acabado impecable y lista para regalar.
           </p>
-          <div className="flex gap-3">
-            <button
-              aria-label="Anterior"
-              onClick={() => navigate("prev")}
-              className="grid place-items-center w-12 h-12 sm:w-16 sm:h-16 rounded-full text-white"
-              style={{
-                background: "transparent",
-                border: "2px solid #fff",
-                transition: "transform 150ms, background-color 150ms",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.08)";
-                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <ArrowLeft size={26} strokeWidth={2.25} />
-            </button>
-            <button
-              aria-label="Siguiente"
-              onClick={() => navigate("next")}
-              className="grid place-items-center w-12 h-12 sm:w-16 sm:h-16 rounded-full text-white"
-              style={{
-                background: "transparent",
-                border: "2px solid #fff",
-                transition: "transform 150ms, background-color 150ms",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.08)";
-                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <ArrowRight size={26} strokeWidth={2.25} />
-            </button>
+          <div className="mt-5 flex gap-3">
+            {(["prev", "next"] as const).map((dir) => (
+              <button
+                key={dir}
+                aria-label={dir === "prev" ? "Anterior" : "Siguiente"}
+                onClick={() => navigate(dir)}
+                className="grid h-12 w-12 place-items-center rounded-full transition hover:scale-110 sm:h-14 sm:w-14"
+                style={{ border: `2px solid ${active.text}` }}
+              >
+                {dir === "prev" ? (
+                  <ArrowLeft size={24} strokeWidth={2.25} />
+                ) : (
+                  <ArrowRight size={24} strokeWidth={2.25} />
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* 6. Enlace abajo derecha */}
-        <div
-          className="absolute bottom-6 right-4 sm:bottom-20 sm:right-10"
-          style={{ zIndex: 60 }}
-        >
+        {/* Botón CTA abajo derecha */}
+        <div className="absolute bottom-6 right-4 sm:bottom-16 sm:right-12" style={{ zIndex: 60 }}>
           <Link
             href="/pedido"
-            className="flex items-center text-white no-underline"
+            className="group inline-flex items-center gap-2 rounded-full px-7 py-4 text-base font-bold uppercase tracking-wide shadow-lg transition hover:scale-[1.04] sm:px-9 sm:py-5 sm:text-lg"
             style={{
-              fontFamily: "var(--font-anton), sans-serif",
-              fontSize: "clamp(20px, 4vw, 56px)",
-              fontWeight: 400,
-              opacity: 0.95,
-              letterSpacing: "-0.02em",
-              lineHeight: 1,
-              textTransform: "uppercase",
-              transition: "opacity 200ms",
+              backgroundColor: active.btnBg,
+              color: active.btnText,
+              transition: `background-color 650ms ${EASE}, color 650ms ${EASE}, transform 150ms`,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.95")}
           >
             Crear la mía
-            <ArrowRight className="w-5 h-5 sm:w-8 sm:h-8 ml-1" strokeWidth={2.25} />
+            <ArrowRight className="transition-transform group-hover:translate-x-1" size={22} strokeWidth={2.5} />
           </Link>
         </div>
       </div>
