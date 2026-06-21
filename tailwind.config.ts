@@ -8,12 +8,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#f6efe7",
-        sand: "#efe3d4",
-        clay: "#e0a87e",
-        terracotta: "#d98c5f",
-        ink: "#2b2b2b",
-        coal: "#161310",
+        // Marca Miniko: fondo blanco, texto negro, rojo solo para líneas/acentos.
+        ink: "#141414",
+        coal: "#0a0a0a",
+        brand: "#E5322D", // rojo: úsalo solo en líneas, bordes y detalles
+        mist: "#f6f6f6", // gris muy claro para secciones
+        line: "#e7e7e7", // bordes neutros
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

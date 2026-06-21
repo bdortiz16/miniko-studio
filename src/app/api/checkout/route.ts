@@ -2,10 +2,18 @@ import { NextResponse } from "next/server";
 import { stripe, getSiteUrl } from "@/lib/stripe";
 import { variantById, styleById, SHIPPING } from "@/data/catalog";
 
-interface IncomingItem {
+interface OrderPayload {
   styleId: string;
   variantId: string;
-  quantity: number;
+  email?: string;
+  photoUrls?: string[];
+  shipping?: {
+    name?: string;
+    address?: string;
+    city?: string;
+    zip?: string;
+    country?: string;
+  };
 }
 
 export async function POST(request: Request) {
@@ -19,80 +27,68 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { items?: IncomingItem[] };
+  let body: OrderPayload;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
 
-  const items = body.items ?? [];
-  if (items.length === 0) {
-    return NextResponse.json({ error: "El carrito está vacío." }, { status: 400 });
-  }
-
-  const lineItems: import("stripe").Stripe.Checkout.SessionCreateParams.LineItem[] =
-    [];
-  let subtotalCents = 0;
-
-  for (const item of items) {
-    const variant = variantById(item.variantId);
-    const style = styleById(item.styleId);
-    const qty = Math.max(1, Math.min(20, Math.floor(item.quantity || 1)));
-    if (!variant || !style) {
-      return NextResponse.json(
-        { error: `Producto no válido: ${item.styleId}/${item.variantId}` },
-        { status: 400 }
-      );
-    }
-    subtotalCents += variant.priceCents * qty;
-    lineItems.push({
-      quantity: qty,
-      price_data: {
-        currency: "eur",
-        unit_amount: variant.priceCents,
-        product_data: {
-          name: `Figura ${style.name} — ${variant.name}`,
-          description: variant.description,
-        },
-      },
-    });
+  const variant = variantById(body.variantId);
+  const style = styleById(body.styleId);
+  if (!variant || !style) {
+    return NextResponse.json({ error: "Producto no válido." }, { status: 400 });
   }
 
   const shippingCents =
-    subtotalCents >= SHIPPING.freeThresholdCents ? 0 : SHIPPING.flatCents;
+    variant.priceCents >= SHIPPING.freeThresholdCents ? 0 : SHIPPING.flatCents;
+
+  const photoUrls = (body.photoUrls ?? []).slice(0, 6);
+  const s = body.shipping ?? {};
+
+  // Metadatos: todo lo que el negocio necesita para preparar el pedido.
+  const metadata: Record<string, string> = {
+    estilo: style.name,
+    tamaño: variant.name,
+    personas: String(variant.people),
+    envio_nombre: s.name ?? "",
+    envio_direccion: [s.address, s.city, s.zip, s.country].filter(Boolean).join(", "),
+  };
+  photoUrls.forEach((url, i) => {
+    metadata[`foto_${i + 1}`] = url.slice(0, 480);
+  });
 
   const siteUrl = getSiteUrl();
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: lineItems,
-      shipping_address_collection: {
-        allowed_countries: ["ES", "DE", "FR", "IT", "PT", "NL", "BE", "AT"],
-      },
-      shipping_options:
-        shippingCents === 0
-          ? [
-              {
-                shipping_rate_data: {
-                  type: "fixed_amount",
-                  display_name: "Envío gratis",
-                  fixed_amount: { amount: 0, currency: "eur" },
-                },
-              },
-            ]
-          : [
-              {
-                shipping_rate_data: {
-                  type: "fixed_amount",
-                  display_name: SHIPPING.label,
-                  fixed_amount: { amount: shippingCents, currency: "eur" },
-                },
-              },
-            ],
+      customer_email: body.email || undefined,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "eur",
+            unit_amount: variant.priceCents,
+            product_data: {
+              name: `Figura ${style.name} — ${variant.name}`,
+              description: variant.description,
+            },
+          },
+        },
+      ],
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            display_name: shippingCents === 0 ? "Envío gratis" : SHIPPING.label,
+            fixed_amount: { amount: shippingCents, currency: "eur" },
+          },
+        },
+      ],
+      metadata,
       success_url: `${siteUrl}/exito?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/carrito`,
+      cancel_url: `${siteUrl}/pedido`,
     });
 
     return NextResponse.json({ url: session.url });

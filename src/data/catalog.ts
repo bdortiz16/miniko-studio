@@ -12,6 +12,7 @@ export interface FigureStyle {
   description: string;
   image: string; // ruta dentro de /public
   accent: string; // color de acento (tailwind hex)
+  premium?: boolean;
 }
 
 export interface Variant {
@@ -21,6 +22,7 @@ export interface Variant {
   // Precio en céntimos de euro (Stripe trabaja con la menor unidad).
   priceCents: number;
   height: string;
+  people: number; // nº de personas/mascotas incluidas
 }
 
 export const STYLES: FigureStyle[] = [
@@ -41,6 +43,7 @@ export const STYLES: FigureStyle[] = [
       "Detalle y proporciones realistas. Capturamos los rasgos tal y como son para un recuerdo fiel de ese momento.",
     image: "/styles/realista.svg",
     accent: "#7e9e8a",
+    premium: true,
   },
   {
     id: "caricatura",
@@ -60,6 +63,7 @@ export const VARIANTS: Variant[] = [
     description: "Una persona o mascota en tu figura personalizada.",
     priceCents: 2900,
     height: "Hasta 15 cm de alto",
+    people: 1,
   },
   {
     id: "pareja",
@@ -67,6 +71,7 @@ export const VARIANTS: Variant[] = [
     description: "Dos personajes juntos en la misma base.",
     priceCents: 4900,
     height: "Hasta 15 cm de alto",
+    people: 2,
   },
   {
     id: "familia",
@@ -74,6 +79,7 @@ export const VARIANTS: Variant[] = [
     description: "Hasta cuatro personajes en una escena compartida.",
     priceCents: 7900,
     height: "Hasta 18 cm de alto",
+    people: 4,
   },
 ];
 

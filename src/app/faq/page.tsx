@@ -42,23 +42,24 @@ export default function FaqPage() {
     <div className="section">
       <div className="container-x max-w-3xl">
         <header className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-terracotta">
+          <p className="text-sm font-semibold uppercase tracking-widest text-brand">
             Ayuda
           </p>
           <h1 className="mt-3 font-display text-4xl font-extrabold">
             Preguntas frecuentes
           </h1>
-          <p className="mt-3 text-ink/60">
+          <div className="mx-auto mt-4 h-px w-16 bg-brand/70" />
+          <p className="mt-4 text-ink/60">
             Todo lo que necesitas saber antes de pedir.
           </p>
         </header>
 
-        <div className="mt-12 divide-y divide-ink/10 rounded-3xl border border-ink/10 bg-white">
+        <div className="mt-12 divide-y divide-line rounded-2xl border border-line bg-white">
           {FAQS.map((item) => (
             <details key={item.q} className="group px-6 py-5 [&_summary]:list-none">
               <summary className="flex cursor-pointer items-center justify-between gap-4 font-semibold">
                 {item.q}
-                <span className="text-terracotta transition group-open:rotate-45">
+                <span className="text-brand transition group-open:rotate-45">
                   +
                 </span>
               </summary>

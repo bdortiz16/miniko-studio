@@ -1,14 +1,14 @@
 import { Suspense } from "react";
-import Personalizar from "./Personalizar";
+import Wizard from "./Wizard";
 
 export const metadata = {
-  title: "Crear mi figura — Miniko Studio",
+  title: "Crear mi figura — miniko",
 };
 
 export default function Page() {
   return (
     <Suspense fallback={<div className="container-x section">Cargando…</div>}>
-      <Personalizar />
+      <Wizard />
     </Suspense>
   );
 }

@@ -12,20 +12,25 @@ html {
 }
 
 body {
-  @apply bg-cream text-ink antialiased;
+  @apply bg-white text-ink antialiased;
 }
 
 @layer components {
+  /* Botón principal: negro sólido (el rojo se reserva para líneas/acentos). */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-clay to-terracotta px-7 py-3 font-semibold text-white shadow-lg shadow-terracotta/20 transition hover:scale-[1.02] hover:shadow-xl active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 font-semibold text-white transition hover:bg-black hover:scale-[1.02] active:scale-95;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 bg-white px-7 py-3 font-semibold text-ink transition hover:border-ink/30 hover:bg-white/70;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 bg-white px-7 py-3 font-semibold text-ink transition hover:border-ink/40;
   }
   .container-x {
     @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
   }
   .section {
     @apply py-20 sm:py-28;
+  }
+  /* Línea/acento de marca en rojo. */
+  .accent-rule {
+    @apply h-px w-full bg-brand/70;
   }
 }

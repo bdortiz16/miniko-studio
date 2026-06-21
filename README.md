@@ -28,11 +28,35 @@ Abre http://localhost:3000
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 
-Mientras no configures las claves, la web funciona pero el botón de pago
-avisará de que Stripe no está configurado.
-
 Para probar pagos usa la tarjeta de test `4242 4242 4242 4242`, cualquier
 fecha futura y cualquier CVC.
+
+## 📷 Subida de fotos (Vercel Blob)
+
+El paso "Foto" del asistente sube la imagen del cliente a **Vercel Blob**.
+
+1. En Vercel: pestaña **Storage → Create → Blob**.
+2. Vercel añade automáticamente `BLOB_READ_WRITE_TOKEN` al proyecto.
+3. Para local, copia ese token a `.env.local`.
+
+## ✉️ Verificación de email (Resend)
+
+El paso "Email" envía un código de 6 dígitos con **Resend**.
+
+1. Crea una API key en https://resend.com/api-keys → `RESEND_API_KEY`.
+2. `EMAIL_FROM`: para pruebas usa `onboarding@resend.dev` (solo envía a tu
+   propio email). En producción, verifica un dominio en Resend.
+3. `AUTH_SECRET`: una cadena larga y aleatoria para firmar los códigos.
+
+Mientras no configures cada servicio, esa parte del asistente avisa con un
+mensaje claro en lugar de fallar.
+
+## 🧭 Flujo de pedido (asistente `/pedido`)
+
+Pedido guiado en 6 pasos, al estilo de la referencia:
+**Estilo → Foto → Email → Preview → Envío → Pago**. Toda la info del pedido
+(estilo, fotos, email y dirección) se adjunta a los **metadatos** de la sesión
+de Stripe, así la ves directamente en el Dashboard de Stripe.
 
 ## 🖼️ Reemplazar las imágenes
 

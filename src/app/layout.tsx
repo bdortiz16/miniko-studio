@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/lib/cart";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -19,7 +18,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Miniko Studio — Tu foto convertida en figura 3D para pintar",
+  title: "miniko — Tu foto convertida en figura 3D para pintar",
   description:
     "Convertimos tu foto favorita en una figura 3D personalizada en 3 estilos: Kawaii, Realista y Caricatura. Un regalo único hecho a mano.",
   keywords: [
@@ -27,7 +26,7 @@ export const metadata: Metadata = {
     "regalo personalizado",
     "figura para pintar",
     "impresión 3D",
-    "Miniko Studio",
+    "miniko",
   ],
 };
 
@@ -39,11 +38,9 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${poppins.variable}`}>
       <body className="flex min-h-screen flex-col">
-        <CartProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </CartProvider>
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );
