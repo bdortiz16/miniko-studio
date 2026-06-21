@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface Order {
   id: string;
@@ -21,14 +22,12 @@ export default function AdminPedidos() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState("");
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const qs = token ? `?token=${encodeURIComponent(token)}` : "";
-      const res = await fetch(`/api/admin/orders${qs}`);
+      const res = await fetch(`/api/admin/orders`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cargar.");
       setOrders(data.orders);
@@ -60,15 +59,12 @@ export default function AdminPedidos() {
         <div className="mt-4 h-px w-16 bg-brand/70" />
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">
+            ← Panel
+          </Link>
           <button onClick={load} disabled={loading} className="btn-primary disabled:opacity-50">
             {loading ? "Cargando…" : orders ? "Actualizar" : "Cargar pedidos"}
           </button>
-          <input
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="token (solo si tienes AUTH_SECRET)"
-            className="rounded-full border border-line px-4 py-2 text-sm outline-none focus:border-ink"
-          />
           {orders && (
             <span className="text-sm text-ink/55">{orders.length} pedido(s)</span>
           )}

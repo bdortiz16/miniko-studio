@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
+import { isAdmin } from "@/lib/admin-auth";
 
 // Genera las 3 imágenes de ejemplo de los estilos (mismo personaje, distinto
 // estilo) y las guarda en Supabase en rutas fijas: samples/<estilo>.png
@@ -52,10 +53,7 @@ export async function GET(request: Request) {
   if (!supabaseAdmin) {
     return NextResponse.json({ error: "Falta configuración de Supabase." }, { status: 500 });
   }
-  // Protección opcional: si AUTH_SECRET está definido, exige ?token=...
-  const required = process.env.AUTH_SECRET;
-  const token = new URL(request.url).searchParams.get("token");
-  if (required && token !== required) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 

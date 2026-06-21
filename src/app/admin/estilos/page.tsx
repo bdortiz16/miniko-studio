@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface Result {
   ok?: boolean;
@@ -18,17 +19,13 @@ const LABELS: Record<string, string> = {
 export default function AdminEstilos() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
-  const [token, setToken] = useState("");
   const [ts, setTs] = useState(Date.now());
 
   async function generate(style?: string) {
     setLoading(true);
     setResult(null);
     try {
-      const params = new URLSearchParams();
-      if (token) params.set("token", token);
-      if (style) params.set("style", style);
-      const qs = params.toString() ? `?${params.toString()}` : "";
+      const qs = style ? `?style=${encodeURIComponent(style)}` : "";
       const res = await fetch(`/api/generate-style-samples${qs}`);
       const data = await res.json();
       setResult(data);
@@ -50,6 +47,9 @@ export default function AdminEstilos() {
         <div className="mx-auto mt-4 h-px w-16 bg-brand/70" />
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">
+            ← Panel
+          </Link>
           <button onClick={() => generate()} disabled={loading} className="btn-primary disabled:opacity-50">
             {loading ? "Generando… (~40s)" : "Generar / Regenerar las 3"}
           </button>
@@ -60,12 +60,6 @@ export default function AdminEstilos() {
           >
             Regenerar solo Realista
           </button>
-          <input
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="token (solo si tienes AUTH_SECRET)"
-            className="rounded-full border border-line px-4 py-2 text-sm outline-none focus:border-ink"
-          />
         </div>
 
         {loading && (

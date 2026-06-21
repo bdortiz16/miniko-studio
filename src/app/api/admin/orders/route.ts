@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { isAdmin } from "@/lib/admin-auth";
 
 // Lista los últimos pedidos pagados desde Stripe para el panel de admin.
 export async function GET(request: Request) {
+  if (!isAdmin(request)) {
+    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  }
   if (!stripe) {
     return NextResponse.json({ error: "Stripe no está configurado." }, { status: 500 });
-  }
-  // Protección opcional: si AUTH_SECRET está definido, exige ?token=...
-  const required = process.env.AUTH_SECRET;
-  const token = new URL(request.url).searchParams.get("token");
-  if (required && token !== required) {
-    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
   try {
