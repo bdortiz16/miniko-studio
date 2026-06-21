@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { STYLES, VARIANTS, formatEur } from "@/data/catalog";
+import { STYLES } from "@/data/catalog";
 import StyleCard from "@/components/StyleCard";
+import HeroCarousel from "@/components/HeroCarousel";
 
 const STEPS = [
   { n: "1", title: "Elige tu estilo", desc: "Kawaii, realista o caricatura: tú decides el look.", icon: "🎨" },
@@ -11,50 +12,10 @@ const STEPS = [
 ];
 
 export default function Home() {
-  const fromPrice = Math.min(...VARIANTS.map((v) => v.priceCents));
-
   return (
     <>
-      {/* HERO */}
-      <section className="border-b border-line">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div className="container-x py-16 sm:py-24 lg:max-w-none lg:pr-0">
-            <span className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-1.5 text-xs font-semibold text-ink/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" /> Hecho a partir de tu foto
-            </span>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] sm:text-6xl">
-              Convierte tu foto en una <span className="text-brand">figura 3D</span> personalizada
-            </h1>
-            <p className="mt-5 max-w-md text-lg text-ink/65">
-              Sube una foto y la transformamos en una figura 3D para pintar tú
-              mismo. El regalo más personal que existe.
-            </p>
-            <div className="mt-7 flex flex-wrap items-center gap-4 text-sm text-ink/60">
-              <span>🧑‍🤝‍🧑 100% personalizado</span>
-              <span>🎨 Sin pintar / DIY</span>
-              <span>🎁 Listo para regalar</span>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/pedido" className="btn-primary">Crear mi figura →</Link>
-              <Link href="/#como-funciona" className="btn-secondary">Cómo funciona</Link>
-            </div>
-            <p className="mt-5 text-sm text-ink/50">
-              Desde {formatEur(fromPrice)} · Envío 4,99 € · Gratis a partir de 55 €
-            </p>
-          </div>
-
-          <div className="relative h-72 border-l border-line bg-mist sm:h-96 lg:h-[34rem]">
-            <Image
-              src="/styles/hero.svg"
-              alt="Figura 3D personalizada"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      {/* HERO carrusel */}
+      <HeroCarousel />
 
       {/* CÓMO FUNCIONA */}
       <section id="como-funciona" className="section">

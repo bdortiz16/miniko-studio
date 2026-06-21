@@ -9,26 +9,26 @@ export const maxDuration = 120;
 
 // Descripción del juguete (no una persona real) — el mismo personaje-mascota
 // de ejemplo en los 3 estilos, para que solo se vea el cambio de estilo.
+// EXACTAMENTE el mismo personaje en los 3 estilos (solo cambia el render).
 const CHARACTER =
-  "a cute fictional cartoon mascot toy character with brown hair, " +
-  "wearing a blue t-shirt and beige pants and white sneakers, " +
-  "holding a small CLOSED laptop (shut flat like a notebook) as an accessory";
+  "the SAME single young man character: short curly light-brown hair, " +
+  "wearing an olive-green field jacket over a blue-and-white striped shirt, " +
+  "brown trousers and brown leather boots, holding a small closed laptop in one hand";
 
 const BASE = (styleLine: string) =>
-  `Product photography of a small handmade collectible vinyl TOY figurine (a sculpted toy, NOT a real person) of ${CHARACTER}. ` +
-  `A single toy figurine standing on a round display base, the ENTIRE figurine fully visible from head to base with generous empty margin around it (zoomed-out catalog product shot), ` +
-  `centered, soft neutral light-gray studio background. ${styleLine}`;
+  `Full-body product photo, the ENTIRE figure visible head to feet, centered with generous margin so it fits in frame, ` +
+  `clean soft light-gray studio background. ${styleLine} The character: ${CHARACTER}.`;
 
 const STYLE_LINES: Record<string, string> = {
   // Funko Pop
   kawaii:
-    "Style: classic Funko Pop vinyl figurine — large oversized square-ish head, small slim petite body, big round solid black eyes, minimal face.",
+    "A classic FUNKO POP collectible vinyl figurine: very large oversized head, small short body, big round solid black dot eyes, simplified matte vinyl, standing on a round white display base.",
   // Disney
   caricatura:
-    "Style: Disney / Pixar 3D animated movie character look — polished 3D animation style, big expressive friendly eyes, warm charming smile, soft rounded shapes, cinematic.",
+    "A DISNEY / PIXAR style 3D animated character figure: stylized full-body cartoon with friendly proportions, large expressive cartoon eyes, smooth polished 3D animation render, standing.",
   // Realista
   realista:
-    "Style: realistic detailed hand-painted collectible toy figurine with neat proportions and refined paintwork — but still clearly a small sculpted vinyl TOY on a base, NOT a photo of a real human; shown small with plenty of margin so the whole toy fits in frame.",
+    "A HYPER-REALISTIC lifelike collectible STATUE figure of the character: highly detailed realistic face, hair and clothing, refined and premium, full body standing on a small base.",
 };
 
 export async function GET(request: Request) {
