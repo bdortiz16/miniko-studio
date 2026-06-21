@@ -56,9 +56,9 @@ export async function POST(request: Request) {
     const output = (await replicate.run(`tencentarc/photomaker:${version}`, {
       input: {
         input_image: photoUrl,
-        prompt: `a person img ${cfg.desc}, keep the same body shape and build as the reference, full body, clean soft studio background, high quality`,
+        prompt: `a person img ${cfg.desc}, wearing the same outfit and clothing as in the reference photo, keep the same slim body shape and build as the reference, full body, clean soft studio background, high quality`,
         negative_prompt:
-          "nsfw, nude, bikini, swimwear, lingerie, lowres, deformed, bad anatomy, extra limbs, fat, obese, overweight, watermark, text",
+          "nude, naked, topless, explicit, nsfw, lowres, deformed, bad anatomy, extra limbs, obese, overweight, watermark, text",
         style_name: cfg.style_name,
         num_steps: 40,
         style_strength_ratio: 25,
