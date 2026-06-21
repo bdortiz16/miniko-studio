@@ -9,9 +9,13 @@ export type StyleId = "kawaii" | "realista" | "caricatura";
 // /api/generate-style-samples) y se guardan en Supabase. Si Supabase está
 // configurado usamos esa imagen; si no, caemos al placeholder SVG local.
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Versión para invalidar la caché del navegador. Súbela si alguna vez ves
+// imágenes viejas tras regenerar (las muestras se sirven con no-cache, pero
+// esto fuerza a soltar cualquier copia antigua ya guardada).
+const SAMPLES_V = "3";
 function styleImage(id: StyleId, fallback: string): string {
   return SUPA_URL
-    ? `${SUPA_URL}/storage/v1/object/public/pedidos/samples/${id}.png`
+    ? `${SUPA_URL}/storage/v1/object/public/pedidos/samples/${id}.png?v=${SAMPLES_V}`
     : fallback;
 }
 
