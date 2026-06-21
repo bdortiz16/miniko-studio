@@ -36,7 +36,9 @@ export async function POST(request: Request) {
             {
               type: "text",
               text:
-                "Look at this photo. Count the number of distinct HUMAN people and the number of PETS/animals (dogs, cats, etc.). " +
+                "Look at this photo. Count the number of distinct REAL HUMAN people and the number of REAL PETS/animals (dogs, cats, etc.). " +
+                "Only count actual people or animals that physically appear in the photo. " +
+                "If the image has NO people and NO animals (for example it is text, a screenshot, an object, a landscape or a logo), answer 0 and 0. " +
                 'Respond ONLY with strict minified JSON, no extra text: {"people": <int>, "pets": <int>}.',
             },
             { type: "image_url", image_url: { url, detail: "low" } },
@@ -61,8 +63,6 @@ export async function POST(request: Request) {
     const results = await Promise.all(urls.map(countOne));
     let people = results.reduce((a, r) => a + r.people, 0);
     let pets = results.reduce((a, r) => a + r.pets, 0);
-    // Nunca menos de una figura en total.
-    if (people + pets === 0) people = 1;
     // Respeta el máximo del pedido.
     if (people + pets > MAX) {
       // Recorta proporcionalmente conservando al menos lo detectado mayor.

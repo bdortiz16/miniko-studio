@@ -68,6 +68,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   // Detección automática de cuántas figuras (personas/mascotas) hay en la foto.
   const [detected, setDetected] = useState<{ people: number; pets: number } | null>(null);
   const [detecting, setDetecting] = useState(false);
+  const [detectError, setDetectError] = useState(false);
   // Ajuste manual opcional por si la IA cuenta mal.
   const [manual, setManual] = useState<{ people: number; pets: number } | null>(null);
   const [shipping, setShipping] = useState<Shipping>({
@@ -86,6 +87,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   // Analiza las fotos para contar personas y mascotas automáticamente.
   const detect = useCallback(async (urls: string[]) => {
     setManual(null);
+    setDetectError(false);
     if (urls.length === 0) {
       setDetected(null);
       return;
@@ -101,19 +103,23 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
       if (res.ok && typeof data.people === "number") {
         setDetected({ people: data.people, pets: data.pets });
       } else {
-        // Si la detección no está disponible, asume 1 figura del tipo del flujo.
-        setDetected({ people: isPet ? 0 : 1, pets: isPet ? 1 : 0 });
+        // No se pudo analizar: el usuario tendrá que indicarlo manualmente.
+        setDetected(null);
+        setDetectError(true);
       }
     } catch {
-      setDetected({ people: isPet ? 0 : 1, pets: isPet ? 1 : 0 });
+      setDetected(null);
+      setDetectError(true);
     } finally {
       setDetecting(false);
     }
-  }, [isPet]);
+  }, []);
 
   // Recuento efectivo (manual si el usuario lo ajustó; si no, el detectado).
-  const counts = manual ?? detected ?? { people: isPet ? 0 : 1, pets: isPet ? 1 : 0 };
-  const totalFigures = Math.min(MAX_FIGURES, Math.max(1, counts.people + counts.pets));
+  const counts = manual ?? detected ?? { people: 0, pets: 0 };
+  const totalDetected = counts.people + counts.pets;
+  const hasFigures = totalDetected >= 1; // hay al menos una persona o mascota
+  const totalFigures = Math.min(MAX_FIGURES, Math.max(1, totalDetected));
   const composicion = composeLabel(counts);
   const tipoLabel =
     counts.people > 0 && counts.pets > 0
@@ -134,7 +140,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   // Validación por paso para habilitar "Continuar".
   const canContinue =
     (step === 0 && !!styleId) ||
-    (step === 1 && photos.length > 0 && !detecting) ||
+    (step === 1 && photos.length > 0 && !detecting && hasFigures) ||
     // Basta con un email válido para avanzar. La verificación por código es un
     // extra (funciona cuando Resend está configurado) pero no bloquea el flujo.
     (step === 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
@@ -168,7 +174,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
               maxPhotos={MAX_FIGURES}
               isPet={isPet}
               detecting={detecting}
-              detected={detected}
+              detectError={detectError}
+              hasFigures={hasFigures}
               counts={counts}
               totalFigures={totalFigures}
               composicion={composicion}
@@ -236,13 +243,13 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
         {/* Resumen permanente abajo. */}
         <div className="mt-10 flex items-center justify-between border-t border-line pt-5 text-sm">
           <div className="flex items-center gap-5 text-ink/60">
-            <span>🧩 {totalFigures} {totalFigures === 1 ? "figura" : "figuras"}</span>
-            <span>📦 {formatCop(price)}</span>
-            <span>🚚 {shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
+            <span>🧩 {hasFigures ? `${totalFigures} ${totalFigures === 1 ? "figura" : "figuras"}` : "—"}</span>
+            <span>📦 {hasFigures ? formatCop(price) : "—"}</span>
+            <span>🚚 {hasFigures ? (shipCents === 0 ? "Gratis" : formatCop(shipCents)) : "—"}</span>
           </div>
           <div className="text-right">
             <span className="block text-xs uppercase tracking-wide text-ink/40">Total</span>
-            <span className="font-display text-xl font-extrabold">{formatCop(total)}</span>
+            <span className="font-display text-xl font-extrabold">{hasFigures ? formatCop(total) : "—"}</span>
           </div>
         </div>
       </div>
@@ -397,7 +404,8 @@ function StepPhotos({
   maxPhotos,
   isPet,
   detecting,
-  detected,
+  detectError,
+  hasFigures,
   counts,
   totalFigures,
   composicion,
@@ -409,7 +417,8 @@ function StepPhotos({
   maxPhotos: number;
   isPet: boolean;
   detecting: boolean;
-  detected: { people: number; pets: number } | null;
+  detectError: boolean;
+  hasFigures: boolean;
   counts: { people: number; pets: number };
   totalFigures: number;
   composicion: string;
@@ -515,12 +524,42 @@ function StepPhotos({
 
       {/* Resultado de la detección automática */}
       {photos.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-line bg-white p-5 text-center">
+        <div
+          className={`mt-6 rounded-2xl border bg-white p-5 text-center ${
+            !detecting && !hasFigures ? "border-brand/50" : "border-line"
+          }`}
+        >
           {detecting ? (
             <p className="flex items-center justify-center gap-2 text-sm text-ink/60">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand" />
               Detectando cuántas figuras hay en tu foto…
             </p>
+          ) : !hasFigures ? (
+            <>
+              <p className="text-2xl">🔍</p>
+              <p className="mt-1 font-display text-lg font-bold text-brand">
+                {detectError
+                  ? "No pudimos analizar la foto"
+                  : "No detectamos ninguna persona ni mascota"}
+              </p>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-ink/60">
+                {detectError
+                  ? "Vuelve a intentarlo o indícanos manualmente cuántas figuras hay."
+                  : "Sube una foto donde se vea bien la persona o la mascota. Si crees que está bien, indícalo manualmente."}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-6">
+                <Counter
+                  label="Personas"
+                  value={counts.people}
+                  onChange={(v) => setManual({ people: v, pets: counts.pets })}
+                />
+                <Counter
+                  label="Mascotas"
+                  value={counts.pets}
+                  onChange={(v) => setManual({ people: counts.people, pets: v })}
+                />
+              </div>
+            </>
           ) : (
             <>
               <p className="text-sm text-ink/60">Detectamos</p>
@@ -534,7 +573,7 @@ function StepPhotos({
               <button
                 onClick={() => {
                   setAdjust((v) => !v);
-                  if (!adjust && detected) setManual({ ...counts });
+                  if (!adjust) setManual({ ...counts });
                 }}
                 className="mt-2 text-xs font-semibold text-brand underline underline-offset-2"
               >
