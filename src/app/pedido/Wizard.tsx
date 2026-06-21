@@ -833,12 +833,27 @@ function StepPreview({
     <div>
       <StepHeading
         title="Tu figura"
-        subtitle="Generamos una vista previa de tu figura a partir de tu foto. Es orientativa; recibirás el render final a aprobar antes de imprimir."
+        subtitle="Esta es una vista previa orientativa de tu figura. Recibirás el render final a aprobar antes de imprimir."
       />
 
-      <div className="mx-auto mt-8 max-w-lg">
-        <div className="overflow-hidden rounded-2xl border border-line">
-          <div className="relative mx-auto aspect-[2/3] max-w-sm bg-mist">
+      <div className="mx-auto mt-8 max-w-sm">
+        {/* Ventana de vista previa */}
+        <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-xl shadow-ink/5">
+          {/* Barra superior tipo ventana */}
+          <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-brand/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-line" />
+              <span className="h-2.5 w-2.5 rounded-full bg-line" />
+            </div>
+            <span className="text-xs font-semibold text-ink/50">Vista previa</span>
+            <span className="rounded-full border border-line px-2.5 py-0.5 text-[11px] font-semibold text-ink/70">
+              {style?.name}
+            </span>
+          </div>
+
+          {/* Lienzo de la figura */}
+          <div className="relative aspect-[3/4] w-full bg-gradient-to-b from-mist to-white">
             {loading && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/70 backdrop-blur-sm">
                 <span className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-brand" />
@@ -852,50 +867,59 @@ function StepPreview({
                 src={previewUrl}
                 alt="Vista previa de tu figura"
                 fill
-                sizes="(max-width: 640px) 100vw, 512px"
-                className="object-contain"
+                sizes="(max-width: 640px) 100vw, 384px"
+                className="object-contain p-3"
                 unoptimized={previewUrl.startsWith("data:")}
               />
             ) : (
               !loading &&
               photos[0] && (
-                <Image src={photos[0].url} alt="Tu foto" fill sizes="512px" className="object-cover opacity-60" />
+                <Image
+                  src={photos[0].url}
+                  alt="Tu foto"
+                  fill
+                  sizes="384px"
+                  className="object-contain p-3 opacity-40"
+                />
               )
             )}
 
-            {previewUrl && (
-              <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold">
-                Estilo {style?.name}
-              </span>
-            )}
-
+            {/* Miniatura de la foto original */}
             {photos[0] && (
-              <div className="absolute bottom-3 left-3 z-10 h-16 w-16 overflow-hidden rounded-lg border-2 border-white shadow">
+              <div className="absolute bottom-3 left-3 z-10 h-16 w-16 overflow-hidden rounded-xl border-2 border-white shadow-md">
                 <Image src={photos[0].url} alt="Tu foto" fill sizes="64px" className="object-cover" />
               </div>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-brand/60 p-4">
-            <p className="text-sm text-ink/60">
-              {error
-                ? "No pudimos generarla automáticamente."
-                : "🎨 Vista previa generada por IA."}
+          {/* Pie de la ventana */}
+          <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
+            <p className="flex items-center gap-1.5 text-xs text-ink/55">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+              {loading ? "Generando con IA…" : previewUrl ? "Generada por IA · orientativa" : "Lista para generar"}
             </p>
             <button
               onClick={generate}
               disabled={loading || !photos[0]}
-              className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold transition hover:border-ink/40 disabled:opacity-40"
             >
+              <span className={loading ? "animate-spin" : ""}>↻</span>
               {loading ? "Generando…" : previewUrl ? "Regenerar" : "Generar"}
             </button>
           </div>
         </div>
 
+        {/* Aviso suave (no choca con la figura ya mostrada) */}
         {error && (
-          <p className="mt-3 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">
-            {error}
-          </p>
+          <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <span className="mt-0.5">⚠️</span>
+            <p>
+              {error}{" "}
+              <button onClick={generate} className="font-semibold underline underline-offset-2">
+                Reintentar
+              </button>
+            </p>
+          </div>
         )}
       </div>
     </div>
