@@ -25,6 +25,20 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
+          href="/admin/clientes"
+          className="rounded-2xl border border-line bg-white p-6 transition hover:-translate-y-0.5 hover:border-ink/30"
+        >
+          <div className="text-3xl">👥</div>
+          <h2 className="mt-3 font-display text-xl font-bold">Clientes</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Tus clientes agrupados por correo: pedidos, total gastado y último pedido.
+          </p>
+          <span className="mt-4 inline-block font-semibold text-ink underline decoration-brand decoration-2 underline-offset-4">
+            Ver clientes →
+          </span>
+        </Link>
+
+        <Link
           href="/admin/estilos"
           className="rounded-2xl border border-line bg-white p-6 transition hover:-translate-y-0.5 hover:border-ink/30"
         >
@@ -39,11 +53,11 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
-          href="/admin/configuracion"
+          href="/admin/precios"
           className="rounded-2xl border border-line bg-white p-6 transition hover:-translate-y-0.5 hover:border-ink/30"
         >
-          <div className="text-3xl">⚙️</div>
-          <h2 className="mt-3 font-display text-xl font-bold">Configuración</h2>
+          <div className="text-3xl">🏷️</div>
+          <h2 className="mt-3 font-display text-xl font-bold">Precios y envío</h2>
           <p className="mt-1 text-sm text-ink/60">
             Cambia los precios (COP) de cada paquete y las reglas de envío.
           </p>

@@ -7,8 +7,9 @@ import { Wordmark } from "@/components/Header";
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: "▦" },
   { href: "/admin/pedidos", label: "Pedidos", icon: "📦" },
+  { href: "/admin/clientes", label: "Clientes", icon: "👥" },
   { href: "/admin/estilos", label: "Estilos", icon: "🎨" },
-  { href: "/admin/configuracion", label: "Configuración", icon: "⚙️" },
+  { href: "/admin/precios", label: "Precios y envío", icon: "🏷️" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

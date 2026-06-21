@@ -5,7 +5,7 @@ import Link from "next/link";
 import { VARIANTS, formatCop } from "@/data/catalog";
 import type { Settings } from "@/lib/settings";
 
-export default function AdminConfiguracion() {
+export default function AdminPrecios() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,7 +58,7 @@ export default function AdminConfiguracion() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="font-display text-3xl font-extrabold">Configuración</h1>
+      <h1 className="font-display text-3xl font-extrabold">Precios y envío</h1>
       <p className="mt-2 text-ink/60">
         Cambia los precios (en pesos colombianos) y las reglas de envío. Se aplican
         al instante en toda la tienda.
