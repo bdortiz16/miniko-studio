@@ -5,6 +5,16 @@ import { updateOrderStatus, OrderStatus } from "@/lib/orders";
 // Webhook de eventos de Wompi. Confirma el pago de forma fiable y actualiza
 // el estado del pedido en nuestro almacén. Configura esta URL en el panel de
 // Wompi: https://<tu-dominio>/api/wompi/webhook
+
+// GET solo informativo (al abrir la URL en el navegador). Wompi usa POST.
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    endpoint: "wompi-webhook",
+    message: "Activo. Este endpoint recibe eventos de Wompi por POST.",
+  });
+}
+
 export async function POST(request: Request) {
   let event: {
     event?: string;
