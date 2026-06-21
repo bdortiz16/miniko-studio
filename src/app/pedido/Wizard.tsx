@@ -7,8 +7,8 @@ import {
   STYLES,
   VARIANTS,
   StyleId,
-  formatEur,
-  SHIPPING,
+  formatCop,
+  shippingCop,
   styleById,
   variantById,
 } from "@/data/catalog";
@@ -51,9 +51,8 @@ export default function Wizard() {
 
   const variant = variantById(variantId)!;
   const style = styleById(styleId)!;
-  const shipCents =
-    variant.priceCents >= SHIPPING.freeThresholdCents ? 0 : SHIPPING.flatCents;
-  const total = variant.priceCents + shipCents;
+  const shipCents = shippingCop(variant.people);
+  const total = variant.priceCop + shipCents;
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
@@ -149,12 +148,12 @@ export default function Wizard() {
         <div className="mt-10 flex items-center justify-between border-t border-line pt-5 text-sm">
           <div className="flex items-center gap-5 text-ink/60">
             <span>👥 {variant.people}</span>
-            <span>📦 {formatEur(variant.priceCents)}</span>
-            <span>🚚 {shipCents === 0 ? "Gratis" : formatEur(shipCents)}</span>
+            <span>📦 {formatCop(variant.priceCop)}</span>
+            <span>🚚 {shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
           </div>
           <div className="text-right">
             <span className="block text-xs uppercase tracking-wide text-ink/40">Total</span>
-            <span className="font-display text-xl font-extrabold">{formatEur(total)}</span>
+            <span className="font-display text-xl font-extrabold">{formatCop(total)}</span>
           </div>
         </div>
       </div>
@@ -277,7 +276,7 @@ function StepStyle({
             >
               <span className="block font-semibold">{v.name}</span>
               <span className="block text-xs text-ink/50">{v.description}</span>
-              <span className="mt-1 block font-display font-bold">{formatEur(v.priceCents)}</span>
+              <span className="mt-1 block font-display font-bold">{formatCop(v.priceCop)}</span>
             </button>
           );
         })}
@@ -768,16 +767,16 @@ function StepPay({
         </div>
         <div className={`${row} border-t border-line`}>
           <span className="text-ink/55">Kit</span>
-          <span className="font-medium">{formatEur(variant.priceCents)}</span>
+          <span className="font-medium">{formatCop(variant.priceCop)}</span>
         </div>
         <div className={`${row} border-t border-line`}>
           <span className="text-ink/55">Envío</span>
-          <span className="font-medium">{shipCents === 0 ? "Gratis" : formatEur(shipCents)}</span>
+          <span className="font-medium">{shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
         </div>
         <div className="my-1 h-px bg-brand/60" />
         <div className="flex items-center justify-between py-2">
           <span className="font-display text-lg font-bold">Total</span>
-          <span className="font-display text-lg font-extrabold">{formatEur(total)}</span>
+          <span className="font-display text-lg font-extrabold">{formatCop(total)}</span>
         </div>
         {shipping.name && (
           <p className="mt-2 text-xs text-ink/50">
@@ -797,7 +796,7 @@ function StepPay({
 
       <div className="mt-6 flex justify-center">
         <button onClick={pay} disabled={loading} className="btn-primary px-10 disabled:opacity-60">
-          {loading ? "Redirigiendo…" : `Pagar ${formatEur(total)} →`}
+          {loading ? "Redirigiendo…" : `Pagar ${formatCop(total)} →`}
         </button>
       </div>
       <p className="mt-3 text-center text-xs text-ink/45">🔒 Pago seguro con Stripe</p>

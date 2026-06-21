@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe, getSiteUrl } from "@/lib/stripe";
-import { variantById, styleById, SHIPPING } from "@/data/catalog";
+import { variantById, styleById, SHIPPING, shippingCop } from "@/data/catalog";
 
 interface OrderPayload {
   styleId: string;
@@ -41,8 +41,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Producto no válido." }, { status: 400 });
   }
 
-  const shippingCents =
-    variant.priceCents >= SHIPPING.freeThresholdCents ? 0 : SHIPPING.flatCents;
+  // Stripe usa la unidad menor: COP tiene 2 decimales en Stripe => x100.
+  const unitAmount = variant.priceCop * 100;
+  const shippingAmount = shippingCop(variant.people) * 100;
 
   const photoUrls = (body.photoUrls ?? []).slice(0, 6);
   const s = body.shipping ?? {};
@@ -72,8 +73,8 @@ export async function POST(request: Request) {
         {
           quantity: 1,
           price_data: {
-            currency: "eur",
-            unit_amount: variant.priceCents,
+            currency: "cop",
+            unit_amount: unitAmount,
             product_data: {
               name: `Figura ${style.name} — ${variant.name}`,
               description: variant.description,
@@ -85,8 +86,8 @@ export async function POST(request: Request) {
         {
           shipping_rate_data: {
             type: "fixed_amount",
-            display_name: shippingCents === 0 ? "Envío gratis" : SHIPPING.label,
-            fixed_amount: { amount: shippingCents, currency: "eur" },
+            display_name: shippingAmount === 0 ? "Envío gratis" : SHIPPING.label,
+            fixed_amount: { amount: shippingAmount, currency: "cop" },
           },
         },
       ],

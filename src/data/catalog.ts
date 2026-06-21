@@ -33,8 +33,8 @@ export interface Variant {
   id: string;
   name: string;
   description: string;
-  // Precio en céntimos de euro (Stripe trabaja con la menor unidad).
-  priceCents: number;
+  // Precio en pesos colombianos (COP), sin decimales. EDITA AQUÍ tus precios.
+  priceCop: number;
   height: string;
   people: number; // nº de personas/mascotas incluidas
 }
@@ -70,38 +70,70 @@ export const STYLES: FigureStyle[] = [
   },
 ];
 
+// ─── PRECIOS (en pesos colombianos, COP) ──────────────────────────
+// Cambia "priceCop" por tus precios reales. 1 personaje, pareja, y grupos.
 export const VARIANTS: Variant[] = [
   {
     id: "individual",
-    name: "Figura individual",
-    description: "Una persona o mascota en tu figura personalizada.",
-    priceCents: 2900,
+    name: "1 personaje",
+    description: "Una persona o mascota.",
+    priceCop: 119000,
     height: "Hasta 15 cm de alto",
     people: 1,
   },
   {
     id: "pareja",
-    name: "Pareja / dúo",
-    description: "Dos personajes juntos en la misma base.",
-    priceCents: 4900,
+    name: "2 personajes (combo)",
+    description: "Pareja o dúo en la misma base.",
+    priceCop: 199000,
     height: "Hasta 15 cm de alto",
     people: 2,
   },
   {
-    id: "familia",
-    name: "Grupo / familia",
-    description: "Hasta cuatro personajes en una escena compartida.",
-    priceCents: 7900,
+    id: "trio",
+    name: "3 personajes",
+    description: "Tres personajes en una escena.",
+    priceCop: 269000,
+    height: "Hasta 18 cm de alto",
+    people: 3,
+  },
+  {
+    id: "familia4",
+    name: "4 personajes",
+    description: "Cuatro personajes en una escena.",
+    priceCop: 329000,
     height: "Hasta 18 cm de alto",
     people: 4,
+  },
+  {
+    id: "grupo5",
+    name: "5 personajes",
+    description: "Cinco personajes en una escena.",
+    priceCop: 389000,
+    height: "Hasta 20 cm de alto",
+    people: 5,
+  },
+  {
+    id: "grupo6",
+    name: "6 personajes",
+    description: "Seis personajes en una escena.",
+    priceCop: 439000,
+    height: "Hasta 20 cm de alto",
+    people: 6,
   },
 ];
 
 export const SHIPPING = {
-  flatCents: 499,
-  freeThresholdCents: 5500,
+  // Costo de envío plano (COP) y a partir de cuántos personajes es GRATIS.
+  flatCop: 12000,
+  freeFromPeople: 3, // envío gratis desde 3 personajes
   label: "Envío estándar",
 };
+
+// Costo de envío en COP según el nº de personajes.
+export function shippingCop(people: number): number {
+  return people >= SHIPPING.freeFromPeople ? 0 : SHIPPING.flatCop;
+}
 
 export function styleById(id: string): FigureStyle | undefined {
   return STYLES.find((s) => s.id === id);
@@ -111,9 +143,10 @@ export function variantById(id: string): Variant | undefined {
   return VARIANTS.find((v) => v.id === id);
 }
 
-export function formatEur(cents: number): string {
-  return new Intl.NumberFormat("es-ES", {
+export function formatCop(cop: number): string {
+  return new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(cop);
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { VARIANTS, formatEur } from "@/data/catalog";
+import { VARIANTS, formatCop, SHIPPING, shippingCop } from "@/data/catalog";
 
 export const metadata = {
   title: "Precios — miniko",
@@ -27,31 +27,39 @@ export default function PreciosPage() {
           </p>
         </header>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {VARIANTS.map((v, i) => (
-            <div
-              key={v.id}
-              className={`flex flex-col rounded-2xl border bg-white p-7 ${
-                i === 1 ? "border-ink ring-1 ring-ink/10" : "border-line"
-              }`}
-            >
-              {i === 1 && (
-                <span className="mb-4 w-fit rounded-full border border-brand px-3 py-1 text-xs font-semibold text-brand">
-                  Más popular
-                </span>
-              )}
-              <h3 className="font-display text-xl font-bold">{v.name}</h3>
-              <p className="mt-1 text-sm text-ink/55">{v.description}</p>
-              <div className="mt-5 flex items-end gap-1">
-                <span className="font-display text-4xl font-extrabold">{formatEur(v.priceCents)}</span>
-                <span className="mb-1 text-sm text-ink/50">/ kit</span>
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {VARIANTS.map((v, i) => {
+            const free = shippingCop(v.people) === 0;
+            return (
+              <div
+                key={v.id}
+                className={`flex flex-col rounded-2xl border bg-white p-7 ${
+                  i === 1 ? "border-ink ring-1 ring-ink/10" : "border-line"
+                }`}
+              >
+                {i === 1 && (
+                  <span className="mb-4 w-fit rounded-full border border-brand px-3 py-1 text-xs font-semibold text-brand">
+                    Más popular
+                  </span>
+                )}
+                <h3 className="font-display text-xl font-bold">{v.name}</h3>
+                <p className="mt-1 text-sm text-ink/55">{v.description}</p>
+                <div className="mt-5">
+                  <span className="font-display text-3xl font-extrabold">{formatCop(v.priceCop)}</span>
+                </div>
+                <p className="mt-1 text-xs text-ink/45">{v.height}</p>
+                <p className="mt-2 text-xs font-semibold text-brand">
+                  {free ? "🚚 Envío GRATIS" : `+ envío ${formatCop(SHIPPING.flatCop)}`}
+                </p>
+                <Link
+                  href={`/pedido?variante=${v.id}`}
+                  className={`mt-6 ${i === 1 ? "btn-primary" : "btn-secondary"}`}
+                >
+                  Elegir
+                </Link>
               </div>
-              <p className="mt-1 text-xs text-ink/45">{v.height}</p>
-              <Link href={`/pedido?variante=${v.id}`} className={`mt-6 ${i === 1 ? "btn-primary" : "btn-secondary"}`}>
-                Elegir
-              </Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mx-auto mt-16 max-w-2xl rounded-2xl border border-line p-8">
@@ -64,7 +72,9 @@ export default function PreciosPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-6 text-center text-sm text-ink/55">Envío 4,99 € · Gratis en pedidos superiores a 55 €</p>
+          <p className="mt-6 text-center text-sm text-ink/55">
+            Envío {formatCop(SHIPPING.flatCop)} · GRATIS desde {SHIPPING.freeFromPeople} personajes
+          </p>
         </div>
       </div>
     </div>
