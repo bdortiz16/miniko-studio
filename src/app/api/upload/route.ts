@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 
+export const maxDuration = 60;
+
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 

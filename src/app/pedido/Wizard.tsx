@@ -287,6 +287,33 @@ function StepStyle({
   );
 }
 
+// Reduce la imagen a máx. 1280px y la exporta como JPEG ligero antes de subir.
+// Si falla (p. ej. HEIC no soportado), devuelve el archivo original.
+async function compressImage(file: File): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const MAX = 1280;
+    let { width, height } = bitmap;
+    if (width > MAX || height > MAX) {
+      const scale = MAX / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85)
+    );
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
+
 /* ─────────────────────────── Paso 2: Foto ─────────────────────────── */
 function StepPhotos({
   photos,
@@ -308,8 +335,10 @@ function StepPhotos({
       try {
         for (const file of Array.from(files)) {
           if (photos.length + added.length >= maxPhotos) break;
+          // Comprime/reduce la imagen en el navegador para que suba rápido.
+          const blob = await compressImage(file);
           const fd = new FormData();
-          fd.append("file", file);
+          fd.append("file", blob, "foto.jpg");
           // Límite de tiempo: si tarda más de 45s, aborta y muestra error.
           const ctrl = new AbortController();
           const timer = setTimeout(() => ctrl.abort(), 45000);
