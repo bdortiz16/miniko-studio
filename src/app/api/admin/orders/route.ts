@@ -28,6 +28,7 @@ export async function GET(request: Request) {
           email: s.customer_details?.email || s.customer_email || "",
           amount: s.amount_total,
           currency: (s.currency || "eur").toUpperCase(),
+          tipo: m.tipo || "",
           estilo: m.estilo || "",
           tamano: m.tamano || m["tamaño"] || "",
           personas: m.personas || "",

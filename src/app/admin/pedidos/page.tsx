@@ -9,6 +9,7 @@ interface Order {
   email: string;
   amount: number;
   currency: string;
+  tipo: string;
   estilo: string;
   tamano: string;
   personas: string;
@@ -86,6 +87,17 @@ export default function AdminPedidos() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-display text-lg font-bold">
+                    {o.tipo && (
+                      <span
+                        className={`mr-2 rounded-full border px-2 py-0.5 align-middle text-xs font-bold ${
+                          o.tipo === "Mascota"
+                            ? "border-brand text-brand"
+                            : "border-line text-ink/60"
+                        }`}
+                      >
+                        {o.tipo === "Mascota" ? "🐾 Mascota" : "Persona"}
+                      </span>
+                    )}
                     {o.estilo || "—"} · {o.tamano || "—"}
                   </p>
                   <p className="text-sm text-ink/60">

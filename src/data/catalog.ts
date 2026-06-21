@@ -135,6 +135,31 @@ export function shippingCop(people: number): number {
   return people >= SHIPPING.freeFromPeople ? 0 : SHIPPING.flatCop;
 }
 
+// ─── MASCOTAS ──────────────────────────────────────────────────────
+// Figuras de ejemplo de mascotas (se generan con IA desde el panel admin y se
+// guardan en Supabase: mascots/<id>.png). Si no hay imagen, se cae al emoji.
+const MASCOTS_V = "1";
+function mascotImage(id: string): string {
+  return SUPA_URL
+    ? `${SUPA_URL}/storage/v1/object/public/pedidos/mascots/${id}.png?v=${MASCOTS_V}`
+    : "";
+}
+
+export interface Mascot {
+  id: string;
+  label: string; // "Perro", "Gato"…
+  styleId: StyleId; // estilo con el que se muestra y se pide
+  styleName: string; // "Funko Pop", "Disney", "Realista"
+  emoji: string; // fallback si no hay imagen generada
+  image: string;
+}
+
+export const MASCOTS: Mascot[] = [
+  { id: "dog", label: "Perro", styleId: "kawaii", styleName: "Funko Pop", emoji: "🐶", image: mascotImage("dog") },
+  { id: "cat", label: "Gato", styleId: "caricatura", styleName: "Disney", emoji: "🐱", image: mascotImage("cat") },
+  { id: "dogreal", label: "Perro", styleId: "realista", styleName: "Realista", emoji: "🐶", image: mascotImage("dogreal") },
+];
+
 export function styleById(id: string): FigureStyle | undefined {
   return STYLES.find((s) => s.id === id);
 }

@@ -14,6 +14,9 @@ const LABELS: Record<string, string> = {
   kawaii: "Funko Pop",
   caricatura: "Disney",
   realista: "Realista",
+  dog: "Perro (Funko)",
+  cat: "Gato (Disney)",
+  dogreal: "Perro (Realista)",
 };
 
 export default function AdminEstilos() {
@@ -52,6 +55,21 @@ export default function AdminEstilos() {
     }
   }
 
+  async function generateMascots() {
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/generate-mascot-samples`);
+      const data = await res.json();
+      setResult(data);
+      setTs(Date.now());
+    } catch (e) {
+      setResult({ error: e instanceof Error ? e.message : "Error de red." });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       <div className="mx-auto max-w-4xl">
@@ -81,6 +99,13 @@ export default function AdminEstilos() {
             className="btn-secondary disabled:opacity-50"
           >
             Generar galería (6) 🎞️
+          </button>
+          <button
+            onClick={generateMascots}
+            disabled={loading}
+            className="btn-secondary disabled:opacity-50"
+          >
+            Generar mascotas 🐾
           </button>
         </div>
 

@@ -7,6 +7,7 @@ interface OrderPayload {
   styleId: string;
   variantId: string;
   email?: string;
+  tipo?: string; // "mascota" | "persona"
   photoUrls?: string[];
   previewUrl?: string | null;
   shipping?: {
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
 
   // Metadatos: todo lo que el negocio necesita para preparar el pedido.
   const metadata: Record<string, string> = {
+    tipo: body.tipo === "mascota" ? "Mascota" : "Persona",
     estilo: style.name,
     tamano: variant.name,
     personas: String(variant.people),

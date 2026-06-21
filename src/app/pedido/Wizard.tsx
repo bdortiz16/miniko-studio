@@ -37,6 +37,8 @@ interface Shipping {
 export default function Wizard() {
   const params = useSearchParams();
   const initStyle = (params.get("estilo") as StyleId) || STYLES[0].id;
+  // Flujo separado: "mascota" cambia los textos y se guarda en el pedido.
+  const isPet = params.get("tipo") === "mascota";
 
   const [step, setStep] = useState(0);
   const [settings, setSettings] = useState<Settings>(defaultSettings());
@@ -87,6 +89,13 @@ export default function Wizard() {
   return (
     <div className="section">
       <div className="container-x max-w-3xl">
+        {isPet && (
+          <div className="mb-6 flex items-center justify-center">
+            <span className="rounded-full border border-brand bg-white px-4 py-1.5 text-sm font-semibold text-brand">
+              🐾 Pedido de mascota
+            </span>
+          </div>
+        )}
         <Stepper step={step} />
 
         <div className="mt-12">
@@ -97,6 +106,7 @@ export default function Wizard() {
               variantId={variantId}
               setVariantId={setVariantId}
               settings={settings}
+              isPet={isPet}
             />
           )}
           {step === 1 && (
@@ -104,6 +114,7 @@ export default function Wizard() {
               photos={photos}
               setPhotos={setPhotos}
               maxPhotos={variant.people}
+              isPet={isPet}
             />
           )}
           {step === 2 && (
@@ -121,6 +132,7 @@ export default function Wizard() {
               styleId={styleId}
               previewUrl={previewUrl}
               setPreviewUrl={setPreviewUrl}
+              isPet={isPet}
             />
           )}
           {step === 4 && <StepShipping shipping={shipping} setShipping={setShipping} />}
@@ -135,6 +147,7 @@ export default function Wizard() {
               price={price}
               shipCents={shipCents}
               total={total}
+              isPet={isPet}
             />
           )}
         </div>
@@ -234,16 +247,25 @@ function StepStyle({
   variantId,
   setVariantId,
   settings,
+  isPet,
 }: {
   styleId: StyleId;
   setStyleId: (id: StyleId) => void;
   variantId: string;
   setVariantId: (id: string) => void;
   settings: Settings;
+  isPet: boolean;
 }) {
   return (
     <div>
-      <StepHeading title="Elige tu estilo" subtitle="El look de tu figura personalizada." />
+      <StepHeading
+        title="Elige tu estilo"
+        subtitle={
+          isPet
+            ? "El look de la figura de tu mascota."
+            : "El look de tu figura personalizada."
+        }
+      />
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         {STYLES.map((s) => {
           const selected = s.id === styleId;
@@ -279,7 +301,9 @@ function StepStyle({
         })}
       </div>
 
-      <h2 className="mt-10 text-center font-display text-lg font-bold">¿Cuántos personajes?</h2>
+      <h2 className="mt-10 text-center font-display text-lg font-bold">
+        {isPet ? "¿Cuántas mascotas?" : "¿Cuántos personajes?"}
+      </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {VARIANTS.map((v) => {
           const selected = v.id === variantId;
@@ -337,10 +361,12 @@ function StepPhotos({
   photos,
   setPhotos,
   maxPhotos,
+  isPet,
 }: {
   photos: Photo[];
   setPhotos: (p: Photo[]) => void;
   maxPhotos: number;
+  isPet: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -389,7 +415,7 @@ function StepPhotos({
   return (
     <div>
       <StepHeading
-        title="Sube tu foto"
+        title={isPet ? "Sube la foto de tu mascota" : "Sube tu foto"}
         subtitle={`Una foto nítida y bien iluminada funciona mejor. Hasta ${maxPhotos} ${
           maxPhotos === 1 ? "imagen" : "imágenes"
         }.`}
@@ -581,12 +607,14 @@ function StepPreview({
   styleId,
   previewUrl,
   setPreviewUrl,
+  isPet,
 }: {
   photos: Photo[];
   style: ReturnType<typeof styleById>;
   styleId: StyleId;
   previewUrl: string | null;
   setPreviewUrl: (u: string | null) => void;
+  isPet: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -599,7 +627,11 @@ function StepPreview({
       const res = await fetch("/api/generate-preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl: photos[0].url, styleId }),
+        body: JSON.stringify({
+          photoUrl: photos[0].url,
+          styleId,
+          tipo: isPet ? "mascota" : "persona",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo generar la figura.");
@@ -609,7 +641,7 @@ function StepPreview({
     } finally {
       setLoading(false);
     }
-  }, [photos, styleId, setPreviewUrl]);
+  }, [photos, styleId, setPreviewUrl, isPet]);
 
   // Genera automáticamente al entrar al paso, si aún no hay preview.
   useEffect(() => {
@@ -733,6 +765,7 @@ function StepPay({
   price,
   shipCents,
   total,
+  isPet,
 }: {
   style: NonNullable<ReturnType<typeof styleById>>;
   variant: NonNullable<ReturnType<typeof variantById>>;
@@ -743,6 +776,7 @@ function StepPay({
   price: number;
   shipCents: number;
   total: number;
+  isPet: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -761,6 +795,7 @@ function StepPay({
           photoUrls: photos.map((p) => p.url),
           previewUrl,
           shipping,
+          tipo: isPet ? "mascota" : "persona",
         }),
       });
       const data = await res.json();
@@ -783,7 +818,7 @@ function StepPay({
           <span className="font-medium">{style.name}</span>
         </div>
         <div className={`${row} border-t border-line`}>
-          <span className="text-ink/55">Personajes</span>
+          <span className="text-ink/55">{isPet ? "Mascotas" : "Personajes"}</span>
           <span className="font-medium">{variant.people}</span>
         </div>
         <div className={`${row} border-t border-line`}>

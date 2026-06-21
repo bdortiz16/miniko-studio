@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { STYLES } from "@/data/catalog";
+import { STYLES, MASCOTS } from "@/data/catalog";
 import StyleCard from "@/components/StyleCard";
 import HeroCarousel from "@/components/HeroCarousel";
+import MascotFigure from "@/components/MascotFigure";
 import { IconEstilo, IconFoto, IconKit, IconPintar } from "@/components/StepIcons";
 
 const STEPS = [
@@ -109,20 +110,23 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pedido" className="btn-primary mt-8">
+              <Link href="/pedido?tipo=mascota" className="btn-primary mt-8">
                 Crear la figura de mi mascota →
               </Link>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
-              {[
-                { e: "🐶", t: "Perros" },
-                { e: "🐱", t: "Gatos" },
-                { e: "🐰", t: "Y más" },
-              ].map((p) => (
-                <div key={p.t} className="rounded-2xl border border-line bg-white p-6">
-                  <div className="text-5xl">{p.e}</div>
-                  <p className="mt-3 text-sm font-semibold">{p.t}</p>
-                </div>
+              {MASCOTS.map((m) => (
+                <Link
+                  key={m.id}
+                  href={`/pedido?tipo=mascota&estilo=${m.styleId}`}
+                  className="group flex flex-col items-center rounded-2xl border border-line bg-white p-5 transition hover:-translate-y-1 hover:border-ink/30 hover:shadow-lg"
+                >
+                  <div className="grid h-24 w-full place-items-center">
+                    <MascotFigure src={m.image} emoji={m.emoji} alt={`${m.label} estilo ${m.styleName}`} />
+                  </div>
+                  <p className="mt-3 text-sm font-semibold">{m.label}</p>
+                  <p className="text-xs text-ink/50">{m.styleName}</p>
+                </Link>
               ))}
             </div>
           </div>

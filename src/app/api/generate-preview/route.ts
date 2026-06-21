@@ -22,6 +22,22 @@ const COMMON_PROMPT =
   "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
   "High quality product photo, soft studio lighting.";
 
+// Prompts equivalentes para MASCOTAS (animales, no personas).
+const PET_STYLE_PROMPT: Record<string, string> = {
+  kawaii:
+    "Turn the pet/animal in this photo into a classic FUNKO POP collectible vinyl figurine of the SAME animal: oversized big head, small body, big round solid black dot eyes, simplified matte vinyl.",
+  caricatura:
+    "Turn the pet/animal in this photo into a DISNEY / PIXAR style 3D animated character figure of the SAME animal: stylized cute cartoon with friendly proportions, large expressive eyes, smooth polished 3D animation render.",
+  realista:
+    "Turn the pet/animal in this photo into a PHOTOREALISTIC lifelike collectible statue of the SAME animal with realistic fur and detail. NOT a Funko, NOT a cartoon, NOT a big-head toy.",
+};
+
+const PET_COMMON_PROMPT =
+  "Keep the SAME animal: same species, breed, fur/coat color, markings and distinctive features — it must clearly look like the SAME pet from the photo. " +
+  "The figurine stands on a round display base, on a clean pure WHITE studio background. " +
+  "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
+  "High quality product photo, soft studio lighting.";
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -33,11 +49,13 @@ export async function POST(request: Request) {
 
   let photoUrl = "";
   let styleId = "";
+  let tipo = "persona";
   try {
-    ({ photoUrl, styleId } = await request.json());
+    ({ photoUrl, styleId, tipo = "persona" } = await request.json());
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
+  const isPet = tipo === "mascota";
   if (!photoUrl) {
     return NextResponse.json({ error: "Falta la foto." }, { status: 400 });
   }
@@ -50,7 +68,9 @@ export async function POST(request: Request) {
     const ext = inputMime.includes("png") ? "png" : inputMime.includes("webp") ? "webp" : "jpg";
     const file = await toFile(buffer, `foto.${ext}`, { type: inputMime });
 
-    const prompt = `${STYLE_PROMPT[styleId] ?? STYLE_PROMPT.kawaii} ${COMMON_PROMPT}`;
+    const prompt = isPet
+      ? `${PET_STYLE_PROMPT[styleId] ?? PET_STYLE_PROMPT.kawaii} ${PET_COMMON_PROMPT}`
+      : `${STYLE_PROMPT[styleId] ?? STYLE_PROMPT.kawaii} ${COMMON_PROMPT}`;
     const openai = new OpenAI({ apiKey });
     const result = await openai.images.edit({
       model: "gpt-image-1",
