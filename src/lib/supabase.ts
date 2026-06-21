@@ -4,7 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 // archivos). Si no hay configuración, queda null y la API responde con un
 // error claro en vez de romperse.
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Acepta tanto la clave secreta nueva (sb_secret_...) como la legacy service_role.
+const serviceKey =
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const supabaseAdmin =
   url && serviceKey

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "La subida de fotos no está configurada (faltan NEXT_PUBLIC_SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY).",
+          "La subida de fotos no está configurada (faltan NEXT_PUBLIC_SUPABASE_URL y SUPABASE_SECRET_KEY).",
       },
       { status: 500 }
     );
