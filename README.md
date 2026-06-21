@@ -31,13 +31,16 @@ Abre http://localhost:3000
 Para probar pagos usa la tarjeta de test `4242 4242 4242 4242`, cualquier
 fecha futura y cualquier CVC.
 
-## 📷 Subida de fotos (Vercel Blob)
+## 📷 Subida de fotos (Supabase Storage)
 
-El paso "Foto" del asistente sube la imagen del cliente a **Vercel Blob**.
+El paso "Foto" del asistente sube la imagen del cliente a **Supabase Storage**.
 
-1. En Vercel: pestaña **Storage → Create → Blob**.
-2. Vercel añade automáticamente `BLOB_READ_WRITE_TOKEN` al proyecto.
-3. Para local, copia ese token a `.env.local`.
+1. Crea un proyecto en https://supabase.com
+2. En **Storage**, crea un bucket **público** llamado `pedidos`.
+3. En **Settings → API**, copia:
+   - `NEXT_PUBLIC_SUPABASE_URL` (Project URL)
+   - `SUPABASE_SERVICE_ROLE_KEY` (service_role — secreta, solo servidor)
+4. Añádelas como variables de entorno (en Vercel y en `.env.local`).
 
 ## ✉️ Verificación de email (Resend)
 

@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 
 export async function POST(request: Request) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!supabaseAdmin) {
     return NextResponse.json(
-      { error: "La subida de fotos no está configurada (falta BLOB_READ_WRITE_TOKEN)." },
+      {
+        error:
+          "La subida de fotos no está configurada (faltan NEXT_PUBLIC_SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY).",
+      },
       { status: 500 }
     );
   }
@@ -30,11 +33,19 @@ export async function POST(request: Request) {
 
   try {
     const safeName = (file.name || "foto").replace(/[^a-zA-Z0-9._-]/g, "_");
-    const blob = await put(`pedidos/${Date.now()}-${safeName}`, file, {
-      access: "public",
-      addRandomSuffix: true,
-    });
-    return NextResponse.json({ url: blob.url });
+    const path = `pedidos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+
+    const { error } = await supabaseAdmin.storage
+      .from(SUPABASE_BUCKET)
+      .upload(path, bytes, {
+        contentType: file.type || "image/jpeg",
+        upsert: false,
+      });
+    if (error) throw new Error(error.message);
+
+    const { data } = supabaseAdmin.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+    return NextResponse.json({ url: data.publicUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al subir la imagen.";
     return NextResponse.json({ error: message }, { status: 500 });
