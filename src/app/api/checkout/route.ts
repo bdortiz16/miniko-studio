@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   // Metadatos: todo lo que el negocio necesita para preparar el pedido.
   const metadata: Record<string, string> = {
     estilo: style.name,
-    tamaño: variant.name,
+    tamano: variant.name,
     personas: String(variant.people),
     envio_nombre: s.name ?? "",
     envio_direccion: [s.address, s.city, s.zip, s.country].filter(Boolean).join(", "),

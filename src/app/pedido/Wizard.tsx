@@ -46,7 +46,7 @@ export default function Wizard() {
     address: "",
     city: "",
     zip: "",
-    country: "España",
+    country: "Colombia",
   });
 
   const variant = variantById(variantId)!;
