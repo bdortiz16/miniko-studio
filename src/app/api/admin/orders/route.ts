@@ -1,44 +1,35 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import { isAdmin } from "@/lib/admin-auth";
+import { listOrders } from "@/lib/orders";
 
-// Lista los últimos pedidos pagados desde Stripe para el panel de admin.
+// Lista los pedidos pagados (APPROVED) desde nuestro almacén para el panel.
 export async function GET(request: Request) {
   if (!isAdmin(request)) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
-  if (!stripe) {
-    return NextResponse.json({ error: "Stripe no está configurado." }, { status: 500 });
-  }
 
   try {
-    const sessions = await stripe.checkout.sessions.list({ limit: 50 });
-    const orders = sessions.data
-      .filter((s) => s.payment_status === "paid" || s.status === "complete")
-      .map((s) => {
-        const m = s.metadata || {};
-        const fotos = Object.keys(m)
-          .filter((k) => k.startsWith("foto_"))
-          .sort()
-          .map((k) => m[k])
-          .filter(Boolean);
-        return {
-          id: s.id,
-          created: s.created,
-          email: s.customer_details?.email || s.customer_email || "",
-          amount: s.amount_total,
-          currency: (s.currency || "eur").toUpperCase(),
-          tipo: m.tipo || "",
-          composicion: m.composicion || "",
-          estilo: m.estilo || "",
-          tamano: m.tamano || m["tamaño"] || "",
-          personas: m.personas || "",
-          envio_nombre: m.envio_nombre || s.customer_details?.name || "",
-          envio_direccion: m.envio_direccion || "",
-          fotos,
-          figura_ia: m.figura_ia || "",
-        };
-      });
+    const all = await listOrders();
+    const orders = all
+      .filter((o) => o.status === "APPROVED")
+      .map((o) => ({
+        id: o.reference,
+        created: o.paidAt || o.createdAt,
+        email: o.email,
+        amount: o.amount,
+        currency: o.currency,
+        tipo: o.tipo,
+        composicion: o.composicion,
+        estilo: o.estilo,
+        tamano: o.composicion,
+        personas: String(o.personas),
+        envio_nombre: o.shipping?.name || "",
+        envio_direccion: [o.shipping?.address, o.shipping?.city, o.shipping?.zip, o.shipping?.country]
+          .filter(Boolean)
+          .join(", "),
+        fotos: o.photoUrls || [],
+        figura_ia: o.previewUrl || "",
+      }));
     return NextResponse.json({ orders });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al listar pedidos.";

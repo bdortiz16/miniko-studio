@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
-import { stripe, getSiteUrl } from "@/lib/stripe";
-import { variantById, styleById, SHIPPING } from "@/data/catalog";
+import { variantById, styleById } from "@/data/catalog";
 import { getSettings, priceOf, shipOf } from "@/lib/settings";
+import { buildCheckoutUrl, getSiteUrl, wompiConfigured } from "@/lib/wompi";
+import { saveOrder, Order } from "@/lib/orders";
 
 interface OrderPayload {
   styleId: string;
   variantId: string;
   email?: string;
-  tipo?: string; // "Persona" | "Mascota" | "Persona + Mascota"
-  personas?: number; // nº de personas detectadas
-  mascotas?: number; // nº de mascotas detectadas
-  composicion?: string; // "1 persona + 1 mascota"
+  tipo?: string;
+  personas?: number;
+  mascotas?: number;
+  composicion?: string;
   photoUrls?: string[];
   previewUrl?: string | null;
   shipping?: {
@@ -23,11 +24,11 @@ interface OrderPayload {
 }
 
 export async function POST(request: Request) {
-  if (!stripe) {
+  if (!wompiConfigured()) {
     return NextResponse.json(
       {
         error:
-          "Stripe no está configurado. Añade STRIPE_SECRET_KEY a tu archivo .env.local.",
+          "Wompi no está configurado. Añade NEXT_PUBLIC_WOMPI_PUBLIC_KEY y WOMPI_INTEGRITY_SECRET.",
       },
       { status: 500 }
     );
@@ -48,67 +49,52 @@ export async function POST(request: Request) {
 
   // Precios y envío vienen de la configuración editable del panel admin.
   const settings = await getSettings();
-  // Stripe usa la unidad menor: COP tiene 2 decimales en Stripe => x100.
-  const unitAmount = priceOf(settings, variant.id, variant.priceCop) * 100;
-  const shippingAmount = shipOf(settings, variant.people) * 100;
+  const priceCop = priceOf(settings, variant.id, variant.priceCop);
+  const shippingCop = shipOf(settings, variant.people);
+  // Wompi usa centavos: COP x100.
+  const amountInCents = (priceCop + shippingCop) * 100;
 
+  const reference = `miniko-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const photoUrls = (body.photoUrls ?? []).slice(0, 8);
   const s = body.shipping ?? {};
 
-  // Metadatos: todo lo que el negocio necesita para preparar el pedido.
-  const metadata: Record<string, string> = {
-    tipo: body.tipo || "Persona",
-    composicion: body.composicion || variant.name,
+  const order: Order = {
+    reference,
+    status: "PENDING",
+    createdAt: Math.floor(Date.now() / 1000),
+    email: body.email || "",
+    amount: amountInCents,
+    currency: "COP",
+    styleId: style.id,
     estilo: style.name,
-    tamano: variant.name,
-    personas: String(body.personas ?? variant.people),
-    mascotas: String(body.mascotas ?? 0),
-    envio_nombre: s.name ?? "",
-    envio_direccion: [s.address, s.city, s.zip, s.country].filter(Boolean).join(", "),
+    composicion: body.composicion || variant.name,
+    tipo: body.tipo || "Persona",
+    personas: body.personas ?? variant.people,
+    mascotas: body.mascotas ?? 0,
+    photoUrls,
+    previewUrl: body.previewUrl && !body.previewUrl.startsWith("data:") ? body.previewUrl : null,
+    shipping: {
+      name: s.name,
+      address: s.address,
+      city: s.city,
+      zip: s.zip,
+      country: s.country,
+    },
   };
-  photoUrls.forEach((url, i) => {
-    metadata[`foto_${i + 1}`] = url.slice(0, 480);
-  });
-  if (body.previewUrl && !body.previewUrl.startsWith("data:")) {
-    metadata.figura_ia = body.previewUrl.slice(0, 480);
-  }
-
-  const siteUrl = getSiteUrl();
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: body.email || undefined,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "cop",
-            unit_amount: unitAmount,
-            product_data: {
-              name: `Figura ${style.name} — ${variant.name}`,
-              description: variant.description,
-            },
-          },
-        },
-      ],
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            display_name: shippingAmount === 0 ? "Envío gratis" : SHIPPING.label,
-            fixed_amount: { amount: shippingAmount, currency: "cop" },
-          },
-        },
-      ],
-      metadata,
-      success_url: `${siteUrl}/exito?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/pedido`,
-    });
-
-    return NextResponse.json({ url: session.url });
+    await saveOrder(order);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error al crear la sesión.";
+    const message = err instanceof Error ? err.message : "No se pudo guardar el pedido.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  const url = buildCheckoutUrl({
+    reference,
+    amountInCents,
+    redirectUrl: `${getSiteUrl()}/exito`,
+    customerEmail: body.email || undefined,
+  });
+
+  return NextResponse.json({ url });
 }

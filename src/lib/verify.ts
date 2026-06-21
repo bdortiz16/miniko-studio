@@ -9,7 +9,7 @@ const TTL_MS = 10 * 60 * 1000; // 10 minutos
 function secret(): string {
   return (
     process.env.AUTH_SECRET ||
-    process.env.STRIPE_SECRET_KEY ||
+    process.env.WOMPI_INTEGRITY_SECRET ||
     "miniko-dev-secret-change-me"
   );
 }

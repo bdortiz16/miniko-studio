@@ -33,7 +33,7 @@ const FAQS = [
   },
   {
     q: "¿Cómo se realiza el pago?",
-    a: "El pago se procesa de forma segura a través de Stripe. Aceptamos las principales tarjetas de crédito y débito.",
+    a: "El pago se procesa de forma segura a través de Wompi. Puedes pagar con PSE, Nequi, Bancolombia o tarjeta de crédito/débito.",
   },
 ];
 

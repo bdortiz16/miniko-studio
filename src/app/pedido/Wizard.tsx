@@ -1042,7 +1042,7 @@ function StepPay({
           {loading ? "Redirigiendo…" : `Pagar ${formatCop(total)} →`}
         </button>
       </div>
-      <p className="mt-3 text-center text-xs text-ink/45">🔒 Pago seguro con Stripe</p>
+      <p className="mt-3 text-center text-xs text-ink/45">🔒 Pago seguro con Wompi · PSE, Nequi, Bancolombia y tarjetas</p>
     </div>
   );
 }

@@ -86,10 +86,10 @@ export default function AdminDashboard() {
 
       {stats && !stats.configured && (
         <div className="mt-6 rounded-2xl border border-brand/40 bg-white p-6">
-          <p className="font-semibold">Conecta Stripe para ver tus métricas</p>
+          <p className="font-semibold">Configura los pagos para ver tus métricas</p>
           <p className="mt-1 text-sm text-ink/60">
-            Añade <code className="rounded bg-mist px-1">STRIPE_SECRET_KEY</code> en Vercel y vuelve
-            a desplegar. Aquí verás ingresos, pedidos y clientes en tiempo real.
+            Añade tus llaves de <b>Wompi</b> y <b>Supabase</b> en Vercel y vuelve a desplegar. Aquí
+            verás ingresos, pedidos y clientes en tiempo real.
           </p>
         </div>
       )}

@@ -1,22 +1,16 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import { isAdmin } from "@/lib/admin-auth";
+import { listOrders } from "@/lib/orders";
 
-// Lista de clientes agrupados por correo, a partir de los pedidos pagados de
-// Stripe. Para cada cliente: nº de pedidos, total gastado, último pedido, etc.
+// Clientes agrupados por correo a partir de los pedidos pagados.
 export async function GET(request: Request) {
   if (!isAdmin(request)) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
-  if (!stripe) {
-    return NextResponse.json({ error: "Stripe no está configurado." }, { status: 500 });
-  }
 
   try {
-    const sessions = await stripe.checkout.sessions.list({ limit: 100 });
-    const paid = sessions.data.filter(
-      (s) => s.payment_status === "paid" || s.status === "complete"
-    );
+    const all = await listOrders();
+    const paid = all.filter((o) => o.status === "APPROVED");
 
     const map = new Map<
       string,
@@ -31,18 +25,20 @@ export async function GET(request: Request) {
       }
     >();
 
-    for (const s of paid) {
-      const m = s.metadata || {};
-      const email = (s.customer_details?.email || s.customer_email || "").toLowerCase();
+    for (const o of paid) {
+      const email = (o.email || "").toLowerCase();
       if (!email) continue;
-      const name = m.envio_nombre || s.customer_details?.name || "";
-      const address = m.envio_direccion || "";
+      const name = o.shipping?.name || "";
+      const address = [o.shipping?.address, o.shipping?.city, o.shipping?.zip, o.shipping?.country]
+        .filter(Boolean)
+        .join(", ");
+      const when = o.paidAt || o.createdAt;
       const existing = map.get(email);
       if (existing) {
         existing.orders += 1;
-        existing.totalSpent += s.amount_total || 0;
-        if (s.created > existing.lastOrder) {
-          existing.lastOrder = s.created;
+        existing.totalSpent += o.amount;
+        if (when > existing.lastOrder) {
+          existing.lastOrder = when;
           if (name) existing.name = name;
           if (address) existing.lastAddress = address;
         }
@@ -51,9 +47,9 @@ export async function GET(request: Request) {
           email,
           name,
           orders: 1,
-          totalSpent: s.amount_total || 0,
-          currency: (s.currency || "cop").toUpperCase(),
-          lastOrder: s.created,
+          totalSpent: o.amount,
+          currency: o.currency,
+          lastOrder: when,
           lastAddress: address,
         });
       }
