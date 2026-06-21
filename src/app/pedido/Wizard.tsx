@@ -511,6 +511,15 @@ function StepPhotos({
         subtitle="Sube una foto nítida y bien iluminada. Detectamos solos cuántas figuras lleva tu pedido."
       />
 
+      <div className="mx-auto mt-6 flex max-w-md items-start gap-2.5 rounded-2xl border border-brand/30 bg-brand/5 px-4 py-3 text-sm text-ink/75">
+        <span className="mt-0.5">💡</span>
+        <p>
+          <span className="font-semibold text-ink">Consejo:</span> sube una foto por cada{" "}
+          {isPet ? "mascota" : "persona o mascota"} (una foto = una figura). Así cada figura se
+          parece mucho más. Una foto grupal también funciona, pero el parecido puede bajar.
+        </p>
+      </div>
+
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         {photos.map((p, i) => (
           <div key={i} className="group relative aspect-square overflow-hidden rounded-2xl border border-line">
