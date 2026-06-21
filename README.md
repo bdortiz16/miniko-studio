@@ -54,6 +54,18 @@ El paso "Email" envía un código de 6 dígitos con **Resend**.
 Mientras no configures cada servicio, esa parte del asistente avisa con un
 mensaje claro en lugar de fallar.
 
+## 🤖 Vista previa con IA (Google Gemini)
+
+El paso "Preview" convierte la foto del cliente en una figura estilo Funko Pop
+con **Gemini 2.5 Flash Image** (Nano Banana).
+
+1. Crea una API key en https://aistudio.google.com/apikey → `GEMINI_API_KEY`.
+2. Añádela como variable de entorno (Vercel y `.env.local`).
+
+La imagen generada se guarda en Supabase (carpeta `previews/`) y se adjunta al
+pedido en los metadatos de Stripe (`figura_ia`). La generación tarda unos
+segundos; el asistente muestra un spinner mientras tanto.
+
 ## 🧭 Flujo de pedido (asistente `/pedido`)
 
 Pedido guiado en 6 pasos, al estilo de la referencia:

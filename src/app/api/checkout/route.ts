@@ -7,6 +7,7 @@ interface OrderPayload {
   variantId: string;
   email?: string;
   photoUrls?: string[];
+  previewUrl?: string | null;
   shipping?: {
     name?: string;
     address?: string;
@@ -57,6 +58,9 @@ export async function POST(request: Request) {
   photoUrls.forEach((url, i) => {
     metadata[`foto_${i + 1}`] = url.slice(0, 480);
   });
+  if (body.previewUrl && !body.previewUrl.startsWith("data:")) {
+    metadata.figura_ia = body.previewUrl.slice(0, 480);
+  }
 
   const siteUrl = getSiteUrl();
 

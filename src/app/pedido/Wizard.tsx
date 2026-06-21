@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
@@ -37,6 +37,7 @@ export default function Wizard() {
   );
   const [variantId, setVariantId] = useState(VARIANTS[0].id);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
   const [shipping, setShipping] = useState<Shipping>({
@@ -99,7 +100,15 @@ export default function Wizard() {
               setVerified={setEmailVerified}
             />
           )}
-          {step === 3 && <StepPreview photos={photos} style={style} />}
+          {step === 3 && (
+            <StepPreview
+              photos={photos}
+              style={style}
+              styleId={styleId}
+              previewUrl={previewUrl}
+              setPreviewUrl={setPreviewUrl}
+            />
+          )}
           {step === 4 && <StepShipping shipping={shipping} setShipping={setShipping} />}
           {step === 5 && (
             <StepPay
@@ -108,6 +117,7 @@ export default function Wizard() {
               shipping={shipping}
               email={email}
               photos={photos}
+              previewUrl={previewUrl}
               shipCents={shipCents}
               total={total}
             />
@@ -496,42 +506,117 @@ function StepEmail({
   );
 }
 
-/* ─────────────────────────── Paso 4: Preview ─────────────────────────── */
+/* ─────────────────────────── Paso 4: Preview (IA) ─────────────────────────── */
 function StepPreview({
   photos,
   style,
+  styleId,
+  previewUrl,
+  setPreviewUrl,
 }: {
   photos: Photo[];
   style: ReturnType<typeof styleById>;
+  styleId: StyleId;
+  previewUrl: string | null;
+  setPreviewUrl: (u: string | null) => void;
 }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const generate = useCallback(async () => {
+    if (!photos[0]) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/generate-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl: photos[0].url, styleId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo generar la figura.");
+      setPreviewUrl(data.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al generar la figura.");
+    } finally {
+      setLoading(false);
+    }
+  }, [photos, styleId, setPreviewUrl]);
+
+  // Genera automáticamente al entrar al paso, si aún no hay preview.
+  useEffect(() => {
+    if (!previewUrl && !loading && !error && photos[0]) generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div>
       <StepHeading
         title="Tu figura"
-        subtitle="Así empezamos. Nuestro equipo modela tu figura 3D y te la envía a aprobar por email antes de imprimir."
+        subtitle="Generamos una vista previa de tu figura a partir de tu foto. Es orientativa; recibirás el render final a aprobar antes de imprimir."
       />
-      <div className="mx-auto mt-8 max-w-lg overflow-hidden rounded-2xl border border-line">
-        <div className="grid grid-cols-2">
-          <div className="relative aspect-square border-r border-line bg-mist">
-            {photos[0] && (
-              <Image src={photos[0].url} alt="Tu foto" fill sizes="300px" className="object-cover" />
-            )}
-            <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium">
-              Tu foto
-            </span>
-          </div>
+
+      <div className="mx-auto mt-8 max-w-lg">
+        <div className="overflow-hidden rounded-2xl border border-line">
           <div className="relative aspect-square bg-mist">
-            {style && (
-              <Image src={style.image} alt={style.name} fill sizes="300px" className="object-cover" />
+            {loading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/70 backdrop-blur-sm">
+                <span className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-brand" />
+                <p className="text-sm font-medium text-ink/70">Creando tu figura…</p>
+                <p className="text-xs text-ink/45">Puede tardar unos segundos</p>
+              </div>
             )}
-            <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium">
-              Estilo {style?.name}
-            </span>
+
+            {previewUrl ? (
+              <Image
+                src={previewUrl}
+                alt="Vista previa de tu figura"
+                fill
+                sizes="(max-width: 640px) 100vw, 512px"
+                className="object-contain"
+                unoptimized={previewUrl.startsWith("data:")}
+              />
+            ) : (
+              !loading &&
+              photos[0] && (
+                <Image src={photos[0].url} alt="Tu foto" fill sizes="512px" className="object-cover opacity-60" />
+              )
+            )}
+
+            {previewUrl && (
+              <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold">
+                Estilo {style?.name}
+              </span>
+            )}
+
+            {photos[0] && (
+              <div className="absolute bottom-3 left-3 z-10 h-16 w-16 overflow-hidden rounded-lg border-2 border-white shadow">
+                <Image src={photos[0].url} alt="Tu foto" fill sizes="64px" className="object-cover" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-brand/60 p-4">
+            <p className="text-sm text-ink/60">
+              {error
+                ? "No pudimos generarla automáticamente."
+                : "🎨 Vista previa generada por IA."}
+            </p>
+            <button
+              onClick={generate}
+              disabled={loading || !photos[0]}
+              className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
+            >
+              {loading ? "Generando…" : previewUrl ? "Regenerar" : "Generar"}
+            </button>
           </div>
         </div>
-        <div className="border-t border-brand/60 p-4 text-center text-sm text-ink/60">
-          🎨 Recibirás un render para aprobar antes de la impresión. ¡Sin sorpresas!
-        </div>
+
+        {error && (
+          <p className="mt-3 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -576,6 +661,7 @@ function StepPay({
   shipping,
   email,
   photos,
+  previewUrl,
   shipCents,
   total,
 }: {
@@ -584,6 +670,7 @@ function StepPay({
   shipping: Shipping;
   email: string;
   photos: Photo[];
+  previewUrl: string | null;
   shipCents: number;
   total: number;
 }) {
@@ -602,6 +689,7 @@ function StepPay({
           variantId: variant.id,
           email,
           photoUrls: photos.map((p) => p.url),
+          previewUrl,
           shipping,
         }),
       });
