@@ -60,7 +60,9 @@ export default function Wizard() {
   const canContinue =
     (step === 0 && !!styleId && !!variantId) ||
     (step === 1 && photos.length > 0) ||
-    (step === 2 && emailVerified) ||
+    // Basta con un email válido para avanzar. La verificación por código es un
+    // extra (funciona cuando Resend está configurado) pero no bloquea el flujo.
+    (step === 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
     step === 3 ||
     (step === 4 &&
       !!shipping.name &&
@@ -481,6 +483,12 @@ function StepEmail({
         {error && (
           <p className="mt-3 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">
             {error}
+          </p>
+        )}
+
+        {!verified && (
+          <p className="mt-3 text-center text-xs text-ink/45">
+            La verificación por código es opcional: puedes continuar con un email válido.
           </p>
         )}
       </div>
