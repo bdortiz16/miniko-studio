@@ -8,7 +8,6 @@ const NAV = [
   { href: "/#estilos", label: "Estilos" },
   { href: "/#mascotas", label: "Mascotas" },
   { href: "/precios", label: "Precios" },
-  { href: "/mis-pedidos", label: "Mis pedidos" },
   { href: "/faq", label: "FAQ" },
 ];
 
@@ -56,10 +55,10 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/pedido"
+            href="/mis-pedidos"
             className="hidden items-center gap-1.5 rounded-full bg-ink px-6 py-2.5 text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-black sm:inline-flex"
           >
-            Crear mi figura
+            Mis pedidos
             <span className="text-brand">→</span>
           </Link>
           <button
@@ -85,8 +84,8 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <Link href="/pedido" onClick={() => setOpen(false)} className="btn-primary mt-2 text-sm">
-              Crear mi figura →
+            <Link href="/mis-pedidos" onClick={() => setOpen(false)} className="btn-primary mt-2 text-sm">
+              Mis pedidos →
             </Link>
           </nav>
         </div>
