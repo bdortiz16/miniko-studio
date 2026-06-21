@@ -17,7 +17,7 @@ const STYLE_PROMPT: Record<string, string> = {
 const COMMON_PROMPT =
   "Keep the SAME face and exact likeness of the person in the photo: same face shape, eyes, nose, mouth, eyebrows and hairstyle — it must clearly look like the SAME person. " +
   "Keep the person's REAL body type, build and weight from the photo (if slim, keep slim; do NOT make them chubby or heavier). " +
-  "Keep the person's outfit if it is normal everyday clothing; but if they are wearing swimwear, a bikini, underwear or very revealing clothing, dress the figure in tasteful casual everyday clothes instead. Never depict swimwear or revealing outfits. " +
+  "Recreate the EXACT same outfit, clothing and colors the person is wearing in the photo, faithfully — including a swimsuit or bikini if that is what they wear. Do not change their clothes. No explicit nudity. " +
   "The figurine stands on a round display base, on a clean pure WHITE studio background. " +
   "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
   "High quality product photo, soft studio lighting.";
