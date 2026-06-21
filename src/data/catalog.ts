@@ -5,6 +5,16 @@
 
 export type StyleId = "kawaii" | "realista" | "caricatura";
 
+// Las imágenes de ejemplo de cada estilo se generan con IA (ruta
+// /api/generate-style-samples) y se guardan en Supabase. Si Supabase está
+// configurado usamos esa imagen; si no, caemos al placeholder SVG local.
+const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+function styleImage(id: StyleId, fallback: string): string {
+  return SUPA_URL
+    ? `${SUPA_URL}/storage/v1/object/public/pedidos/samples/${id}.png`
+    : fallback;
+}
+
 export interface FigureStyle {
   id: StyleId;
   name: string;
@@ -32,7 +42,7 @@ export const STYLES: FigureStyle[] = [
     tagline: "Tierno y adorable",
     description:
       "Rasgos suaves, ojos grandes y proporciones achuchables. El estilo más dulce, perfecto para regalos entrañables.",
-    image: "/styles/kawaii.svg",
+    image: styleImage("kawaii", "/styles/kawaii.svg"),
     accent: "#e89ab0",
   },
   {
@@ -41,7 +51,7 @@ export const STYLES: FigureStyle[] = [
     tagline: "Fiel a la foto",
     description:
       "Detalle y proporciones realistas. Capturamos los rasgos tal y como son para un recuerdo fiel de ese momento.",
-    image: "/styles/realista.svg",
+    image: styleImage("realista", "/styles/realista.svg"),
     accent: "#7e9e8a",
     premium: true,
   },
@@ -51,7 +61,7 @@ export const STYLES: FigureStyle[] = [
     tagline: "Divertido y expresivo",
     description:
       "Cabezas grandes, gestos exagerados y mucha personalidad. El estilo más simpático y lleno de carácter.",
-    image: "/styles/caricatura.svg",
+    image: styleImage("caricatura", "/styles/caricatura.svg"),
     accent: "#d98c5f",
   },
 ];
