@@ -6,6 +6,8 @@ import { replicateConfigured, replicateSupportsStyle, generateFaceToMany } from 
 export const maxDuration = 300;
 
 // Cada estilo define el look completo (no fuerza Funko siempre).
+// ⚠️ PROMPTS APROBADOS (2026-06-21): los 3 estilos quedaron validados por el
+// dueño. No cambiar sin pedirlo expresamente.
 const STYLE_PROMPT: Record<string, string> = {
   kawaii:
     "Turn the person in this photo into a classic FUNKO POP collectible vinyl figurine: very large oversized head, small short slim body, big round solid black dot eyes, simplified matte vinyl.",
