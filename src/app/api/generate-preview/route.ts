@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI, { toFile } from "openai";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 
 // La generación de imagen puede tardar; ampliamos el límite (requiere plan Pro).
 export const maxDuration = 60;
 
 const BASE_PROMPT =
-  "Create a clean studio product photo of a Funko Pop style collectible vinyl figurine based on the person in the provided photo. " +
+  "Create a clean studio product photo of a Funko Pop style collectible vinyl figurine based on the person in this photo. " +
   "The figurine has an oversized head and a small stylized body, standing on a round display base, on a soft neutral white background. " +
   "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any, and the colors and style of their clothing. " +
   "Dress the figurine in tasteful everyday clothing. A single figurine, centered, high quality, soft studio lighting.";
@@ -21,10 +21,10 @@ const STYLE_PROMPT: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "La IA no está configurada (falta GEMINI_API_KEY)." },
+      { error: "La IA no está configurada (falta OPENAI_API_KEY)." },
       { status: 500 }
     );
   }
@@ -44,26 +44,25 @@ export async function POST(request: Request) {
     // 1) Descargar la foto subida por el cliente.
     const imgRes = await fetch(photoUrl);
     if (!imgRes.ok) throw new Error("No se pudo leer la foto subida.");
-    const inputMime = imgRes.headers.get("content-type") || "image/jpeg";
-    const inputB64 = Buffer.from(await imgRes.arrayBuffer()).toString("base64");
+    const inputMime = imgRes.headers.get("content-type") || "image/png";
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const ext = inputMime.includes("png") ? "png" : inputMime.includes("webp") ? "webp" : "jpg";
+    const file = await toFile(buffer, `foto.${ext}`, { type: inputMime });
 
-    // 2) Generar la figura con Gemini 2.5 Flash Image (Nano Banana).
+    // 2) Generar la figura con gpt-image-1 (edición a partir de la foto).
     const prompt = `${BASE_PROMPT} ${STYLE_PROMPT[styleId] ?? ""}`;
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
-      contents: [
-        { text: prompt },
-        { inlineData: { mimeType: inputMime, data: inputB64 } },
-      ],
+    const openai = new OpenAI({ apiKey });
+    const result = await openai.images.edit({
+      model: "gpt-image-1",
+      image: file,
+      prompt,
+      size: "1024x1024",
     });
 
-    const parts = response.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find((p) => p.inlineData?.data);
-    if (!imagePart?.inlineData?.data) {
+    const outB64 = result.data?.[0]?.b64_json;
+    if (!outB64) {
       throw new Error("La IA no devolvió una imagen. Prueba con otra foto.");
     }
-    const outB64 = imagePart.inlineData.data;
 
     // 3) Guardar el resultado en Supabase y devolver su URL pública.
     if (supabaseAdmin) {

@@ -54,13 +54,15 @@ El paso "Email" envía un código de 6 dígitos con **Resend**.
 Mientras no configures cada servicio, esa parte del asistente avisa con un
 mensaje claro en lugar de fallar.
 
-## 🤖 Vista previa con IA (Google Gemini)
+## 🤖 Vista previa con IA (OpenAI)
 
 El paso "Preview" convierte la foto del cliente en una figura estilo Funko Pop
-con **Gemini 2.5 Flash Image** (Nano Banana).
+con **gpt-image-1** de OpenAI (edición de imagen a partir de la foto).
 
-1. Crea una API key en https://aistudio.google.com/apikey → `GEMINI_API_KEY`.
-2. Añádela como variable de entorno (Vercel y `.env.local`).
+1. Crea una API key en https://platform.openai.com/api-keys → `OPENAI_API_KEY`.
+2. Añádela como variable de entorno en **Vercel** (y en `.env.local`).
+3. Nota: usar `gpt-image-1` puede requerir **verificar tu organización** en
+   OpenAI (Settings → Organization → Verify).
 
 La imagen generada se guarda en Supabase (carpeta `previews/`) y se adjunta al
 pedido en los metadatos de Stripe (`figura_ia`). La generación tarda unos
