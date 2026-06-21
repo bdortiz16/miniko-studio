@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI, { toFile } from "openai";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
+import { replicateConfigured, replicateSupportsStyle, generateFaceToMany } from "@/lib/replicate";
 
 export const maxDuration = 300;
 
@@ -76,6 +77,22 @@ export async function POST(request: Request) {
   }
 
   try {
+    let outB64 = "";
+
+    // 1) Replicate (face-to-many / InstantID): mejor parecido facial para los
+    // estilos estilizados (Funko/Disney) con un solo sujeto. Si falla, seguimos.
+    if (!isPet && total <= 1 && replicateConfigured() && replicateSupportsStyle(styleId)) {
+      try {
+        const repUrl = await generateFaceToMany(photoUrl, styleId);
+        const r = await fetch(repUrl);
+        if (r.ok) outB64 = Buffer.from(await r.arrayBuffer()).toString("base64");
+      } catch {
+        // cae a gpt-image-1
+      }
+    }
+
+    // 2) gpt-image-1: realista, mascotas, multi-sujeto, o si Replicate no dio.
+    if (!outB64) {
     const imgRes = await fetch(photoUrl);
     if (!imgRes.ok) throw new Error("No se pudo leer la foto subida.");
     const inputMime = imgRes.headers.get("content-type") || "image/png";
@@ -106,7 +123,6 @@ export async function POST(request: Request) {
       return b64;
     }
 
-    let outB64 = "";
     let lastErr: unknown = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -137,6 +153,7 @@ export async function POST(request: Request) {
           : "La IA no devolvió una imagen. Prueba con otra foto."
       );
     }
+    } // fin gpt-image-1
 
     if (supabaseAdmin) {
       const path = `previews/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
