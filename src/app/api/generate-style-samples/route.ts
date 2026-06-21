@@ -32,7 +32,7 @@ const STYLE_LINES: Record<string, string> = {
     "A DISNEY / PIXAR style 3D animated character figure: stylized full-body cartoon with friendly proportions, large expressive cartoon eyes, smooth polished 3D animation render, standing.",
   // Realista
   realista:
-    "A PHOTOREALISTIC lifelike statue of the character, real photograph quality: realistic skin texture, realistic hair and realistic fabric, ultra-detailed and refined, studio photography. NOT cartoon, NOT stylized, NOT a toy — looks like a real high-end lifelike figure, full body standing.",
+    "A PHOTOREALISTIC lifelike statue of the character, real photograph quality: realistic skin texture, realistic hair and realistic fabric, ultra-detailed and refined, studio photography. NOT cartoon, NOT stylized, NOT a toy — looks like a real high-end lifelike figure. FULL BODY from head to the SHOES, the feet and shoes completely visible with empty space below them, nothing cut off at the bottom.",
 };
 
 // Todas sin fondo (transparente) para que la figura flote limpia en el carrusel.

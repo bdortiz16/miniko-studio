@@ -21,11 +21,14 @@ export default function AdminEstilos() {
   const [token, setToken] = useState("");
   const [ts, setTs] = useState(Date.now());
 
-  async function generate() {
+  async function generate(style?: string) {
     setLoading(true);
     setResult(null);
     try {
-      const qs = token ? `?token=${encodeURIComponent(token)}` : "";
+      const params = new URLSearchParams();
+      if (token) params.set("token", token);
+      if (style) params.set("style", style);
+      const qs = params.toString() ? `?${params.toString()}` : "";
       const res = await fetch(`/api/generate-style-samples${qs}`);
       const data = await res.json();
       setResult(data);
@@ -47,8 +50,15 @@ export default function AdminEstilos() {
         <div className="mx-auto mt-4 h-px w-16 bg-brand/70" />
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <button onClick={generate} disabled={loading} className="btn-primary disabled:opacity-50">
+          <button onClick={() => generate()} disabled={loading} className="btn-primary disabled:opacity-50">
             {loading ? "Generando… (~40s)" : "Generar / Regenerar las 3"}
+          </button>
+          <button
+            onClick={() => generate("realista")}
+            disabled={loading}
+            className="btn-secondary disabled:opacity-50"
+          >
+            Regenerar solo Realista
           </button>
           <input
             value={token}
