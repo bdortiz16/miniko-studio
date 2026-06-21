@@ -3,12 +3,13 @@ import Link from "next/link";
 import { STYLES } from "@/data/catalog";
 import StyleCard from "@/components/StyleCard";
 import HeroCarousel from "@/components/HeroCarousel";
+import { IconEstilo, IconFoto, IconKit, IconPintar } from "@/components/StepIcons";
 
 const STEPS = [
-  { n: "1", title: "Elige tu estilo", desc: "Kawaii, realista o caricatura: tú decides el look.", icon: "🎨" },
-  { n: "2", title: "Sube tu foto", desc: "Creamos un modelo 3D personalizado a partir de tu imagen.", icon: "📷" },
-  { n: "3", title: "Recibe tu kit", desc: "Impreso en 3D y listo en tu casa, sin pintar.", icon: "🎁" },
-  { n: "4", title: "Píntalo y disfruta", desc: "Un recuerdo único hecho con tus propias manos.", icon: "🖌️" },
+  { n: "1", title: "Elige tu estilo", desc: "Kawaii, realista o caricatura: tú decides el look.", Icon: IconEstilo },
+  { n: "2", title: "Sube tu foto", desc: "Creamos un modelo 3D personalizado a partir de tu imagen.", Icon: IconFoto },
+  { n: "3", title: "Recibe tu kit", desc: "Impreso en 3D y listo en tu casa, sin pintar.", Icon: IconKit },
+  { n: "4", title: "Píntalo y disfruta", desc: "Un recuerdo único hecho con tus propias manos.", Icon: IconPintar },
 ];
 
 export default function Home() {
@@ -24,8 +25,8 @@ export default function Home() {
           <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s) => (
               <div key={s.n} className="text-center">
-                <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-line text-3xl">
-                  {s.icon}
+                <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-line">
+                  <s.Icon />
                 </div>
                 <div className="mt-5 text-xs font-bold text-brand">PASO {s.n}</div>
                 <h3 className="mt-1 font-display text-lg font-bold">{s.title}</h3>
