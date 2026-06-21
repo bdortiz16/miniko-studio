@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#e9efe9"/>
+  <g transform="translate(400 320)">
+    <ellipse cx="0" cy="160" rx="140" ry="22" fill="#7e9e8a" opacity="0.25"/>
+    <path d="M-60 160 L-55 30 Q0 0 55 30 L60 160 Z" fill="#9bb0a4"/>
+    <circle cx="0" cy="-30" r="80" fill="#c7b6a3"/>
+    <path d="M-80 -45 Q0 -130 80 -45 Q60 -90 0 -95 Q-60 -90 -80 -45 Z" fill="#5b4a3a"/>
+    <circle cx="-28" cy="-25" r="9" fill="#3a2b25"/>
+    <circle cx="28" cy="-25" r="9" fill="#3a2b25"/>
+    <path d="M-12 5 q12 8 24 0" fill="none" stroke="#7a6151" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="400" y="560" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="30" font-weight="700" fill="#5c7a68">Realista</text>
+  <text x="400" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#5c7a68" opacity="0.7">imagen de ejemplo — reemplázala</text>
+</svg>

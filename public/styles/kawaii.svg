@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#fbeaf0"/>
+  <g transform="translate(400 320)">
+    <ellipse cx="0" cy="160" rx="150" ry="22" fill="#e89ab0" opacity="0.25"/>
+    <rect x="-70" y="40" width="140" height="120" rx="40" fill="#f4c4d4"/>
+    <circle cx="0" cy="-40" r="105" fill="#ffd9e3"/>
+    <circle cx="-38" cy="-30" r="18" fill="#3a2b30"/>
+    <circle cx="38" cy="-30" r="18" fill="#3a2b30"/>
+    <circle cx="-32" cy="-36" r="6" fill="#fff"/>
+    <circle cx="44" cy="-36" r="6" fill="#fff"/>
+    <circle cx="-55" cy="5" r="14" fill="#f7a8bf" opacity="0.7"/>
+    <circle cx="55" cy="5" r="14" fill="#f7a8bf" opacity="0.7"/>
+    <path d="M-16 5 q16 16 32 0" fill="none" stroke="#3a2b30" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="400" y="560" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="30" font-weight="700" fill="#c76e8c">Kawaii</text>
+  <text x="400" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#c76e8c" opacity="0.7">imagen de ejemplo — reemplázala</text>
+</svg>
