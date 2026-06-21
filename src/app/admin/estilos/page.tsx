@@ -37,6 +37,21 @@ export default function AdminEstilos() {
     }
   }
 
+  async function generateGallery() {
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/generate-gallery`);
+      const data = await res.json();
+      setResult(data.urls ? { samples: {}, ...data } : data);
+      setTs(Date.now());
+    } catch (e) {
+      setResult({ error: e instanceof Error ? e.message : "Error de red." });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       <div className="mx-auto max-w-4xl">
@@ -59,6 +74,13 @@ export default function AdminEstilos() {
             className="btn-secondary disabled:opacity-50"
           >
             Regenerar solo Realista
+          </button>
+          <button
+            onClick={generateGallery}
+            disabled={loading}
+            className="btn-secondary disabled:opacity-50"
+          >
+            Generar galería (6) 🎞️
           </button>
         </div>
 
