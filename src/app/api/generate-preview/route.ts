@@ -21,7 +21,7 @@ const STYLE_PROMPT: Record<string, string> = {
 const COMMON_PROMPT =
   "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any. " +
   "CRITICAL: keep the person's EXACT body type, build and weight from the photo. If they are slim, keep them slim — do NOT make them chubby, fat, heavier or rounder. Match their real silhouette and proportions faithfully. " +
-  "Recreate the same outfit, clothing and colors the person is wearing in the photo. " +
+  "Keep the person's outfit if it is normal everyday clothing; BUT if they are wearing swimwear, a bikini, underwear or very revealing clothing, instead dress the figure in tasteful casual everyday clothes (a t-shirt and trousers). Never depict swimwear, lingerie or revealing outfits. " +
   "Tall vertical frame, ZOOMED OUT: the whole figure is SMALL and centered, occupying only about 65% of the frame, with generous empty margin on all sides — clear space above the head AND below the feet/shoes. The full figure from head to shoes is completely visible and never cropped. " +
   "Clean studio product photo, a single figure, soft neutral background, high quality, soft studio lighting.";
 
@@ -62,6 +62,8 @@ export async function POST(request: Request) {
       image: file,
       prompt,
       size: "1024x1536",
+      // moderation "low" reduce rechazos en fotos al límite; el SDK aún no lo tipa.
+      ...({ moderation: "low" } as object),
     });
 
     const outB64 = result.data?.[0]?.b64_json;
