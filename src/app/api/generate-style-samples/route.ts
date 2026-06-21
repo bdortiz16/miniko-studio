@@ -11,9 +11,9 @@ export const maxDuration = 120;
 // de ejemplo en los 3 estilos, para que solo se vea el cambio de estilo.
 // EXACTAMENTE el mismo personaje en los 3 estilos (solo cambia el render).
 const CHARACTER =
-  "the SAME single young man character: short curly light-brown hair, " +
-  "wearing an olive-green field jacket over a blue-and-white striped shirt, " +
-  "brown trousers and brown leather boots, holding a small closed laptop in one hand";
+  "the SAME single young man character: short dark wavy hair, " +
+  "wearing a mustard-yellow hoodie over a white t-shirt, dark blue jeans and white sneakers, " +
+  "holding a modern silver laptop clearly visible in his hands";
 
 const BASE = (styleLine: string, bgLine: string) =>
   `Full-body product photo, the ENTIRE figure visible head to feet, centered with generous margin so it fits in frame. ` +

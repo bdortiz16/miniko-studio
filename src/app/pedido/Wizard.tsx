@@ -250,7 +250,7 @@ function StepStyle({
                   fallback={`/styles/${s.id}.svg`}
                   alt={s.name}
                   sizes="200px"
-                  className="object-cover"
+                  className="object-contain p-2"
                 />
               </div>
               <div className="p-4">

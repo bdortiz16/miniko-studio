@@ -11,7 +11,7 @@ export default function StyleCard({ style }: { style: FigureStyle }) {
           fallback={`/styles/${style.id}.svg`}
           alt={`Estilo ${style.name}`}
           sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover transition duration-500 group-hover:scale-105"
+          className="object-contain p-3 transition duration-500 group-hover:scale-105"
         />
         {style.premium && (
           <span className="absolute right-0 top-4 rounded-l-full border-y border-l border-brand bg-white px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
