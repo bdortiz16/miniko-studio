@@ -8,8 +8,9 @@ export const maxDuration = 60;
 const BASE_PROMPT =
   "Create a clean studio product photo of a Funko Pop style collectible vinyl figurine based on the person in this photo. " +
   "The figurine has an oversized head and a small stylized body, standing on a round display base, on a soft neutral white background. " +
-  "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any, and the colors and style of their clothing. " +
-  "Dress the figurine in tasteful everyday clothing. A single figurine, centered, high quality, soft studio lighting.";
+  "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any. " +
+  "Recreate the exact same outfit, clothing and colors the person is wearing in the photo, faithfully. " +
+  "A single figurine, centered, high quality, soft studio lighting.";
 
 const STYLE_PROMPT: Record<string, string> = {
   kawaii:
