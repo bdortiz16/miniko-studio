@@ -61,7 +61,7 @@ export default function HeroCarousel() {
     // cortar la cabeza, con objectFit contain.
     const base: CSSProperties = {
       position: "absolute",
-      aspectRatio: "1 / 1",
+      aspectRatio: "2 / 3",
       transition: `transform 650ms ${EASE}, filter 650ms ${EASE}, opacity 650ms ${EASE}, left 650ms ${EASE}, height 650ms ${EASE}`,
       willChange: "transform, filter, opacity",
     };

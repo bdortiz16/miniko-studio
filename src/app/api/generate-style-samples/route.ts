@@ -16,7 +16,8 @@ const CHARACTER =
   "holding a modern silver laptop clearly visible in his hands";
 
 const BASE = (styleLine: string, bgLine: string) =>
-  `Full-body product photo, the ENTIRE figure visible head to feet, centered with generous margin so it fits in frame. ` +
+  `Full-body product photo in a TALL VERTICAL frame. The ENTIRE figure must be fully visible from the very top of the head to the feet, ` +
+  `with clear EMPTY PADDING above the head and below the feet. The figure occupies only the central ~70% of the frame and is never cropped at the top. ` +
   `${bgLine} ${styleLine} The character: ${CHARACTER}.`;
 
 const GRAY_BG = "Clean soft light-gray studio background.";
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
     const result = await openai.images.generate({
       model: "gpt-image-1",
       prompt: BASE(STYLE_LINES[styleId], STYLE_BG[styleId]),
-      size: "1024x1024",
+      size: "1024x1536", // retrato: cabe la figura completa de cuerpo entero
       background: "transparent", // las 3 sin fondo
     });
     const b64 = result.data?.[0]?.b64_json;
