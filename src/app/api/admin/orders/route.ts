@@ -28,7 +28,7 @@ export async function GET(request: Request) {
           .filter(Boolean)
           .join(", "),
         fotos: o.photoUrls || [],
-        figura_ia: o.previewUrl || "",
+        figuras_ia: o.previewUrls || [],
         fulfillment: o.fulfillment || "RECIBIDO",
         carrier: o.carrier || "",
         tracking: o.tracking || "",

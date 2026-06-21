@@ -52,12 +52,20 @@ export async function POST(request: Request) {
   let photoUrl = "";
   let styleId = "";
   let tipo = "persona";
+  let index = 1;
+  let total = 1;
   try {
-    ({ photoUrl, styleId, tipo = "persona" } = await request.json());
+    ({ photoUrl, styleId, tipo = "persona", index = 1, total = 1 } = await request.json());
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
   const isPet = tipo === "mascota";
+  // Si hay varios sujetos del mismo tipo en la foto, aislamos al número `index`.
+  const subject = isPet ? "animal/pet" : "person";
+  const isolate =
+    total > 1
+      ? `The photo contains ${total} ${subject}s. Create a figurine of ONLY ONE of them: the ${subject} number ${index} counting from LEFT to RIGHT in the photo. Show only that single ${subject} as one figurine; completely ignore and exclude the others. `
+      : "";
   if (!photoUrl) {
     return NextResponse.json({ error: "Falta la foto." }, { status: 400 });
   }
@@ -71,8 +79,8 @@ export async function POST(request: Request) {
     const file = await toFile(buffer, `foto.${ext}`, { type: inputMime });
 
     const prompt = isPet
-      ? `${PET_STYLE_PROMPT[styleId] ?? PET_STYLE_PROMPT.kawaii} ${PET_COMMON_PROMPT}`
-      : `${STYLE_PROMPT[styleId] ?? STYLE_PROMPT.kawaii} ${COMMON_PROMPT}`;
+      ? `${isolate}${PET_STYLE_PROMPT[styleId] ?? PET_STYLE_PROMPT.kawaii} ${PET_COMMON_PROMPT}`
+      : `${isolate}${STYLE_PROMPT[styleId] ?? STYLE_PROMPT.kawaii} ${COMMON_PROMPT}`;
     const openai = new OpenAI({ apiKey });
 
     // El filtro de OpenAI a veces rechaza fotos al límite (p. ej. bikini) de

@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       composicion: o.composicion,
       personas: o.personas,
       mascotas: o.mascotas,
-      previewUrl: o.previewUrl || "",
+      previewUrls: o.previewUrls || [],
       photoUrls: o.photoUrls || [],
       shipping: o.shipping,
       fulfillment: o.fulfillment || "RECIBIDO",

@@ -12,7 +12,7 @@ interface Order {
   estilo: string;
   tipo: string;
   composicion: string;
-  previewUrl: string;
+  previewUrls: string[];
   photoUrls: string[];
   shipping: { name?: string; address?: string; city?: string; zip?: string; country?: string };
   fulfillment: string;
@@ -137,9 +137,13 @@ function OrderCard({ order: o }: { order: Order }) {
     <div className="overflow-hidden rounded-2xl border border-line bg-white">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line p-5">
         <div className="flex items-center gap-4">
-          {o.previewUrl ? (
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
-              <Image src={o.previewUrl} alt="Figura" fill sizes="64px" className="object-contain" unoptimized={o.previewUrl.startsWith("data:")} />
+          {o.previewUrls && o.previewUrls.length > 0 ? (
+            <div className="flex shrink-0 -space-x-3">
+              {o.previewUrls.slice(0, 3).map((u, i) => (
+                <div key={i} className="relative h-16 w-16 overflow-hidden rounded-xl border-2 border-white bg-mist shadow-sm">
+                  <Image src={u} alt={`Figura ${i + 1}`} fill sizes="64px" className="object-contain" unoptimized={u.startsWith("data:")} />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl border border-line bg-mist text-2xl">🧩</div>

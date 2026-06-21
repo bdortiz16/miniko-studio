@@ -62,7 +62,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     STYLES.some((s) => s.id === initStyle) ? initStyle : STYLES[0].id
   );
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Una vista previa por cada figura detectada (personas + mascotas).
+  const [previews, setPreviews] = useState<(string | null)[]>([]);
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
   // Detección automática de cuántas figuras (personas/mascotas) hay en la foto.
@@ -127,6 +128,30 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
       : counts.pets > 0
       ? "Mascota"
       : "Persona";
+
+  // Lista de figuras a generar: primero las personas, luego las mascotas.
+  // Cada una sabe su tipo y su número dentro de su tipo (para aislar sujetos).
+  const figures: { kind: "persona" | "mascota"; index: number; ofKind: number }[] = [];
+  for (let i = 0; i < counts.people; i++)
+    figures.push({ kind: "persona", index: i + 1, ofKind: counts.people });
+  for (let i = 0; i < counts.pets; i++)
+    figures.push({ kind: "mascota", index: i + 1, ofKind: counts.pets });
+
+  // Mantiene el array de vistas previas del tamaño correcto al cambiar el conteo.
+  useEffect(() => {
+    setPreviews((prev) => {
+      const next = Array<string | null>(totalFigures).fill(null);
+      for (let i = 0; i < Math.min(prev.length, totalFigures); i++) next[i] = prev[i];
+      return next;
+    });
+  }, [totalFigures]);
+
+  const setPreviewAt = (i: number, url: string | null) =>
+    setPreviews((prev) => {
+      const next = [...prev];
+      next[i] = url;
+      return next;
+    });
 
   const variant = variantByPeople(totalFigures);
   const style = styleById(styleId)!;
@@ -196,9 +221,9 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
               photos={photos}
               style={style}
               styleId={styleId}
-              previewUrl={previewUrl}
-              setPreviewUrl={setPreviewUrl}
-              isPet={isPet}
+              figures={figures}
+              previews={previews}
+              setPreviewAt={setPreviewAt}
             />
           )}
           {step === 4 && <StepShipping shipping={shipping} setShipping={setShipping} />}
@@ -209,7 +234,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
               shipping={shipping}
               email={email}
               photos={photos}
-              previewUrl={previewUrl}
+              previews={previews}
               price={price}
               shipCents={shipCents}
               total={total}
@@ -781,26 +806,83 @@ function StepEmail({
 }
 
 /* ─────────────────────────── Paso 4: Preview (IA) ─────────────────────────── */
+type Figure = { kind: "persona" | "mascota"; index: number; ofKind: number };
+
 function StepPreview({
   photos,
   style,
   styleId,
-  previewUrl,
-  setPreviewUrl,
-  isPet,
+  figures,
+  previews,
+  setPreviewAt,
 }: {
   photos: Photo[];
   style: ReturnType<typeof styleById>;
   styleId: StyleId;
-  previewUrl: string | null;
-  setPreviewUrl: (u: string | null) => void;
-  isPet: boolean;
+  figures: Figure[];
+  previews: (string | null)[];
+  setPreviewAt: (i: number, url: string | null) => void;
+}) {
+  const multiple = figures.length > 1;
+  return (
+    <div>
+      <StepHeading
+        title={multiple ? "Tus figuras" : "Tu figura"}
+        subtitle={
+          multiple
+            ? `Detectamos ${figures.length} figuras: cada una se genera e imprime por separado. Desliza para verlas todas →`
+            : "Esta es una vista previa orientativa de tu figura. Recibirás el render final a aprobar antes de imprimir."
+        }
+      />
+
+      <div
+        className={`mt-8 flex gap-4 overflow-x-auto pb-3 ${
+          multiple ? "snap-x snap-mandatory" : "justify-center"
+        }`}
+      >
+        {figures.map((fig, i) => (
+          <PreviewWindow
+            key={i}
+            figure={fig}
+            number={i + 1}
+            total={figures.length}
+            styleName={style?.name || ""}
+            styleId={styleId}
+            photoUrl={photos[Math.min(i, photos.length - 1)]?.url || photos[0]?.url || ""}
+            url={previews[i] ?? null}
+            onResult={(u) => setPreviewAt(i, u)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Una ventana = una figura. Se genera sola al aparecer si aún no existe.
+function PreviewWindow({
+  figure,
+  number,
+  total,
+  styleName,
+  styleId,
+  photoUrl,
+  url,
+  onResult,
+}: {
+  figure: Figure;
+  number: number;
+  total: number;
+  styleName: string;
+  styleId: StyleId;
+  photoUrl: string;
+  url: string | null;
+  onResult: (u: string | null) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generate = useCallback(async () => {
-    if (!photos[0]) return;
+    if (!photoUrl) return;
     setLoading(true);
     setError(null);
     try {
@@ -808,120 +890,107 @@ function StepPreview({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          photoUrl: photos[0].url,
+          photoUrl,
           styleId,
-          tipo: isPet ? "mascota" : "persona",
+          tipo: figure.kind,
+          index: figure.index,
+          total: figure.ofKind,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo generar la figura.");
-      setPreviewUrl(data.url);
+      onResult(data.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar la figura.");
     } finally {
       setLoading(false);
     }
-  }, [photos, styleId, setPreviewUrl, isPet]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoUrl, styleId, figure.kind, figure.index, figure.ofKind]);
 
-  // Genera automáticamente al entrar al paso, si aún no hay preview.
+  // Genera automáticamente al aparecer si aún no hay imagen.
   useEffect(() => {
-    if (!previewUrl && !loading && !error && photos[0]) generate();
+    if (!url && !loading && !error && photoUrl) generate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const label =
+    total > 1
+      ? `${figure.kind === "mascota" ? "Mascota" : "Persona"} ${figure.index}`
+      : figure.kind === "mascota"
+      ? "Mascota"
+      : "Tu figura";
+
   return (
-    <div>
-      <StepHeading
-        title="Tu figura"
-        subtitle="Esta es una vista previa orientativa de tu figura. Recibirás el render final a aprobar antes de imprimir."
-      />
-
-      <div className="mx-auto mt-8 max-w-sm">
-        {/* Ventana de vista previa */}
-        <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-xl shadow-ink/5">
-          {/* Barra superior tipo ventana */}
-          <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-brand/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-line" />
-              <span className="h-2.5 w-2.5 rounded-full bg-line" />
-            </div>
-            <span className="text-xs font-semibold text-ink/50">Vista previa</span>
-            <span className="rounded-full border border-line px-2.5 py-0.5 text-[11px] font-semibold text-ink/70">
-              {style?.name}
-            </span>
+    <div className="w-[280px] shrink-0 snap-center">
+      <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-xl shadow-ink/5">
+        {/* Barra superior tipo ventana */}
+        <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-brand/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-line" />
+            <span className="h-2.5 w-2.5 rounded-full bg-line" />
           </div>
-
-          {/* Lienzo de la figura */}
-          <div className="relative aspect-[3/4] w-full bg-gradient-to-b from-mist to-white">
-            {loading && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/70 backdrop-blur-sm">
-                <span className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-brand" />
-                <p className="text-sm font-medium text-ink/70">Creando tu figura…</p>
-                <p className="text-xs text-ink/45">Puede tardar unos segundos</p>
-              </div>
-            )}
-
-            {previewUrl ? (
-              <Image
-                src={previewUrl}
-                alt="Vista previa de tu figura"
-                fill
-                sizes="(max-width: 640px) 100vw, 384px"
-                className="object-contain p-3"
-                unoptimized={previewUrl.startsWith("data:")}
-              />
-            ) : (
-              !loading &&
-              photos[0] && (
-                <Image
-                  src={photos[0].url}
-                  alt="Tu foto"
-                  fill
-                  sizes="384px"
-                  className="object-contain p-3 opacity-40"
-                />
-              )
-            )}
-
-            {/* Miniatura de la foto original */}
-            {photos[0] && (
-              <div className="absolute bottom-3 left-3 z-10 h-16 w-16 overflow-hidden rounded-xl border-2 border-white shadow-md">
-                <Image src={photos[0].url} alt="Tu foto" fill sizes="64px" className="object-cover" />
-              </div>
-            )}
-          </div>
-
-          {/* Pie de la ventana */}
-          <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
-            <p className="flex items-center gap-1.5 text-xs text-ink/55">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-              {loading ? "Generando con IA…" : previewUrl ? "Generada por IA · orientativa" : "Lista para generar"}
-            </p>
-            <button
-              onClick={generate}
-              disabled={loading || !photos[0]}
-              className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold transition hover:border-ink/40 disabled:opacity-40"
-            >
-              <span className={loading ? "animate-spin" : ""}>↻</span>
-              {loading ? "Generando…" : previewUrl ? "Regenerar" : "Generar"}
-            </button>
-          </div>
+          <span className="text-xs font-semibold text-ink/50">{label}</span>
+          <span className="rounded-full border border-line px-2.5 py-0.5 text-[11px] font-semibold text-ink/70">
+            {styleName}
+          </span>
         </div>
 
-        {/* Aviso suave (no choca con la figura ya mostrada) */}
-        {error && (
-          <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            <span className="mt-0.5">⚠️</span>
-            <p>
-              {error}{" "}
-              <button onClick={generate} className="font-semibold underline underline-offset-2">
-                Reintentar
-              </button>
-            </p>
-          </div>
-        )}
+        {/* Lienzo de la figura */}
+        <div className="relative aspect-[3/4] w-full bg-gradient-to-b from-mist to-white">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/70 backdrop-blur-sm">
+              <span className="h-9 w-9 animate-spin rounded-full border-2 border-line border-t-brand" />
+              <p className="text-sm font-medium text-ink/70">Creando figura…</p>
+            </div>
+          )}
+
+          {url ? (
+            <Image
+              src={url}
+              alt={label}
+              fill
+              sizes="280px"
+              className="object-contain p-3"
+              unoptimized={url.startsWith("data:")}
+            />
+          ) : (
+            !loading &&
+            photoUrl && (
+              <Image src={photoUrl} alt="Tu foto" fill sizes="280px" className="object-contain p-3 opacity-40" />
+            )
+          )}
+        </div>
+
+        {/* Pie de la ventana */}
+        <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-3">
+          <p className="flex items-center gap-1.5 text-xs text-ink/55">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+            {loading ? "Generando…" : url ? "Orientativa" : "Lista"}
+          </p>
+          <button
+            onClick={generate}
+            disabled={loading || !photoUrl}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-sm font-semibold transition hover:border-ink/40 disabled:opacity-40"
+          >
+            <span className={loading ? "animate-spin" : ""}>↻</span>
+            {loading ? "…" : url ? "Regenerar" : "Generar"}
+          </button>
+        </div>
       </div>
+
+      {error && (
+        <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <span>⚠️</span>
+          <p>
+            {error}{" "}
+            <button onClick={generate} className="font-semibold underline underline-offset-2">
+              Reintentar
+            </button>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -965,7 +1034,7 @@ function StepPay({
   shipping,
   email,
   photos,
-  previewUrl,
+  previews,
   price,
   shipCents,
   total,
@@ -978,7 +1047,7 @@ function StepPay({
   shipping: Shipping;
   email: string;
   photos: Photo[];
-  previewUrl: string | null;
+  previews: (string | null)[];
   price: number;
   shipCents: number;
   total: number;
@@ -1001,7 +1070,7 @@ function StepPay({
           variantId: variant.id,
           email,
           photoUrls: photos.map((p) => p.url),
-          previewUrl,
+          previewUrls: previews.filter((u): u is string => !!u),
           shipping,
           tipo: tipoLabel,
           personas: counts.people,

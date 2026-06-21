@@ -17,7 +17,7 @@ interface Order {
   envio_nombre: string;
   envio_direccion: string;
   fotos: string[];
-  figura_ia: string;
+  figuras_ia: string[];
   fulfillment: string;
   carrier: string;
   tracking: string;
@@ -134,16 +134,16 @@ export default function AdminPedidos() {
                       />
                     </a>
                   ))}
-                  {o.figura_ia && (
-                    <a href={o.figura_ia} target="_blank" rel="noreferrer" className="block">
+                  {o.figuras_ia?.map((f, i) => (
+                    <a key={`ia${i}`} href={f} target="_blank" rel="noreferrer" className="block">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={o.figura_ia}
-                        alt="Diseño IA"
+                        src={f}
+                        alt={`Diseño IA ${i + 1}`}
                         className="h-24 w-24 rounded-lg border-2 border-brand object-contain"
                       />
                     </a>
-                  )}
+                  ))}
                 </div>
 
                 {/* Envío */}

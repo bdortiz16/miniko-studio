@@ -13,7 +13,7 @@ interface OrderPayload {
   mascotas?: number;
   composicion?: string;
   photoUrls?: string[];
-  previewUrl?: string | null;
+  previewUrls?: string[];
   shipping?: {
     name?: string;
     address?: string;
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     personas: body.personas ?? variant.people,
     mascotas: body.mascotas ?? 0,
     photoUrls,
-    previewUrl: body.previewUrl && !body.previewUrl.startsWith("data:") ? body.previewUrl : null,
+    previewUrls: (body.previewUrls ?? []).filter((u) => u && !u.startsWith("data:")).slice(0, 8),
     shipping: {
       name: s.name,
       address: s.address,

@@ -21,7 +21,7 @@ export interface Order {
   personas: number;
   mascotas: number;
   photoUrls: string[];
-  previewUrl?: string | null;
+  previewUrls?: string[]; // una vista previa IA por figura
   shipping: {
     name?: string;
     address?: string;
