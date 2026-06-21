@@ -17,7 +17,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
       <span className="text-ink">k</span>
       <span className="relative inline-block text-ink">
         o
-        <span className="absolute -top-[0.32em] left-1/2 -translate-x-1/2 text-[0.4em] leading-none text-brand">
+        <span className="absolute -top-[0.32em] left-[70%] -translate-x-1/2 text-[0.4em] leading-none text-brand">
           ★
         </span>
       </span>
