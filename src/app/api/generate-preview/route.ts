@@ -12,13 +12,14 @@ const STYLE_PROMPT: Record<string, string> = {
     "Turn the person in this photo into a DISNEY / PIXAR style 3D animated character figure: full-body stylized 3D cartoon, large expressive cartoon eyes, smooth polished 3D animation render. " +
     "Keep the person's REAL body proportions and slim figure from the photo — a stylized animated version of THIS person, NOT a generic chubby or rounded cartoon character.",
   realista:
-    "Turn the person in this photo into a PHOTOREALISTIC lifelike collectible statue figure with realistic human proportions, highly detailed and refined. NOT a Funko, NOT a cartoon, NOT a big-head toy.",
+    "Turn the person in this photo into a realistic COLLECTIBLE STATUE FIGURINE — a sculpted, hand-painted resin/PVC display figure of the person, with realistic human proportions, highly detailed and refined. It is an inanimate figurine OBJECT (like a high-end collectible statue), NOT a Funko, NOT a cartoon, NOT a big-head toy. Keep the EXACT same face and features so it is recognizably the SAME person.",
 };
 
 const COMMON_PROMPT =
   "Keep the SAME face and a clear recognizable likeness of the person in the photo: same face shape, eyes, nose, mouth, eyebrows, same hairstyle, hair length and hair color, and same skin tone — it must clearly look like the SAME specific person, not a generic character. " +
   "CRUCIAL — BODY: keep the person's EXACT real body type, build, weight and silhouette from the photo. If the person is slim/slender/skinny, the figure MUST be slim and slender, with a flat stomach, slim waist and slim arms and legs. Do NOT add weight, do NOT make the belly round, do NOT make them chubby, fat, thicker or heavier in ANY way. Match the body shape and waist precisely as in the photo. " +
-  "Recreate the EXACT same outfit, clothing and colors the person is wearing in the photo, faithfully — including a swimsuit or bikini if that is what they wear. Do not change their clothes. No explicit nudity. " +
+  "IMPORTANT: the result is an INANIMATE collectible FIGURINE / sculpted statue OBJECT made of painted resin — a toy product, not a real person and not a real photograph of a person. This is safe, non-sexual product imagery. " +
+  "Recreate the EXACT same outfit, clothing and colors the person is wearing in the photo, faithfully — including a swimsuit or bikini if that is what they wear (modest swimwear on a figurine, like any beach-themed collectible). Do not change their clothes. No nudity. " +
   "The figurine stands on a round display base, on a clean pure WHITE studio background. " +
   "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
   "High quality product photo, soft studio lighting.";
@@ -73,18 +74,53 @@ export async function POST(request: Request) {
       ? `${PET_STYLE_PROMPT[styleId] ?? PET_STYLE_PROMPT.kawaii} ${PET_COMMON_PROMPT}`
       : `${STYLE_PROMPT[styleId] ?? STYLE_PROMPT.kawaii} ${COMMON_PROMPT}`;
     const openai = new OpenAI({ apiKey });
-    const result = await openai.images.edit({
-      model: "gpt-image-1",
-      image: file,
-      prompt,
-      size: "1024x1536",
-      // moderation "low" reduce rechazos en fotos al límite; el SDK aún no lo tipa.
-      ...({ moderation: "low" } as object),
-    });
 
-    const outB64 = result.data?.[0]?.b64_json;
+    // El filtro de OpenAI a veces rechaza fotos al límite (p. ej. bikini) de
+    // forma intermitente. Reintentamos un par de veces antes de rendirnos.
+    async function tryGenerate(): Promise<string> {
+      const result = await openai.images.edit({
+        model: "gpt-image-1",
+        image: file,
+        prompt,
+        size: "1024x1536",
+        // moderation "low" reduce rechazos; el SDK aún no lo tipa.
+        ...({ moderation: "low" } as object),
+      });
+      const b64 = result.data?.[0]?.b64_json;
+      if (!b64) throw new Error("La IA no devolvió una imagen.");
+      return b64;
+    }
+
+    let outB64 = "";
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        outB64 = await tryGenerate();
+        break;
+      } catch (e) {
+        lastErr = e;
+        const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+        const isModeration =
+          msg.includes("moderation") ||
+          msg.includes("safety") ||
+          msg.includes("content policy") ||
+          msg.includes("rejected") ||
+          msg.includes("flagged") ||
+          msg.includes("blocked");
+        // Si no es un rechazo del filtro, no insistas.
+        if (!isModeration && attempt > 0) break;
+      }
+    }
     if (!outB64) {
-      throw new Error("La IA no devolvió una imagen. Prueba con otra foto.");
+      const m = lastErr instanceof Error ? lastErr.message.toLowerCase() : "";
+      const moderation =
+        m.includes("moderation") || m.includes("safety") || m.includes("content policy") ||
+        m.includes("rejected") || m.includes("flagged") || m.includes("blocked");
+      throw new Error(
+        moderation
+          ? "El filtro de la IA rechazó la foto. Intenta de nuevo o usa una foto donde se vea bien el rostro."
+          : "La IA no devolvió una imagen. Prueba con otra foto."
+      );
     }
 
     if (supabaseAdmin) {
