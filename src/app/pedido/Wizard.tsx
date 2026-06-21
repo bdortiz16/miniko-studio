@@ -565,7 +565,7 @@ function StepPreview({
 
       <div className="mx-auto mt-8 max-w-lg">
         <div className="overflow-hidden rounded-2xl border border-line">
-          <div className="relative aspect-square bg-mist">
+          <div className="relative aspect-[3/4] bg-mist">
             {loading && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/70 backdrop-blur-sm">
                 <span className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-brand" />

@@ -20,7 +20,9 @@ const STYLE_PROMPT: Record<string, string> = {
 
 const COMMON_PROMPT =
   "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any. " +
+  "Keep the person's REAL body shape, build and proportions — do NOT make them chubbier/heavier or slimmer than in the photo. " +
   "Recreate the same outfit, clothing and colors the person is wearing in the photo. " +
+  "Tall vertical frame: show the ENTIRE figure from the top of the head to the feet, fully visible with empty padding above the head and below the feet, never cropped. " +
   "Clean studio product photo, a single figure centered, soft neutral background, high quality, soft studio lighting.";
 
 export async function POST(request: Request) {
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
       model: "gpt-image-1",
       image: file,
       prompt,
-      size: "1024x1024",
+      size: "1024x1536",
     });
 
     const outB64 = result.data?.[0]?.b64_json;
