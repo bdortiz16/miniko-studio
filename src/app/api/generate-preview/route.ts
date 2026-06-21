@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import OpenAI, { toFile } from "openai";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 
-// La generación de imagen puede tardar; ampliamos el límite (requiere plan Pro).
-export const maxDuration = 60;
+// La generación de imagen puede tardar; ampliamos al máximo (plan Pro: 300s).
+export const maxDuration = 300;
 
 const BASE_PROMPT =
   "Create a clean studio product photo of a Funko Pop style collectible vinyl figurine based on the person in this photo. " +

@@ -5,7 +5,7 @@ import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 // Genera las 3 imágenes de ejemplo de los estilos (mismo personaje, distinto
 // estilo) y las guarda en Supabase en rutas fijas: samples/<estilo>.png
 // Llámala UNA vez desde el navegador. Cuesta ~$0.45 en OpenAI (3 imágenes).
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 // Descripción del juguete (no una persona real) — el mismo personaje-mascota
 // de ejemplo en los 3 estilos, para que solo se vea el cambio de estilo.
