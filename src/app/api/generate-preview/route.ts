@@ -26,7 +26,8 @@ const COMMON_PROMPT =
   "CRUCIAL — BODY: keep the person's EXACT real body type, build, weight and silhouette from the photo. If the person is slim/slender/skinny, the figure MUST be slim and slender, with a flat stomach, slim waist and slim arms and legs. Do NOT add weight, do NOT make the belly round, do NOT make them chubby, fat, thicker or heavier in ANY way. Match the body shape and waist precisely as in the photo. " +
   "IMPORTANT: the result is an INANIMATE collectible FIGURINE / sculpted statue OBJECT made of painted resin — a toy product, not a real person and not a real photograph of a person. This is safe, non-sexual product imagery. " +
   "Recreate the EXACT same outfit, clothing and colors the person is wearing in the photo, faithfully — including a swimsuit or bikini if that is what they wear (modest swimwear on a figurine, like any beach-themed collectible). Do not change their clothes. No nudity. " +
-  "The figurine stands on a round display base, on a clean pure WHITE studio background. " +
+  "POSE: pose the figure STANDING UPRIGHT and straight in a neat, tidy, symmetrical, orderly STANDING pose, facing forward, both feet on the base — REGARDLESS of the pose in the original photo. Do NOT copy casual poses such as leaning, sitting, crossing arms or resting on a railing. " +
+  "BACKGROUND: completely REMOVE and ignore the original photo background (any room, street, landscape, railing or scenery). The figurine stands on a round display base, on a clean pure WHITE studio background — nothing else behind it. " +
   "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
   "High quality product photo, soft studio lighting.";
 
@@ -42,7 +43,8 @@ const PET_STYLE_PROMPT: Record<string, string> = {
 
 const PET_COMMON_PROMPT =
   "Keep the SAME animal: same species, breed, fur/coat color, markings and distinctive features — it must clearly look like the SAME pet from the photo. " +
-  "The figurine stands on a round display base, on a clean pure WHITE studio background. " +
+  "POSE: pose the animal in a neat, tidy, orderly STANDING or sitting pose, facing forward, REGARDLESS of the pose in the original photo. " +
+  "BACKGROUND: completely REMOVE and ignore the original photo background. The figurine stands on a round display base, on a clean pure WHITE studio background. " +
   "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
   "High quality product photo, soft studio lighting.";
 
@@ -79,9 +81,17 @@ export async function POST(request: Request) {
   try {
     let outB64 = "";
 
-    // 1) Replicate (face-to-many / InstantID): mejor parecido facial para los
-    // estilos estilizados (Funko/Disney) con un solo sujeto. Si falla, seguimos.
-    if (!isPet && total <= 1 && replicateConfigured() && replicateSupportsStyle(styleId)) {
+    // 1) Replicate (face-to-many / InstantID): preserva muy bien el rostro,
+    // PERO conserva el fondo y la pose originales (no respeta el look de figura
+    // sobre base con fondo blanco). Por eso queda desactivado salvo que se
+    // ponga REPLICATE_ENABLED=true a propósito.
+    if (
+      process.env.REPLICATE_ENABLED === "true" &&
+      !isPet &&
+      total <= 1 &&
+      replicateConfigured() &&
+      replicateSupportsStyle(styleId)
+    ) {
       try {
         const repUrl = await generateFaceToMany(photoUrl, styleId);
         const r = await fetch(repUrl);
