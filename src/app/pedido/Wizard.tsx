@@ -12,6 +12,7 @@ import {
   styleById,
   variantById,
 } from "@/data/catalog";
+import StyleImage from "@/components/StyleImage";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
 
@@ -244,7 +245,13 @@ function StepStyle({
                 </span>
               )}
               <div className="relative aspect-square w-full bg-mist">
-                <Image src={s.image} alt={s.name} fill sizes="200px" className="object-cover" />
+                <StyleImage
+                  src={s.image}
+                  fallback={`/styles/${s.id}.svg`}
+                  alt={s.name}
+                  sizes="200px"
+                  className="object-cover"
+                />
               </div>
               <div className="p-4">
                 <p className="font-display font-bold">{s.name}</p>

@@ -1,15 +1,15 @@
-import Image from "next/image";
 import Link from "next/link";
 import { FigureStyle } from "@/data/catalog";
+import StyleImage from "@/components/StyleImage";
 
 export default function StyleCard({ style }: { style: FigureStyle }) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:-translate-y-1 hover:border-ink/30">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-mist">
-        <Image
+        <StyleImage
           src={style.image}
+          fallback={`/styles/${style.id}.svg`}
           alt={`Estilo ${style.name}`}
-          fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover transition duration-500 group-hover:scale-105"
         />

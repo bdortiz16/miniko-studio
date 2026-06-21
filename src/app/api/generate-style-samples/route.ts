@@ -7,22 +7,25 @@ import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 // Llámala UNA vez desde el navegador. Cuesta ~$0.45 en OpenAI (3 imágenes).
 export const maxDuration = 120;
 
-// Mismo personaje en los 3 estilos para que se vea solo el cambio de estilo.
+// Descripción del juguete (no una persona real) — el mismo personaje-mascota
+// de ejemplo en los 3 estilos, para que solo se vea el cambio de estilo.
 const CHARACTER =
-  "the same friendly young adult character: medium-length wavy dark-brown hair, " +
-  "warm light-tan skin, wearing a casual sky-blue t-shirt and beige trousers with white sneakers";
+  "a cute fictional cartoon mascot toy character with brown hair, " +
+  "wearing a blue t-shirt and beige pants and white sneakers, " +
+  "holding a small laptop as an accessory (to show that personal accessories can be added)";
 
 const BASE = (styleLine: string) =>
-  `Studio product photo of a collectible figurine of ${CHARACTER}. ` +
-  `Single full-body figurine standing on a round display base, centered, soft neutral light-gray studio background, high quality. ${styleLine}`;
+  `Product photography of a small handmade collectible vinyl TOY figurine (a sculpted toy, not a real person) of ${CHARACTER}. ` +
+  `A single toy figurine standing on a round display base, fully visible from head to base, centered with some margin around it, ` +
+  `soft neutral light-gray studio background, clean catalog product shot. ${styleLine}`;
 
 const STYLE_LINES: Record<string, string> = {
   kawaii:
-    "Funko Pop / kawaii style: large oversized head with a small, slim, petite body, big round glossy black eyes, cute minimal face.",
+    "Style: cute kawaii vinyl toy with a large oversized head and a small slim petite body, big round glossy eyes, simple adorable face.",
   realista:
-    "Realistic premium collectible style: lifelike proportions, detailed face sculpt and refined paintwork.",
+    "Style: finely detailed hand-painted collectible toy figurine with neat proportions and refined paintwork (still clearly a stylized toy).",
   caricatura:
-    "Stylized 3D cartoon (Pixar-like) style: big expressive friendly face, playful proportions, vibrant colors.",
+    "Style: playful 3D cartoon toy figurine, big friendly expression, exaggerated fun proportions, vibrant colors.",
 };
 
 export async function GET(request: Request) {
@@ -63,13 +66,18 @@ export async function GET(request: Request) {
     return data.publicUrl;
   }
 
-  try {
-    const ids = Object.keys(STYLE_LINES);
-    const urls = await Promise.all(ids.map(makeOne));
-    const result = Object.fromEntries(ids.map((id, i) => [id, urls[i]]));
-    return NextResponse.json({ ok: true, samples: result });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error al generar.";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  const ids = Object.keys(STYLE_LINES);
+  const settled = await Promise.allSettled(ids.map(makeOne));
+  const samples: Record<string, string> = {};
+  const errors: Record<string, string> = {};
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") samples[ids[i]] = r.value;
+    else errors[ids[i]] = r.reason instanceof Error ? r.reason.message : "error";
+  });
+
+  const ok = Object.keys(samples).length > 0;
+  return NextResponse.json(
+    { ok, samples, errors: Object.keys(errors).length ? errors : undefined },
+    { status: ok ? 200 : 500 }
+  );
 }
