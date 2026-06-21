@@ -5,22 +5,23 @@ import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 // La generación de imagen puede tardar; ampliamos al máximo (plan Pro: 300s).
 export const maxDuration = 300;
 
-const BASE_PROMPT =
-  "Create a clean studio product photo of a Funko Pop style collectible vinyl figurine based on the person in this photo. " +
-  "Use classic Funko Pop proportions: a large oversized head and a SMALL, SLIM, PETITE body with a narrow torso and short, thin limbs " +
-  "(the body is clearly smaller and slimmer than the head, not chubby or wide). Standing on a round display base, on a soft neutral white background. " +
-  "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any. " +
-  "Recreate the exact same outfit, clothing and colors the person is wearing in the photo, faithfully. " +
-  "A single figurine, centered, high quality, soft studio lighting.";
-
+// Cada estilo define el LOOK por completo (antes el prompt forzaba Funko siempre).
 const STYLE_PROMPT: Record<string, string> = {
+  // Funko Pop
   kawaii:
-    "Style: cute kawaii chibi — extra-large head, big glossy sparkling eyes, tiny simplified nose, soft rounded shapes, gentle pastel tones, adorable expression.",
-  realista:
-    "Style: realistic premium collectible — finely detailed, accurate proportions, lifelike face sculpt and refined paintwork.",
+    "Turn the person in this photo into a classic FUNKO POP collectible vinyl figurine: very large oversized head, small short slim body, big round solid black dot eyes, simplified matte vinyl, standing on a round display base.",
+  // Disney
   caricatura:
-    "Style: fun exaggerated cartoon caricature — big expressive features, playful proportions, bold vibrant colors, full of personality.",
+    "Turn the person in this photo into a DISNEY / PIXAR style 3D animated character figure: full-body stylized cartoon with friendly proportions, large expressive cartoon eyes, smooth polished 3D animation render, standing.",
+  // Realista
+  realista:
+    "Turn the person in this photo into a PHOTOREALISTIC lifelike collectible statue figure: highly detailed realistic face, hair, skin and clothing with realistic human proportions, refined and premium, full body standing on a small base. It is NOT a Funko, NOT a cartoon, NOT a big-head toy — it looks like a real lifelike figure.",
 };
+
+const COMMON_PROMPT =
+  "Preserve the person's recognizable features: hairstyle and hair color, skin tone, facial hair, glasses if any. " +
+  "Recreate the same outfit, clothing and colors the person is wearing in the photo. " +
+  "Clean studio product photo, a single figure centered, soft neutral background, high quality, soft studio lighting.";
 
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     const file = await toFile(buffer, `foto.${ext}`, { type: inputMime });
 
     // 2) Generar la figura con gpt-image-1 (edición a partir de la foto).
-    const prompt = `${BASE_PROMPT} ${STYLE_PROMPT[styleId] ?? ""}`;
+    const prompt = `${STYLE_PROMPT[styleId] ?? STYLE_PROMPT.kawaii} ${COMMON_PROMPT}`;
     const openai = new OpenAI({ apiKey });
     const result = await openai.images.edit({
       model: "gpt-image-1",
