@@ -9,14 +9,15 @@ const STYLE_PROMPT: Record<string, string> = {
   kawaii:
     "Turn the person in this photo into a classic FUNKO POP collectible vinyl figurine: very large oversized head, small short slim body, big round solid black dot eyes, simplified matte vinyl.",
   caricatura:
-    "Turn the person in this photo into a DISNEY / PIXAR style 3D animated character figure: full-body stylized cartoon with friendly proportions, large expressive cartoon eyes, smooth polished 3D animation render.",
+    "Turn the person in this photo into a DISNEY / PIXAR style 3D animated character figure: full-body stylized 3D cartoon, large expressive cartoon eyes, smooth polished 3D animation render. " +
+    "Keep the person's REAL body proportions and slim figure from the photo — a stylized animated version of THIS person, NOT a generic chubby or rounded cartoon character.",
   realista:
     "Turn the person in this photo into a PHOTOREALISTIC lifelike collectible statue figure with realistic human proportions, highly detailed and refined. NOT a Funko, NOT a cartoon, NOT a big-head toy.",
 };
 
 const COMMON_PROMPT =
-  "Keep the SAME face and exact likeness of the person in the photo: same face shape, eyes, nose, mouth, eyebrows and hairstyle — it must clearly look like the SAME person. " +
-  "Keep the person's REAL body type, build and weight from the photo (if slim, keep slim; do NOT make them chubby or heavier). " +
+  "Keep the SAME face and a clear recognizable likeness of the person in the photo: same face shape, eyes, nose, mouth, eyebrows, same hairstyle, hair length and hair color, and same skin tone — it must clearly look like the SAME specific person, not a generic character. " +
+  "CRUCIAL — BODY: keep the person's EXACT real body type, build, weight and silhouette from the photo. If the person is slim/slender/skinny, the figure MUST be slim and slender, with a flat stomach, slim waist and slim arms and legs. Do NOT add weight, do NOT make the belly round, do NOT make them chubby, fat, thicker or heavier in ANY way. Match the body shape and waist precisely as in the photo. " +
   "Recreate the EXACT same outfit, clothing and colors the person is wearing in the photo, faithfully — including a swimsuit or bikini if that is what they wear. Do not change their clothes. No explicit nudity. " +
   "The figurine stands on a round display base, on a clean pure WHITE studio background. " +
   "Tall vertical frame, zoomed out: the whole figure is small and centered with generous margin on all sides, fully visible from head to the base, never cropped. " +
