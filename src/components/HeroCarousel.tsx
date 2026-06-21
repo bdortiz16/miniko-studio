@@ -69,8 +69,8 @@ export default function HeroCarousel() {
       return {
         ...base,
         left: "50%",
-        bottom: isMobile ? "16%" : "2%",
-        height: isMobile ? "58%" : "90%",
+        bottom: isMobile ? "18%" : "5%",
+        height: isMobile ? "50%" : "76%",
         transform: "translateX(-50%) scale(1)",
         filter: "none",
         opacity: 1,
