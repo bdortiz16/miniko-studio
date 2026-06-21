@@ -121,6 +121,22 @@ export const VARIANTS: Variant[] = [
     height: "Hasta 20 cm de alto",
     people: 6,
   },
+  {
+    id: "grupo7",
+    name: "7 personajes",
+    description: "Siete personajes en una escena.",
+    priceCop: 489000,
+    height: "Hasta 20 cm de alto",
+    people: 7,
+  },
+  {
+    id: "grupo8",
+    name: "8 personajes",
+    description: "Ocho personajes en una escena.",
+    priceCop: 539000,
+    height: "Hasta 20 cm de alto",
+    people: 8,
+  },
 ];
 
 export const SHIPPING = {
@@ -166,6 +182,12 @@ export function styleById(id: string): FigureStyle | undefined {
 
 export function variantById(id: string): Variant | undefined {
   return VARIANTS.find((v) => v.id === id);
+}
+
+// Devuelve la variante (paquete) según el nº de figuras detectadas (1–6).
+export function variantByPeople(people: number): Variant {
+  const n = Math.min(VARIANTS.length, Math.max(1, people));
+  return VARIANTS.find((v) => v.people === n) ?? VARIANTS[VARIANTS.length - 1];
 }
 
 export function formatCop(cop: number): string {

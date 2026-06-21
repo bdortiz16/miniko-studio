@@ -29,6 +29,7 @@ export async function GET(request: Request) {
           amount: s.amount_total,
           currency: (s.currency || "eur").toUpperCase(),
           tipo: m.tipo || "",
+          composicion: m.composicion || "",
           estilo: m.estilo || "",
           tamano: m.tamano || m["tamaño"] || "",
           personas: m.personas || "",

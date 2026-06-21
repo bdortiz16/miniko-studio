@@ -7,7 +7,10 @@ interface OrderPayload {
   styleId: string;
   variantId: string;
   email?: string;
-  tipo?: string; // "mascota" | "persona"
+  tipo?: string; // "Persona" | "Mascota" | "Persona + Mascota"
+  personas?: number; // nº de personas detectadas
+  mascotas?: number; // nº de mascotas detectadas
+  composicion?: string; // "1 persona + 1 mascota"
   photoUrls?: string[];
   previewUrl?: string | null;
   shipping?: {
@@ -49,15 +52,17 @@ export async function POST(request: Request) {
   const unitAmount = priceOf(settings, variant.id, variant.priceCop) * 100;
   const shippingAmount = shipOf(settings, variant.people) * 100;
 
-  const photoUrls = (body.photoUrls ?? []).slice(0, 6);
+  const photoUrls = (body.photoUrls ?? []).slice(0, 8);
   const s = body.shipping ?? {};
 
   // Metadatos: todo lo que el negocio necesita para preparar el pedido.
   const metadata: Record<string, string> = {
-    tipo: body.tipo === "mascota" ? "Mascota" : "Persona",
+    tipo: body.tipo || "Persona",
+    composicion: body.composicion || variant.name,
     estilo: style.name,
     tamano: variant.name,
-    personas: String(variant.people),
+    personas: String(body.personas ?? variant.people),
+    mascotas: String(body.mascotas ?? 0),
     envio_nombre: s.name ?? "",
     envio_direccion: [s.address, s.city, s.zip, s.country].filter(Boolean).join(", "),
   };

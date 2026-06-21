@@ -10,6 +10,7 @@ interface Order {
   amount: number;
   currency: string;
   tipo: string;
+  composicion: string;
   estilo: string;
   tamano: string;
   personas: string;
@@ -90,15 +91,15 @@ export default function AdminPedidos() {
                     {o.tipo && (
                       <span
                         className={`mr-2 rounded-full border px-2 py-0.5 align-middle text-xs font-bold ${
-                          o.tipo === "Mascota"
+                          o.tipo.includes("Mascota")
                             ? "border-brand text-brand"
                             : "border-line text-ink/60"
                         }`}
                       >
-                        {o.tipo === "Mascota" ? "🐾 Mascota" : "Persona"}
+                        {o.tipo.includes("Mascota") ? `🐾 ${o.tipo}` : o.tipo}
                       </span>
                     )}
-                    {o.estilo || "—"} · {o.tamano || "—"}
+                    {o.estilo || "—"} · {o.composicion || o.tamano || "—"}
                   </p>
                   <p className="text-sm text-ink/60">
                     {o.email} · {new Date(o.created * 1000).toLocaleString("es-CO")}

@@ -5,12 +5,12 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   STYLES,
-  VARIANTS,
   MASCOTS,
   StyleId,
   formatCop,
   styleById,
   variantById,
+  variantByPeople,
 } from "@/data/catalog";
 import {
   Settings,
@@ -22,12 +22,21 @@ import {
 import StyleImage from "@/components/StyleImage";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
+const MAX_FIGURES = 8; // máximo de personas/mascotas por pedido
 
 // Imagen de mascota de ejemplo por estilo (perro Funko, gato Disney, perro
 // realista) para mostrarla en el selector cuando es un pedido de mascota.
 const mascotByStyle: Record<string, string> = Object.fromEntries(
   MASCOTS.map((m) => [m.styleId, m.image])
 );
+
+// "1 persona + 1 mascota", "2 personas", "3 mascotas"…
+function composeLabel({ people, pets }: { people: number; pets: number }): string {
+  const parts: string[] = [];
+  if (people > 0) parts.push(`${people} ${people === 1 ? "persona" : "personas"}`);
+  if (pets > 0) parts.push(`${pets} ${pets === 1 ? "mascota" : "mascotas"}`);
+  return parts.join(" + ") || "1 figura";
+}
 
 interface Photo {
   url: string;
@@ -52,11 +61,15 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   const [styleId, setStyleId] = useState<StyleId>(
     STYLES.some((s) => s.id === initStyle) ? initStyle : STYLES[0].id
   );
-  const [variantId, setVariantId] = useState(VARIANTS[0].id);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  // Detección automática de cuántas figuras (personas/mascotas) hay en la foto.
+  const [detected, setDetected] = useState<{ people: number; pets: number } | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  // Ajuste manual opcional por si la IA cuenta mal.
+  const [manual, setManual] = useState<{ people: number; pets: number } | null>(null);
   const [shipping, setShipping] = useState<Shipping>({
     name: "",
     address: "",
@@ -70,10 +83,49 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     getSettings().then(setSettings).catch(() => {});
   }, []);
 
-  const variant = variantById(variantId)!;
+  // Analiza las fotos para contar personas y mascotas automáticamente.
+  const detect = useCallback(async (urls: string[]) => {
+    setManual(null);
+    if (urls.length === 0) {
+      setDetected(null);
+      return;
+    }
+    setDetecting(true);
+    try {
+      const res = await fetch("/api/detect-subjects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrls: urls }),
+      });
+      const data = await res.json();
+      if (res.ok && typeof data.people === "number") {
+        setDetected({ people: data.people, pets: data.pets });
+      } else {
+        // Si la detección no está disponible, asume 1 figura del tipo del flujo.
+        setDetected({ people: isPet ? 0 : 1, pets: isPet ? 1 : 0 });
+      }
+    } catch {
+      setDetected({ people: isPet ? 0 : 1, pets: isPet ? 1 : 0 });
+    } finally {
+      setDetecting(false);
+    }
+  }, [isPet]);
+
+  // Recuento efectivo (manual si el usuario lo ajustó; si no, el detectado).
+  const counts = manual ?? detected ?? { people: isPet ? 0 : 1, pets: isPet ? 1 : 0 };
+  const totalFigures = Math.min(MAX_FIGURES, Math.max(1, counts.people + counts.pets));
+  const composicion = composeLabel(counts);
+  const tipoLabel =
+    counts.people > 0 && counts.pets > 0
+      ? "Persona + Mascota"
+      : counts.pets > 0
+      ? "Mascota"
+      : "Persona";
+
+  const variant = variantByPeople(totalFigures);
   const style = styleById(styleId)!;
   const price = priceOf(settings, variant.id, variant.priceCop);
-  const shipCents = shipOf(settings, variant.people);
+  const shipCents = shipOf(settings, totalFigures);
   const total = price + shipCents;
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
@@ -81,8 +133,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
 
   // Validación por paso para habilitar "Continuar".
   const canContinue =
-    (step === 0 && !!styleId && !!variantId) ||
-    (step === 1 && photos.length > 0) ||
+    (step === 0 && !!styleId) ||
+    (step === 1 && photos.length > 0 && !detecting) ||
     // Basta con un email válido para avanzar. La verificación por código es un
     // extra (funciona cuando Resend está configurado) pero no bloquea el flujo.
     (step === 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
@@ -107,21 +159,21 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
 
         <div className="mt-12">
           {step === 0 && (
-            <StepStyle
-              styleId={styleId}
-              setStyleId={setStyleId}
-              variantId={variantId}
-              setVariantId={setVariantId}
-              settings={settings}
-              isPet={isPet}
-            />
+            <StepStyle styleId={styleId} setStyleId={setStyleId} isPet={isPet} />
           )}
           {step === 1 && (
             <StepPhotos
               photos={photos}
               setPhotos={setPhotos}
-              maxPhotos={variant.people}
+              maxPhotos={MAX_FIGURES}
               isPet={isPet}
+              detecting={detecting}
+              detected={detected}
+              counts={counts}
+              totalFigures={totalFigures}
+              composicion={composicion}
+              setManual={setManual}
+              onPhotosChange={detect}
             />
           )}
           {step === 2 && (
@@ -154,7 +206,9 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
               price={price}
               shipCents={shipCents}
               total={total}
-              isPet={isPet}
+              counts={counts}
+              composicion={composicion}
+              tipoLabel={tipoLabel}
             />
           )}
         </div>
@@ -182,7 +236,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
         {/* Resumen permanente abajo. */}
         <div className="mt-10 flex items-center justify-between border-t border-line pt-5 text-sm">
           <div className="flex items-center gap-5 text-ink/60">
-            <span>👥 {variant.people}</span>
+            <span>🧩 {totalFigures} {totalFigures === 1 ? "figura" : "figuras"}</span>
             <span>📦 {formatCop(price)}</span>
             <span>🚚 {shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
           </div>
@@ -251,16 +305,10 @@ function StepHeading({ title, subtitle }: { title: string; subtitle: string }) {
 function StepStyle({
   styleId,
   setStyleId,
-  variantId,
-  setVariantId,
-  settings,
   isPet,
 }: {
   styleId: StyleId;
   setStyleId: (id: StyleId) => void;
-  variantId: string;
-  setVariantId: (id: string) => void;
-  settings: Settings;
   isPet: boolean;
 }) {
   return (
@@ -307,31 +355,10 @@ function StepStyle({
           );
         })}
       </div>
-
-      <h2 className="mt-10 text-center font-display text-lg font-bold">
-        {isPet ? "¿Cuántas mascotas?" : "¿Cuántos personajes?"}
-      </h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        {VARIANTS.map((v) => {
-          const selected = v.id === variantId;
-          return (
-            <button
-              key={v.id}
-              onClick={() => setVariantId(v.id)}
-              className={`rounded-2xl border p-4 text-center transition ${
-                selected ? "border-ink ring-2 ring-ink/10" : "border-line hover:border-ink/30"
-              }`}
-            >
-              <span className="block font-semibold">{v.name}</span>
-              <span className="block text-xs text-ink/50">{v.description}</span>
-              <span className="mt-1 block font-display font-bold">
-                {formatCop(priceOf(settings, v.id, v.priceCop))}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-3 text-center text-xs text-ink/40">* Cada personaje mide hasta 15 cm.</p>
+      <p className="mt-6 text-center text-sm text-ink/55">
+        No te preocupes por la cantidad: al subir la foto detectamos
+        automáticamente cuántas personas y mascotas hay. 🪄
+      </p>
     </div>
   );
 }
@@ -369,14 +396,38 @@ function StepPhotos({
   setPhotos,
   maxPhotos,
   isPet,
+  detecting,
+  detected,
+  counts,
+  totalFigures,
+  composicion,
+  setManual,
+  onPhotosChange,
 }: {
   photos: Photo[];
   setPhotos: (p: Photo[]) => void;
   maxPhotos: number;
   isPet: boolean;
+  detecting: boolean;
+  detected: { people: number; pets: number } | null;
+  counts: { people: number; pets: number };
+  totalFigures: number;
+  composicion: string;
+  setManual: (c: { people: number; pets: number } | null) => void;
+  onPhotosChange: (urls: string[]) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [adjust, setAdjust] = useState(false);
+
+  // Cambia la lista de fotos y dispara la detección automática.
+  const commit = useCallback(
+    (list: Photo[]) => {
+      setPhotos(list);
+      onPhotosChange(list.map((p) => p.url));
+    },
+    [setPhotos, onPhotosChange]
+  );
 
   const upload = useCallback(
     async (files: FileList) => {
@@ -409,23 +460,21 @@ function StepPhotos({
           if (!res.ok) throw new Error(data.error || "Error al subir.");
           added.push({ url: data.url, name: file.name });
         }
-        setPhotos([...photos, ...added]);
+        commit([...photos, ...added]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Error al subir la imagen.");
       } finally {
         setUploading(false);
       }
     },
-    [photos, setPhotos, maxPhotos]
+    [photos, commit, maxPhotos]
   );
 
   return (
     <div>
       <StepHeading
         title={isPet ? "Sube la foto de tu mascota" : "Sube tu foto"}
-        subtitle={`Una foto nítida y bien iluminada funciona mejor. Hasta ${maxPhotos} ${
-          maxPhotos === 1 ? "imagen" : "imágenes"
-        }.`}
+        subtitle="Sube una foto nítida y bien iluminada. Detectamos solos cuántas figuras lleva tu pedido."
       />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -433,7 +482,7 @@ function StepPhotos({
           <div key={i} className="group relative aspect-square overflow-hidden rounded-2xl border border-line">
             <Image src={p.url} alt={p.name} fill sizes="200px" className="object-cover" />
             <button
-              onClick={() => setPhotos(photos.filter((_, j) => j !== i))}
+              onClick={() => commit(photos.filter((_, j) => j !== i))}
               className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-white/90 text-sm shadow"
               aria-label="Quitar"
             >
@@ -463,9 +512,94 @@ function StepPhotos({
           {error}
         </p>
       )}
-      <p className="mt-4 text-center text-xs text-ink/40">
-        Tus fotos solo se usan para crear tu figura. JPG, PNG o WEBP · máx. 10 MB.
-      </p>
+
+      {/* Resultado de la detección automática */}
+      {photos.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-line bg-white p-5 text-center">
+          {detecting ? (
+            <p className="flex items-center justify-center gap-2 text-sm text-ink/60">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-brand" />
+              Detectando cuántas figuras hay en tu foto…
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-ink/60">Detectamos</p>
+              <p className="mt-1 font-display text-xl font-extrabold">{composicion}</p>
+              <p className="mt-1 text-sm text-ink/70">
+                = {totalFigures} {totalFigures === 1 ? "figura" : "figuras"}
+              </p>
+              <p className="mt-1 text-xs text-ink/45">
+                Cada figura va por separado (en impresión 3D solo se imprime una por base).
+              </p>
+              <button
+                onClick={() => {
+                  setAdjust((v) => !v);
+                  if (!adjust && detected) setManual({ ...counts });
+                }}
+                className="mt-2 text-xs font-semibold text-brand underline underline-offset-2"
+              >
+                {adjust ? "Listo" : "¿No coincide? Ajustar"}
+              </button>
+
+              {adjust && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-6">
+                  <Counter
+                    label="Personas"
+                    value={counts.people}
+                    onChange={(v) => setManual({ people: v, pets: counts.pets })}
+                  />
+                  <Counter
+                    label="Mascotas"
+                    value={counts.pets}
+                    onChange={(v) => setManual({ people: counts.people, pets: v })}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Reglas / consejos para mejores resultados */}
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-center text-xs text-ink/40">
+        <span>👥 Máximo {maxPhotos} personas/mascotas por pedido.</span>
+        <span>📷 Las fotos de cuerpo entero con fondos sencillos funcionan mejor.</span>
+        <span>🐾 Mascotas: de pie o sentadas, no acurrucadas.</span>
+      </div>
+    </div>
+  );
+}
+
+// Contador +/- para ajustar manualmente personas o mascotas.
+function Counter({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="text-xs font-semibold text-ink/60">{label}</span>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => onChange(Math.max(0, value - 1))}
+          className="grid h-8 w-8 place-items-center rounded-full border border-line text-lg leading-none hover:border-ink/40"
+          aria-label={`Menos ${label}`}
+        >
+          −
+        </button>
+        <span className="w-6 text-center font-display text-lg font-bold">{value}</span>
+        <button
+          onClick={() => onChange(Math.min(8, value + 1))}
+          className="grid h-8 w-8 place-items-center rounded-full border border-line text-lg leading-none hover:border-ink/40"
+          aria-label={`Más ${label}`}
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }
@@ -772,7 +906,9 @@ function StepPay({
   price,
   shipCents,
   total,
-  isPet,
+  counts,
+  composicion,
+  tipoLabel,
 }: {
   style: NonNullable<ReturnType<typeof styleById>>;
   variant: NonNullable<ReturnType<typeof variantById>>;
@@ -783,7 +919,9 @@ function StepPay({
   price: number;
   shipCents: number;
   total: number;
-  isPet: boolean;
+  counts: { people: number; pets: number };
+  composicion: string;
+  tipoLabel: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -802,7 +940,10 @@ function StepPay({
           photoUrls: photos.map((p) => p.url),
           previewUrl,
           shipping,
-          tipo: isPet ? "mascota" : "persona",
+          tipo: tipoLabel,
+          personas: counts.people,
+          mascotas: counts.pets,
+          composicion,
         }),
       });
       const data = await res.json();
@@ -825,11 +966,11 @@ function StepPay({
           <span className="font-medium">{style.name}</span>
         </div>
         <div className={`${row} border-t border-line`}>
-          <span className="text-ink/55">{isPet ? "Mascotas" : "Personajes"}</span>
-          <span className="font-medium">{variant.people}</span>
+          <span className="text-ink/55">Figuras</span>
+          <span className="font-medium">{composicion}</span>
         </div>
         <div className={`${row} border-t border-line`}>
-          <span className="text-ink/55">Kit</span>
+          <span className="text-ink/55">Kit ({variant.people} {variant.people === 1 ? "figura" : "figuras"})</span>
           <span className="font-medium">{formatCop(price)}</span>
         </div>
         <div className={`${row} border-t border-line`}>
