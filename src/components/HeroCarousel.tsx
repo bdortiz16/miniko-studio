@@ -215,7 +215,7 @@ export default function HeroCarousel() {
 
         {/* Texto + navegación abajo izquierda */}
         <div
-          className="absolute bottom-6 left-4 sm:bottom-16 sm:left-16"
+          className="absolute bottom-10 left-4 sm:bottom-28 sm:left-16"
           style={{ zIndex: 60, maxWidth: 360, color: active.text, transition: `color 650ms ${EASE}` }}
         >
           <p className="mb-2 text-sm font-bold uppercase tracking-[0.25em]" style={{ opacity: 0.9 }}>
@@ -251,7 +251,7 @@ export default function HeroCarousel() {
         </div>
 
         {/* Botón CTA abajo derecha */}
-        <div className="absolute bottom-6 right-4 sm:bottom-16 sm:right-12" style={{ zIndex: 60 }}>
+        <div className="absolute bottom-10 right-4 sm:bottom-28 sm:right-12" style={{ zIndex: 60 }}>
           <Link
             href={`/pedido?estilo=${active.style.id}`}
             className="group inline-flex items-center gap-2 rounded-full px-7 py-4 text-base font-bold uppercase tracking-wide shadow-lg transition hover:scale-[1.04] sm:px-9 sm:py-5 sm:text-lg"
