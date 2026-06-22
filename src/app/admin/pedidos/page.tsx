@@ -207,6 +207,64 @@ function Tracking({ order }: { order: Order }) {
 
   const input = "w-full rounded-xl border border-line px-3 py-2 text-sm outline-none focus:border-ink";
 
+  // Abre un sticker 10x15 cm autoimprimible (impresora térmica). Usa los datos
+  // actuales del formulario, así puedes pegar la guía y imprimir al instante.
+  function printLabel() {
+    const esc = (s: string) =>
+      String(s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] as string));
+    const fecha = new Date(order.created * 1000).toLocaleDateString("es-CO");
+    const guia = tracking.trim();
+    const transp = carrier.trim();
+    const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Etiqueta ${esc(order.id)}</title>
+<style>
+  @page { size: 100mm 150mm; margin: 0; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; padding:0; }
+  body { font-family: Arial, Helvetica, sans-serif; color:#111; }
+  .label { width:100mm; min-height:150mm; padding:6mm; display:flex; flex-direction:column; gap:3mm; }
+  .top { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #111; padding-bottom:2mm; }
+  .brand { font-size:24pt; font-weight:800; letter-spacing:-0.5px; }
+  .tag { font-size:9pt; font-weight:700; text-transform:uppercase; }
+  .sec { font-size:8pt; text-transform:uppercase; letter-spacing:1px; color:#666; }
+  .big { font-size:13pt; font-weight:700; line-height:1.25; }
+  .addr { font-size:12pt; line-height:1.35; }
+  .content { font-size:10pt; }
+  .guia-box { margin-top:auto; border:2px solid #111; border-radius:4px; padding:3mm; text-align:center; }
+  .guia-num { font-size:22pt; font-weight:800; letter-spacing:1px; }
+  .muted { font-size:8pt; color:#888; }
+  .row { display:flex; justify-content:space-between; }
+</style></head>
+<body onload="window.print()">
+  <div class="label">
+    <div class="top"><span class="brand">miniko<span style="color:#E5322D">.</span></span><span class="tag">Envío</span></div>
+    <div>
+      <div class="sec">Destinatario</div>
+      <div class="big">${esc(order.envio_nombre) || "—"}</div>
+      <div class="addr">${esc(order.envio_direccion) || "Sin dirección"}</div>
+    </div>
+    <div>
+      <div class="sec">Contenido</div>
+      <div class="content">${esc(order.tipo)} · ${esc(order.estilo)} · ${esc(order.composicion)} · ${esc(order.personas)} personaje(s)</div>
+    </div>
+    <div class="guia-box">
+      <div class="sec">${transp ? esc(transp) : "Transportadora (99Envios)"}</div>
+      <div class="guia-num">${guia ? esc(guia) : "—— guía ——"}</div>
+      ${guia ? "" : '<div class="muted">Genera la guía en 99Envios y vuelve a imprimir</div>'}
+    </div>
+    <div class="row"><span class="muted">Pedido: ${esc(order.id)}</span><span class="muted">${fecha}</span></div>
+  </div>
+  <script>window.onafterprint = function(){ setTimeout(function(){ window.close(); }, 300); };</script>
+</body></html>`;
+    const w = window.open("", "_blank", "width=420,height=640");
+    if (!w) {
+      alert("Permite las ventanas emergentes para imprimir la etiqueta.");
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
   return (
     <div className="mt-5 rounded-xl border border-line bg-mist/60 p-4">
       <p className="text-sm font-semibold">📦 Seguimiento del cliente</p>
@@ -232,9 +290,12 @@ function Tracking({ order }: { order: Order }) {
         Nota para el cliente (opcional)
         <input value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Tu figura está en producción 🎨" className={`mt-1 ${input}`} />
       </label>
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <button onClick={save} disabled={saving} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
           {saving ? "Guardando…" : "Guardar seguimiento"}
+        </button>
+        <button onClick={printLabel} type="button" className="btn-secondary px-5 py-2 text-sm">
+          🖨️ Imprimir etiqueta
         </button>
         {saved && <span className="text-sm font-semibold text-green-600">✓ Guardado</span>}
       </div>
