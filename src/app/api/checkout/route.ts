@@ -4,6 +4,18 @@ import { getSettings, priceOf, shipOf } from "@/lib/settings";
 import { buildCheckoutUrl, getSiteUrl, wompiConfigured } from "@/lib/wompi";
 import { saveOrder, Order } from "@/lib/orders";
 
+// Dominio real de ESTA petición. Evita que redirect-url quede como
+// http://localhost:3000 (que el firewall de Wompi bloquea con 403).
+function originFromRequest(request: Request): string {
+  const h = request.headers;
+  const origin = h.get("origin");
+  if (origin && !origin.includes("localhost")) return origin;
+  const host = h.get("x-forwarded-host") || h.get("host");
+  const proto = h.get("x-forwarded-proto") || "https";
+  if (host && !host.includes("localhost")) return `${proto}://${host}`;
+  return getSiteUrl();
+}
+
 interface OrderPayload {
   styleId: string;
   variantId: string;
@@ -92,7 +104,7 @@ export async function POST(request: Request) {
   const url = buildCheckoutUrl({
     reference,
     amountInCents,
-    redirectUrl: `${getSiteUrl()}/exito`,
+    redirectUrl: `${originFromRequest(request)}/exito`,
     customerEmail: body.email || undefined,
   });
 
