@@ -60,8 +60,14 @@ export async function POST(request: Request) {
     typeof body.whatsapp === "string" ? body.whatsapp.replace(/[^\d+\s]/g, "").trim() : def.whatsapp;
   const adminEmail =
     typeof body.adminEmail === "string" ? body.adminEmail.trim() : def.adminEmail;
+  const whatsappIcon =
+    typeof body.whatsappIcon === "string" ? body.whatsappIcon : def.whatsappIcon;
+  const supportIcon =
+    typeof body.supportIcon === "string" ? body.supportIcon : def.supportIcon;
 
-  const settings: Settings = { prices, shippingCop, freeFromPeople, whatsapp, adminEmail };
+  const settings: Settings = {
+    prices, shippingCop, freeFromPeople, whatsapp, adminEmail, whatsappIcon, supportIcon,
+  };
 
   try {
     const { error } = await supabaseAdmin.storage

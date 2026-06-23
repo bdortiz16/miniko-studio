@@ -8,6 +8,8 @@ export interface Settings {
   freeFromPeople: number; // envío gratis desde N personajes
   whatsapp: string; // número de WhatsApp de soporte (solo el número)
   adminEmail: string; // correo donde llegan los avisos de pedidos nuevos
+  whatsappIcon: string; // URL del Funko (camiseta WhatsApp) generado con IA
+  supportIcon: string; // URL del Funko de soporte/asistente generado con IA
 }
 
 const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,6 +22,8 @@ export function defaultSettings(): Settings {
     freeFromPeople: SHIPPING.freeFromPeople,
     whatsapp: "",
     adminEmail: "",
+    whatsappIcon: "",
+    supportIcon: "",
   };
 }
 
@@ -40,6 +44,8 @@ export async function getSettings(): Promise<Settings> {
         typeof data.freeFromPeople === "number" ? data.freeFromPeople : def.freeFromPeople,
       whatsapp: typeof data.whatsapp === "string" ? data.whatsapp : def.whatsapp,
       adminEmail: typeof data.adminEmail === "string" ? data.adminEmail : def.adminEmail,
+      whatsappIcon: typeof data.whatsappIcon === "string" ? data.whatsappIcon : def.whatsappIcon,
+      supportIcon: typeof data.supportIcon === "string" ? data.supportIcon : def.supportIcon,
     };
   } catch {
     return def;

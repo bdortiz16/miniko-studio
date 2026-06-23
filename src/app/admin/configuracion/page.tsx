@@ -10,6 +10,23 @@ export default function AdminConfiguracion() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [genIcons, setGenIcons] = useState(false);
+
+  async function generarIconos() {
+    setGenIcons(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/generate-icons", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudieron generar los íconos.");
+      setSettings((s) => (s ? { ...s, whatsappIcon: data.whatsappIcon, supportIcon: data.supportIcon } : s));
+      setMsg({ ok: true, text: "✓ Funkos generados. Ya aparecen en los botones." });
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Error al generar." });
+    } finally {
+      setGenIcons(false);
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -112,6 +129,28 @@ export default function AdminConfiguracion() {
               ) : (
                 <p className="mt-2 text-xs text-ink/40">Vacío = no se muestra el botón de WhatsApp.</p>
               )}
+            </div>
+          </section>
+
+          {/* Funkos con IA */}
+          <section className="mt-6 rounded-2xl border border-line bg-white p-6">
+            <h2 className="font-display text-lg font-bold">Íconos Funko (IA)</h2>
+            <p className="mt-1 text-sm text-ink/55">
+              Genera con IA un Funko con camiseta de WhatsApp (para el botón de soporte) y un Funko
+              asistente. Reemplazan los íconos actuales de los botones flotantes.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              {settings.whatsappIcon && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={settings.whatsappIcon} alt="Funko WhatsApp" className="h-20 w-20 rounded-xl border border-line object-contain" />
+              )}
+              {settings.supportIcon && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={settings.supportIcon} alt="Funko soporte" className="h-20 w-20 rounded-xl border border-line object-contain" />
+              )}
+              <button onClick={generarIconos} disabled={genIcons} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+                {genIcons ? "Generando… (puede tardar)" : settings.whatsappIcon ? "Regenerar Funkos" : "Generar Funkos con IA"}
+              </button>
             </div>
           </section>
 

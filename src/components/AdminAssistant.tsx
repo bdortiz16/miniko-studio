@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MiFigure } from "@/components/MiniIcons";
+import { getSettings } from "@/lib/settings";
 
 // Asistente del admin: vive en todas las páginas del panel. Revisa pedidos cada
 // 25s, avisa de los nuevos (sonido + notificación del navegador) y muestra
@@ -33,6 +34,7 @@ export default function AdminAssistant() {
   const [newCount, setNewCount] = useState(0);
   const [bump, setBump] = useState(false);
   const [notify, setNotify] = useState(false);
+  const [icon, setIcon] = useState("");
 
   const known = useRef<Set<string>>(new Set());
   const first = useRef(true);
@@ -107,6 +109,7 @@ export default function AdminAssistant() {
 
   useEffect(() => {
     load();
+    getSettings().then((s) => { if (s.supportIcon) setIcon(s.supportIcon); }).catch(() => {});
     const t = window.setInterval(load, 25000);
     return () => window.clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,9 +146,14 @@ export default function AdminAssistant() {
       <button
         onClick={togglePanel}
         aria-label="Asistente"
-        className="fixed bottom-5 right-5 z-[80] grid h-16 w-16 place-items-center rounded-full border-2 border-brand bg-white text-brand shadow-lg transition hover:scale-105"
+        className="fixed bottom-5 right-5 z-[80] grid h-16 w-16 place-items-center overflow-hidden rounded-full border-2 border-brand bg-white text-brand shadow-lg transition hover:scale-105"
       >
-        <MiFigure className={`h-9 w-9 ${bump ? "animate-bounce" : ""}`} />
+        {icon ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={icon} alt="Asistente" className={`h-full w-full object-contain p-1 ${bump ? "animate-bounce" : ""}`} />
+        ) : (
+          <MiFigure className={`h-9 w-9 ${bump ? "animate-bounce" : ""}`} />
+        )}
         {badge > 0 && (
           <span className={`absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full px-1 text-xs font-bold text-white ${badgeColor}`}>
             {badge}
