@@ -24,12 +24,24 @@ function money(amount: number, currency: string) {
 }
 
 function shell(title: string, inner: string): string {
-  return `<div style="font-family:system-ui,Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#2b2b2b">
-    <h2 style="margin:0 0 4px;font-size:24px">miniko<span style="color:#E5322D">.</span></h2>
-    <h3 style="margin:16px 0 8px">${title}</h3>
-    ${inner}
-    <p style="color:#999;font-size:12px;margin-top:24px">Miniko · Pereira, Colombia · <a href="${SITE}" style="color:#999">miniko.com.co</a></p>
+  return `<div style="background:#f4f4f5;padding:32px 16px;font-family:system-ui,Arial,sans-serif">
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #ececec;border-radius:16px;overflow:hidden">
+      <div style="height:6px;background:#E5322D"></div>
+      <div style="padding:32px 32px 8px">
+        <div style="font-size:26px;font-weight:800;color:#111;margin-bottom:18px">miniko<span style="color:#E5322D">.</span></div>
+        <h1 style="font-size:18px;margin:0 0 12px;color:#111">${title}</h1>
+        <div style="font-size:14px;color:#444;line-height:1.6">${inner}</div>
+      </div>
+      <div style="padding:16px 32px;margin-top:16px;border-top:1px solid #f0f0f0;color:#9a9a9a;font-size:12px">
+        Miniko · Pereira, Colombia · <a href="${SITE}" style="color:#9a9a9a;text-decoration:none">miniko.com.co</a>
+      </div>
+    </div>
   </div>`;
+}
+
+// Plantilla reutilizable también desde otros endpoints (p. ej. el código de acceso).
+export function emailShell(title: string, inner: string): string {
+  return shell(title, inner);
 }
 
 function row(label: string, value: string): string {

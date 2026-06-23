@@ -26,15 +26,15 @@ export default function Footer() {
           links={[
             { href: "/faq", label: "Preguntas frecuentes" },
             { href: "/#como-funciona", label: "Cómo funciona" },
-            { href: "mailto:hola@miniko.studio", label: "Contacto" },
+            { href: "mailto:miniko.byandrea@gmail.com", label: "Contacto" },
           ]}
         />
         <FooterCol
           title="Legal"
           links={[
-            { href: "#", label: "Términos" },
-            { href: "#", label: "Privacidad" },
-            { href: "#", label: "Envíos y devoluciones" },
+            { href: "/terminos", label: "Términos" },
+            { href: "/privacidad", label: "Privacidad" },
+            { href: "/envios", label: "Envíos y devoluciones" },
           ]}
         />
       </div>
