@@ -72,13 +72,18 @@ export default function ExitoClient() {
           </div>
         )}
 
-        <div className="mt-8 flex justify-center gap-3">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           {failed && (
             <Link href="/pedido" className="btn-primary">
               Intentar de nuevo
             </Link>
           )}
-          <Link href="/" className={failed ? "btn-secondary" : "btn-primary"}>
+          {ok && (
+            <Link href="/mis-pedidos" className="btn-primary">
+              Ver mis pedidos →
+            </Link>
+          )}
+          <Link href="/" className={ok || failed ? "btn-secondary" : "btn-primary"}>
             Volver al inicio
           </Link>
         </div>
