@@ -203,6 +203,10 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   // sigue con el email/envío. Si una falla, reintenta sola varias veces.
   type GenStatus = "idle" | "loading" | "done" | "error";
   const [genStatus, setGenStatus] = useState<GenStatus[]>([]);
+  // Foto alternativa por figura (cuando el cliente cambia solo una).
+  const [photoOverrides, setPhotoOverrides] = useState<(string | null)[]>([]);
+  const photoOverridesRef = useRef<(string | null)[]>([]);
+  photoOverridesRef.current = photoOverrides;
 
   // Refs con los valores actuales (evita closures obsoletos en el generador).
   const figuresRef = useRef(figures);
@@ -222,12 +226,13 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     attemptsRef.current = Array(n).fill(0);
     setPreviews(Array<string | null>(n).fill(null));
     setGenStatus(Array<GenStatus>(n).fill("idle"));
+    setPhotoOverrides(Array<string | null>(n).fill(null));
   }, [figuresKey, photosKey, styleId]);
 
   const generateFigure = useCallback(async (i: number) => {
     const fig = figuresRef.current[i];
     const ph = photosRef.current;
-    const photoUrl = ph[Math.min(i, ph.length - 1)]?.url;
+    const photoUrl = photoOverridesRef.current[i] || ph[Math.min(i, ph.length - 1)]?.url;
     if (!fig || !photoUrl) return;
     setGenStatus((p) => { const n = [...p]; n[i] = "loading"; return n; });
     try {
@@ -275,6 +280,24 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     attemptsRef.current[i] = 0;
     setGenStatus((p) => { const n = [...p]; n[i] = "idle"; return n; });
   };
+
+  // Cambiar la foto de UNA sola figura (sin tocar las demás ni volver atrás).
+  const changeFigurePhoto = useCallback(async (i: number, file: File) => {
+    setGenStatus((p) => { const n = [...p]; n[i] = "loading"; return n; });
+    try {
+      const blob = await compressImage(file);
+      const fd = new FormData();
+      fd.append("file", blob, "foto.jpg");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "fallo");
+      setPhotoOverrides((p) => { const n = [...p]; n[i] = data.url; return n; });
+      attemptsRef.current[i] = 0;
+      setGenStatus((p) => { const n = [...p]; n[i] = "idle"; return n; });
+    } catch {
+      setGenStatus((p) => { const n = [...p]; n[i] = "error"; return n; });
+    }
+  }, []);
 
   const variant = variantByPeople(totalFigures);
   const style = styleById(styleId)!;
@@ -346,6 +369,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
               previews={previews}
               genStatus={genStatus}
               onRegenerate={regenerate}
+              onChangePhoto={changeFigurePhoto}
             />
           )}
           {step === 4 && <StepShipping shipping={shipping} setShipping={setShipping} />}
@@ -952,12 +976,14 @@ function StepPreview({
   previews,
   genStatus,
   onRegenerate,
+  onChangePhoto,
 }: {
   style: ReturnType<typeof styleById>;
   figures: Figure[];
   previews: (string | null)[];
   genStatus: GenStatus[];
   onRegenerate: (i: number) => void;
+  onChangePhoto: (i: number, file: File) => void;
 }) {
   const multiple = figures.length > 1;
   return (
@@ -985,6 +1011,7 @@ function StepPreview({
             url={previews[i] ?? null}
             status={genStatus[i] ?? "idle"}
             onRegenerate={() => onRegenerate(i)}
+            onChangePhoto={(file) => onChangePhoto(i, file)}
           />
         ))}
       </div>
@@ -1001,6 +1028,7 @@ function PreviewWindow({
   url,
   status,
   onRegenerate,
+  onChangePhoto,
 }: {
   figure: Figure;
   total: number;
@@ -1008,6 +1036,7 @@ function PreviewWindow({
   url: string | null;
   status: GenStatus;
   onRegenerate: () => void;
+  onChangePhoto: (file: File) => void;
 }) {
   const busy = status === "loading" || (status === "idle" && !url);
   const label =
@@ -1059,19 +1088,34 @@ function PreviewWindow({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-3">
+        <div className="border-t border-line px-4 py-3">
           <p className="flex items-center gap-1.5 text-xs text-ink/55">
             <span className={`h-1.5 w-1.5 rounded-full ${status === "error" ? "bg-amber-500" : "bg-brand"}`} />
             {busy ? "Generando…" : url ? "Orientativa" : status === "error" ? "Reintentando…" : "En cola…"}
           </p>
-          <button
-            onClick={onRegenerate}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-sm font-semibold transition hover:border-ink/40 disabled:opacity-40"
-          >
-            <span className={busy ? "animate-spin" : ""}>↻</span>
-            {busy ? "…" : url ? "Regenerar" : "Reintentar"}
-          </button>
+          <div className="mt-2 flex items-center gap-2">
+            <label className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold transition hover:border-ink/40 ${busy ? "pointer-events-none opacity-40" : ""}`}>
+              <MiCamera /> Cambiar foto
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onChangePhoto(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <button
+              onClick={onRegenerate}
+              disabled={busy}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold transition hover:border-ink/40 disabled:opacity-40"
+            >
+              <span className={busy ? "animate-spin" : ""}>↻</span>
+              {busy ? "…" : url ? "Regenerar" : "Reintentar"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
