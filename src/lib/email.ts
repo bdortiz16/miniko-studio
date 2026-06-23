@@ -62,6 +62,25 @@ export async function sendOrderConfirmation(order: Order): Promise<void> {
   await send(order.email, "Confirmación de tu pedido Miniko 🎁", shell("Pago confirmado", inner));
 }
 
+// Aviso al ADMIN (tú) cuando entra un pedido nuevo pagado.
+export async function sendAdminNewOrder(order: Order): Promise<void> {
+  const to = process.env.ADMIN_EMAIL;
+  if (!to) return; // sin ADMIN_EMAIL configurado, no se envía
+  const s = order.shipping || {};
+  const dir = [s.address, s.city, s.zip, s.country].filter(Boolean).join(", ");
+  const inner = `
+    <p>Entró un pedido nuevo pagado. 🎉</p>
+    <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
+      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Cliente", order.email || "—")}
+      ${row("Estilo", `${order.estilo} · ${order.composicion}`)}
+      ${row("Total", `<b>${money(order.amount, order.currency)}</b>`)}
+      ${row("Enviar a", `${s.name || "—"}${dir ? `<br>${dir}` : ""}`)}
+    </table>
+    <p style="font-size:14px"><a href="${SITE}/admin/pedidos" style="color:#E5322D">Abrir el panel de pedidos</a></p>`;
+  await send(to, `Nuevo pedido ${order.reference} · ${money(order.amount, order.currency)}`, shell("Nuevo pedido", inner));
+}
+
 // Aviso de envío con la guía cuando el admin marca el pedido como ENVIADO.
 export async function sendShippingNotice(order: Order): Promise<void> {
   if (!order.email) return;
