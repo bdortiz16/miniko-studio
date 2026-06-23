@@ -326,11 +326,8 @@ function Tracking({ order }: { order: Order }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Generación de guía con Envia.com (prefill con lo capturado en el checkout).
+  // Generación de guía con Envia.com (usa los datos que dio el cliente).
   const [labelUrl, setLabelUrl] = useState(order.labelUrl || "");
-  const [phone, setPhone] = useState(order.envio_telefono || "");
-  const [depto, setDepto] = useState(order.envio_departamento || "");
-  const [postal, setPostal] = useState("");
   const [genLoading, setGenLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
@@ -365,7 +362,7 @@ function Tracking({ order }: { order: Order }) {
       const res = await fetch("/api/admin/generar-guia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: order.id, phone, state: depto, postalCode: postal }),
+        body: JSON.stringify({ reference: order.id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo generar la guía.");
@@ -503,22 +500,22 @@ function Tracking({ order }: { order: Order }) {
           <div className="rounded-xl border border-line bg-white p-4">
             <p className="text-sm font-semibold">🚚 Generar guía y enviar</p>
             <p className="mt-1 text-xs text-ink/55">
-              Verifica los datos del destinatario (vienen del cliente) y genera la guía con Envia.com.
-              Esto crea la guía y la etiqueta, marca el pedido como <b>Enviado</b> y avisa al cliente.
+              Con los datos que dio el cliente, genera la guía con Envia.com. Esto crea la guía
+              y la etiqueta, marca el pedido como <b>Enviado</b> y avisa al cliente.
             </p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <label className="text-xs font-medium text-ink/60">
-                Teléfono destinatario
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="3001234567" className={`mt-1 ${input}`} />
-              </label>
-              <label className="text-xs font-medium text-ink/60">
-                Departamento
-                <input value={depto} onChange={(e) => setDepto(e.target.value)} placeholder="Antioquia" className={`mt-1 ${input}`} />
-              </label>
-              <label className="text-xs font-medium text-ink/60">
-                Código postal (opcional)
-                <input value={postal} onChange={(e) => setPostal(e.target.value)} placeholder="050001" className={`mt-1 ${input}`} />
-              </label>
+            <div className="mt-3 grid gap-2 rounded-xl border border-line bg-mist/50 p-3 text-sm sm:grid-cols-3">
+              <div>
+                <span className="text-xs text-ink/50">Destinatario</span>
+                <p className="font-medium text-ink">{order.envio_nombre || "—"}</p>
+              </div>
+              <div>
+                <span className="text-xs text-ink/50">Teléfono</span>
+                <p className="font-medium text-ink">{order.envio_telefono || "—"}</p>
+              </div>
+              <div>
+                <span className="text-xs text-ink/50">Departamento</span>
+                <p className="font-medium text-ink">{order.envio_departamento || "—"}</p>
+              </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-4">
               <button onClick={generarGuiaYEnviar} disabled={genLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">

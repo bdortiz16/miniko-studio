@@ -18,6 +18,42 @@ export function enviaConfigured(): boolean {
   return !!TOKEN;
 }
 
+// Envia.com exige el departamento como CÓDIGO corto (ISO 3166-2:CO), no el
+// nombre completo. Mapeamos nombre -> código.
+const CO_STATES: Record<string, string> = {
+  amazonas: "AMA", antioquia: "ANT", arauca: "ARA", atlantico: "ATL",
+  bogota: "DC", "bogota dc": "DC", "distrito capital": "DC",
+  bolivar: "BOL", boyaca: "BOY", caldas: "CAL", caqueta: "CAQ", casanare: "CAS",
+  cauca: "CAU", cesar: "CES", choco: "CHO", cordoba: "COR", cundinamarca: "CUN",
+  guainia: "GUA", guaviare: "GUV", huila: "HUI", "la guajira": "LAG", guajira: "LAG",
+  magdalena: "MAG", meta: "MET", narino: "NAR", "norte de santander": "NSA",
+  putumayo: "PUT", quindio: "QUI", risaralda: "RIS",
+  "san andres y providencia": "SAP", "san andres": "SAP", santander: "SAN",
+  sucre: "SUC", tolima: "TOL", "valle del cauca": "VAC", valle: "VAC",
+  vaupes: "VAU", vichada: "VID",
+};
+
+function norm(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\./g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function coStateCode(name: string): string {
+  const n = norm(name);
+  if (CO_STATES[n]) return CO_STATES[n];
+  if (/^[a-z]{2,3}$/i.test((name || "").trim())) return name.trim().toUpperCase();
+  return name; // se envía tal cual; Envia validará
+}
+
+function withStateCode(a: Address): Address {
+  return { ...a, state: coStateCode(a.state) };
+}
+
 function base(): string {
   return process.env.ENVIA_SANDBOX === "true"
     ? "https://api-test.envia.com"
@@ -123,8 +159,8 @@ export async function quote(
   declaredValue: number
 ): Promise<RateOption[]> {
   const json = await call("/ship/rate/", {
-    origin,
-    destination,
+    origin: withStateCode(origin),
+    destination: withStateCode(destination),
     packages: [defaultPackage(declaredValue)],
     shipment: { type: 1 },
   });
@@ -150,8 +186,8 @@ export async function generate(
   service: string
 ): Promise<GeneratedGuide> {
   const json = await call("/ship/generate/", {
-    origin,
-    destination,
+    origin: withStateCode(origin),
+    destination: withStateCode(destination),
     packages: [defaultPackage(declaredValue)],
     shipment: { type: 1, carrier, service },
   });
