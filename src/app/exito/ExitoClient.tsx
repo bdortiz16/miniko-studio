@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { MiCheck, MiClock, MiX, MiWarn } from "@/components/MiniIcons";
 
 type State = "loading" | "APPROVED" | "PENDING" | "DECLINED" | "VOIDED" | "ERROR";
 
@@ -38,13 +39,14 @@ export default function ExitoClient() {
   }, [id]);
 
   const ui = {
-    loading: { emoji: "⏳", title: "Confirmando tu pago…", desc: "Un momento, estamos verificando la transacción con Wompi." },
-    APPROVED: { emoji: "🎉", title: "¡Gracias por tu pedido!", desc: "Tu pago fue aprobado. En breve recibirás un correo de confirmación con los siguientes pasos para crear tu figura 3D." },
-    PENDING: { emoji: "🕓", title: "Pago en proceso", desc: "Tu pago está siendo procesado. Te avisaremos por correo en cuanto se confirme. Puede tardar unos minutos." },
-    DECLINED: { emoji: "❌", title: "Pago rechazado", desc: "Tu pago no pudo completarse. Puedes intentarlo de nuevo con otro medio de pago." },
-    VOIDED: { emoji: "❌", title: "Pago anulado", desc: "La transacción fue anulada. Puedes intentarlo de nuevo." },
-    ERROR: { emoji: "⚠️", title: "Hubo un problema", desc: "Ocurrió un error con el pago. Intenta de nuevo o contáctanos." },
+    loading: { Icon: MiClock, color: "text-ink/40", title: "Confirmando tu pago…", desc: "Un momento, estamos verificando la transacción con Wompi." },
+    APPROVED: { Icon: MiCheck, color: "text-green-600", title: "¡Gracias por tu pedido!", desc: "Tu pago fue aprobado. En breve recibirás un correo de confirmación con los siguientes pasos para crear tu figura 3D." },
+    PENDING: { Icon: MiClock, color: "text-amber-500", title: "Pago en proceso", desc: "Tu pago está siendo procesado. Te avisaremos por correo en cuanto se confirme. Puede tardar unos minutos." },
+    DECLINED: { Icon: MiX, color: "text-brand", title: "Pago rechazado", desc: "Tu pago no pudo completarse. Puedes intentarlo de nuevo con otro medio de pago." },
+    VOIDED: { Icon: MiX, color: "text-brand", title: "Pago anulado", desc: "La transacción fue anulada. Puedes intentarlo de nuevo." },
+    ERROR: { Icon: MiWarn, color: "text-brand", title: "Hubo un problema", desc: "Ocurrió un error con el pago. Intenta de nuevo o contáctanos." },
   }[state];
+  const StateIcon = ui.Icon;
 
   const ok = state === "APPROVED";
   const failed = ["DECLINED", "VOIDED", "ERROR"].includes(state);
@@ -52,12 +54,8 @@ export default function ExitoClient() {
   return (
     <div className="section">
       <div className="container-x max-w-xl text-center">
-        <div
-          className={`mx-auto grid h-24 w-24 place-items-center rounded-full border text-5xl ${
-            failed ? "border-brand/50" : "border-brand/50"
-          }`}
-        >
-          {ui.emoji}
+        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full border border-brand/50">
+          <StateIcon className={`h-12 w-12 ${ui.color}`} />
         </div>
         <h1 className="mt-7 font-display text-3xl font-extrabold">{ui.title}</h1>
         <p className="mt-4 text-ink/60">{ui.desc}</p>

@@ -82,3 +82,44 @@ export function MiPaw({ className = "", ...p }: P) {
     </svg>
   );
 }
+
+// Check en círculo — pago aprobado.
+export function MiCheck({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.2l2.6 2.6L16 9.5" />
+    </svg>
+  );
+}
+
+// Reloj — pago en proceso / cargando.
+export function MiClock({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
+}
+
+// X en círculo — pago rechazado/anulado.
+export function MiX({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9l6 6M15 9l-6 6" />
+    </svg>
+  );
+}
+
+// Triángulo de alerta — error.
+export function MiWarn({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <path d="M12 4 2.5 20h19L12 4z" />
+      <path d="M12 10v4" />
+      <circle cx="12" cy="17" r="0.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
