@@ -15,6 +15,8 @@ interface Order {
   tamano: string;
   personas: string;
   envio_nombre: string;
+  envio_telefono: string;
+  envio_departamento: string;
   envio_direccion: string;
   fotos: string[];
   figuras_ia: string[];
@@ -158,6 +160,7 @@ export default function AdminPedidos() {
                   <p className="mt-1">
                     <span className="font-semibold text-ink">Enviar a:</span>{" "}
                     {o.envio_nombre || "—"}
+                    {o.envio_telefono ? ` · 📱 ${o.envio_telefono}` : ""}
                   </p>
                   <p className="mt-1">{o.envio_direccion || "Sin dirección"}</p>
                   <p className="mt-2 text-xs text-ink/40">ID: {o.id}</p>
@@ -221,10 +224,10 @@ function Tracking({ order }: { order: Order }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Generación de guía con Envia.com.
+  // Generación de guía con Envia.com (prefill con lo capturado en el checkout).
   const [labelUrl, setLabelUrl] = useState(order.labelUrl || "");
-  const [phone, setPhone] = useState("");
-  const [depto, setDepto] = useState("");
+  const [phone, setPhone] = useState(order.envio_telefono || "");
+  const [depto, setDepto] = useState(order.envio_departamento || "");
   const [postal, setPostal] = useState("");
   const [genLoading, setGenLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -308,6 +311,7 @@ function Tracking({ order }: { order: Order }) {
     <div>
       <div class="sec">Destinatario</div>
       <div class="big">${esc(order.envio_nombre) || "—"}</div>
+      ${order.envio_telefono ? `<div class="addr">📱 ${esc(order.envio_telefono)}</div>` : ""}
       <div class="addr">${esc(order.envio_direccion) || "Sin dirección"}</div>
     </div>
     <div>

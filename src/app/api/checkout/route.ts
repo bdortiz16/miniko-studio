@@ -28,8 +28,11 @@ interface OrderPayload {
   previewUrls?: string[];
   shipping?: {
     name?: string;
+    phone?: string;
     address?: string;
+    reference?: string;
     city?: string;
+    department?: string;
     zip?: string;
     country?: string;
   };
@@ -87,8 +90,11 @@ export async function POST(request: Request) {
     previewUrls: (body.previewUrls ?? []).filter((u) => u && !u.startsWith("data:")).slice(0, 8),
     shipping: {
       name: s.name,
+      phone: s.phone,
       address: s.address,
+      reference: s.reference,
       city: s.city,
+      department: s.department,
       zip: s.zip,
       country: s.country,
     },

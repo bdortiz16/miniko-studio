@@ -39,15 +39,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Pedido no encontrado." }, { status: 404 });
   }
 
-  // Destino: datos del pedido completados con lo que el admin haya ingresado.
+  // Destino: datos del pedido (capturados en el checkout); el admin puede
+  // sobrescribir teléfono/departamento si hiciera falta.
+  const sh = order.shipping || {};
+  const street = [body.street || sh.address, sh.reference].filter(Boolean).join(", ");
   const destination: Address = {
-    name: (body.name || order.shipping?.name || "").trim(),
-    phone: (body.phone || "").trim(),
-    street: (body.street || order.shipping?.address || "").trim(),
-    city: (body.city || order.shipping?.city || "").trim(),
-    state: (body.state || "").trim(),
+    name: (body.name || sh.name || "").trim(),
+    phone: (body.phone || sh.phone || "").trim(),
+    street: street.trim(),
+    city: (body.city || sh.city || "").trim(),
+    state: (body.state || sh.department || "").trim(),
     country: "CO",
-    postalCode: (body.postalCode || order.shipping?.zip || "").trim() || undefined,
+    postalCode: (body.postalCode || sh.zip || "").trim() || undefined,
   };
 
   const missing: string[] = [];

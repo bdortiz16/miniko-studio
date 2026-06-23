@@ -24,8 +24,11 @@ export interface Order {
   previewUrls?: string[]; // una vista previa IA por figura
   shipping: {
     name?: string;
+    phone?: string;
     address?: string;
+    reference?: string;
     city?: string;
+    department?: string;
     zip?: string;
     country?: string;
   };

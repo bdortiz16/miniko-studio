@@ -44,11 +44,24 @@ interface Photo {
 }
 interface Shipping {
   name: string;
+  phone: string;
   address: string;
+  reference: string;
   city: string;
+  department: string;
   zip: string;
   country: string;
 }
+
+// Departamentos de Colombia (los exige la transportadora).
+const DEPARTAMENTOS = [
+  "Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar",
+  "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó",
+  "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira",
+  "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío",
+  "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima",
+  "Valle del Cauca", "Vaupés", "Vichada",
+];
 
 export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}) {
   const params = useSearchParams();
@@ -74,8 +87,11 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   const [manual, setManual] = useState<{ people: number; pets: number } | null>(null);
   const [shipping, setShipping] = useState<Shipping>({
     name: "",
+    phone: "",
     address: "",
+    reference: "",
     city: "",
+    department: "",
     zip: "",
     country: "Colombia",
   });
@@ -101,7 +117,12 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
         if (typeof s.emailVerified === "boolean") setEmailVerified(s.emailVerified);
         if (s.detected) setDetected(s.detected);
         if (s.manual) setManual(s.manual);
-        if (s.shipping) setShipping(s.shipping);
+        if (s.shipping)
+          setShipping({
+            name: "", phone: "", address: "", reference: "",
+            city: "", department: "", zip: "", country: "Colombia",
+            ...s.shipping,
+          });
       }
     } catch {
       /* almacenamiento no disponible */
@@ -272,9 +293,10 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     step === 3 ||
     (step === 4 &&
       !!shipping.name &&
+      !!shipping.phone &&
       !!shipping.address &&
       !!shipping.city &&
-      !!shipping.zip);
+      !!shipping.department);
 
   return (
     <div className="section">
@@ -1059,23 +1081,63 @@ function StepShipping({
 }) {
   const field = (k: keyof Shipping) => ({
     value: shipping[k],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setShipping({ ...shipping, [k]: e.target.value }),
   });
   const input =
     "w-full rounded-xl border border-line px-4 py-2.5 outline-none focus:border-ink";
+  const label = "text-xs font-medium text-ink/60";
 
   return (
     <div>
       <StepHeading title="Datos de envío" subtitle="¿A dónde enviamos tu kit?" />
-      <div className="mx-auto mt-8 grid max-w-lg gap-3">
-        <input className={input} placeholder="Nombre y apellidos" {...field("name")} />
-        <input className={input} placeholder="Dirección" {...field("address")} />
+      <div className="mx-auto mt-8 grid max-w-lg gap-3 text-left">
+        <label className="block">
+          <span className={label}>Nombre y apellidos *</span>
+          <input className={`mt-1 ${input}`} placeholder="Nombre completo" {...field("name")} />
+        </label>
+        <label className="block">
+          <span className={label}>Celular *</span>
+          <input
+            className={`mt-1 ${input}`}
+            inputMode="tel"
+            placeholder="3001234567"
+            {...field("phone")}
+          />
+        </label>
+        <label className="block">
+          <span className={label}>Dirección *</span>
+          <input className={`mt-1 ${input}`} placeholder="Calle 82 # 37-68" {...field("address")} />
+        </label>
+        <label className="block">
+          <span className={label}>Referencia / barrio (opcional)</span>
+          <input className={`mt-1 ${input}`} placeholder="Bosques de Bambú, casa azul…" {...field("reference")} />
+        </label>
         <div className="grid grid-cols-2 gap-3">
-          <input className={input} placeholder="Ciudad" {...field("city")} />
-          <input className={input} placeholder="Código postal" {...field("zip")} />
+          <label className="block">
+            <span className={label}>Departamento *</span>
+            <select className={`mt-1 ${input} bg-white`} {...field("department")}>
+              <option value="">Selecciona…</option>
+              {DEPARTAMENTOS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className={label}>Ciudad / Municipio *</span>
+            <input className={`mt-1 ${input}`} placeholder="Pereira" {...field("city")} />
+          </label>
         </div>
-        <input className={input} placeholder="País" {...field("country")} />
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className={label}>Código postal (opcional)</span>
+            <input className={`mt-1 ${input}`} placeholder="660001" {...field("zip")} />
+          </label>
+          <label className="block">
+            <span className={label}>País</span>
+            <input className={`mt-1 ${input}`} placeholder="País" {...field("country")} />
+          </label>
+        </div>
       </div>
     </div>
   );

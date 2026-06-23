@@ -24,7 +24,16 @@ export async function GET(request: Request) {
         tamano: o.composicion,
         personas: String(o.personas),
         envio_nombre: o.shipping?.name || "",
-        envio_direccion: [o.shipping?.address, o.shipping?.city, o.shipping?.zip, o.shipping?.country]
+        envio_telefono: o.shipping?.phone || "",
+        envio_departamento: o.shipping?.department || "",
+        envio_direccion: [
+          o.shipping?.address,
+          o.shipping?.reference,
+          o.shipping?.city,
+          o.shipping?.department,
+          o.shipping?.zip,
+          o.shipping?.country,
+        ]
           .filter(Boolean)
           .join(", "),
         fotos: o.photoUrls || [],
