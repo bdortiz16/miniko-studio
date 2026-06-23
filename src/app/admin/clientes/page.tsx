@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface Customer {
@@ -34,6 +34,12 @@ export default function AdminClientes() {
     }
   }
 
+  // Carga automática al entrar.
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function money(amount: number, currency: string) {
     try {
       return new Intl.NumberFormat("es-CO", {
@@ -65,7 +71,7 @@ export default function AdminClientes() {
           ← Panel
         </Link>
         <button onClick={load} disabled={loading} className="btn-primary disabled:opacity-50">
-          {loading ? "Cargando…" : customers ? "Actualizar" : "Cargar clientes"}
+          {loading ? "Cargando…" : "Actualizar"}
         </button>
         {customers && (
           <span className="text-sm text-ink/55">{customers.length} cliente(s)</span>
@@ -134,9 +140,7 @@ export default function AdminClientes() {
       )}
 
       {!customers && !loading && (
-        <p className="mt-8 text-sm text-ink/45">
-          Pulsa &quot;Cargar clientes&quot; para ver tu lista de clientes.
-        </p>
+        <p className="mt-8 text-sm text-ink/45">Cargando clientes…</p>
       )}
     </div>
   );
