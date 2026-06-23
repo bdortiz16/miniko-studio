@@ -34,6 +34,7 @@ export interface Order {
   fulfillment?: FulfillmentStatus; // estado de preparación/envío
   carrier?: string; // transportadora (Servientrega, Coordinadora…)
   tracking?: string; // número de guía
+  labelUrl?: string; // URL del PDF de la etiqueta oficial (Envia.com)
   adminNote?: string; // nota opcional visible al cliente
 }
 
@@ -126,13 +127,20 @@ export async function listOrdersByEmail(email: string): Promise<Order[]> {
 // Actualiza los campos de seguimiento de un pedido (lo usa el admin).
 export async function updateOrderFulfillment(
   reference: string,
-  fields: { fulfillment?: FulfillmentStatus; carrier?: string; tracking?: string; adminNote?: string }
+  fields: {
+    fulfillment?: FulfillmentStatus;
+    carrier?: string;
+    tracking?: string;
+    labelUrl?: string;
+    adminNote?: string;
+  }
 ): Promise<Order | null> {
   const order = await getOrder(reference);
   if (!order) return null;
   if (fields.fulfillment) order.fulfillment = fields.fulfillment;
   if (fields.carrier !== undefined) order.carrier = fields.carrier;
   if (fields.tracking !== undefined) order.tracking = fields.tracking;
+  if (fields.labelUrl !== undefined) order.labelUrl = fields.labelUrl;
   if (fields.adminNote !== undefined) order.adminNote = fields.adminNote;
   await saveOrder(order);
   return order;

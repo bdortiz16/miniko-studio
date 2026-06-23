@@ -21,6 +21,7 @@ interface Order {
   fulfillment: string;
   carrier: string;
   tracking: string;
+  labelUrl: string;
   adminNote: string;
 }
 
@@ -187,6 +188,40 @@ function Tracking({ order }: { order: Order }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Generación de guía con Envia.com.
+  const [labelUrl, setLabelUrl] = useState(order.labelUrl || "");
+  const [phone, setPhone] = useState("");
+  const [depto, setDepto] = useState("");
+  const [postal, setPostal] = useState("");
+  const [genLoading, setGenLoading] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  async function generarGuia() {
+    setGenLoading(true);
+    setGenError(null);
+    try {
+      const res = await fetch("/api/admin/generar-guia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reference: order.id,
+          phone,
+          state: depto,
+          postalCode: postal,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo generar la guía.");
+      if (data.carrier) setCarrier(data.carrier);
+      if (data.tracking) setTracking(data.tracking);
+      if (data.labelUrl) setLabelUrl(data.labelUrl);
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "Error de red.");
+    } finally {
+      setGenLoading(false);
+    }
+  }
+
   async function save() {
     setSaving(true);
     setSaved(false);
@@ -290,6 +325,43 @@ function Tracking({ order }: { order: Order }) {
         Nota para el cliente (opcional)
         <input value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Tu figura está en producción 🎨" className={`mt-1 ${input}`} />
       </label>
+
+      {/* Generar guía automática con Envia.com */}
+      <div className="mt-4 rounded-xl border border-line bg-white p-4">
+        <p className="text-sm font-semibold">🚚 Generar guía con Envia.com</p>
+        <p className="mt-1 text-xs text-ink/55">
+          Completa el teléfono y departamento del destinatario (la API los exige) y
+          genera la guía. Se rellena la transportadora, la guía y la etiqueta oficial.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <label className="text-xs font-medium text-ink/60">
+            Teléfono destinatario
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="3001234567" className={`mt-1 ${input}`} />
+          </label>
+          <label className="text-xs font-medium text-ink/60">
+            Departamento
+            <input value={depto} onChange={(e) => setDepto(e.target.value)} placeholder="Antioquia" className={`mt-1 ${input}`} />
+          </label>
+          <label className="text-xs font-medium text-ink/60">
+            Código postal (opcional)
+            <input value={postal} onChange={(e) => setPostal(e.target.value)} placeholder="050001" className={`mt-1 ${input}`} />
+          </label>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button onClick={generarGuia} disabled={genLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+            {genLoading ? "Generando…" : "Generar guía"}
+          </button>
+          {labelUrl && (
+            <a href={labelUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-brand underline underline-offset-2">
+              Ver etiqueta oficial (PDF) ↗
+            </a>
+          )}
+        </div>
+        {genError && (
+          <p className="mt-2 rounded-lg border border-brand/40 px-3 py-2 text-xs text-brand">{genError}</p>
+        )}
+      </div>
+
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button onClick={save} disabled={saving} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
           {saving ? "Guardando…" : "Guardar seguimiento"}

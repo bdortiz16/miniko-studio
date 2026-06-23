@@ -32,6 +32,7 @@ export async function GET(request: Request) {
         fulfillment: o.fulfillment || "RECIBIDO",
         carrier: o.carrier || "",
         tracking: o.tracking || "",
+        labelUrl: o.labelUrl || "",
         adminNote: o.adminNote || "",
       }));
     return NextResponse.json({ orders });
