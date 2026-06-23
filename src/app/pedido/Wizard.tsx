@@ -20,6 +20,7 @@ import {
   shipOf,
 } from "@/lib/settings";
 import StyleImage from "@/components/StyleImage";
+import { MiFigure, MiBox, MiTruck, MiPeople, MiCamera, MiPaw } from "@/components/MiniIcons";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
 const MAX_FIGURES = 8; // máximo de personas/mascotas por pedido
@@ -303,8 +304,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
       <div className="container-x max-w-3xl">
         {isPet && (
           <div className="mb-5 flex items-center justify-center">
-            <span className="rounded-full border border-brand bg-white px-4 py-1.5 text-sm font-semibold text-brand">
-              🐾 Pedido de mascota
+            <span className="flex items-center gap-1.5 rounded-full border border-brand bg-white px-4 py-1.5 text-sm font-semibold text-brand">
+              <MiPaw /> Pedido de mascota
             </span>
           </div>
         )}
@@ -389,9 +390,15 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
         {/* Resumen permanente abajo. */}
         <div className="mt-10 flex items-center justify-between border-t border-line pt-5 text-sm">
           <div className="flex items-center gap-5 text-ink/60">
-            <span>🧩 {hasFigures ? `${totalFigures} ${totalFigures === 1 ? "figura" : "figuras"}` : "—"}</span>
-            <span>📦 {hasFigures ? formatCop(price) : "—"}</span>
-            <span>🚚 {hasFigures ? (shipCents === 0 ? "Gratis" : formatCop(shipCents)) : "—"}</span>
+            <span className="flex items-center gap-1.5">
+              <MiFigure /> {hasFigures ? `${totalFigures} ${totalFigures === 1 ? "figura" : "figuras"}` : "—"}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MiBox /> {hasFigures ? formatCop(price) : "—"}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MiTruck /> {hasFigures ? (shipCents === 0 ? "Gratis" : formatCop(shipCents)) : "—"}
+            </span>
           </div>
           <div className="text-right">
             <span className="block text-xs uppercase tracking-wide text-ink/40">Total</span>
@@ -756,9 +763,9 @@ function StepPhotos({
 
       {/* Reglas / consejos para mejores resultados */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-center text-xs text-ink/40">
-        <span>👥 Máximo {maxPhotos} personas/mascotas por pedido.</span>
-        <span>📷 Las fotos de cuerpo entero con fondos sencillos funcionan mejor.</span>
-        <span>🐾 Mascotas: de pie o sentadas, no acurrucadas.</span>
+        <span className="flex items-center gap-1.5"><MiPeople /> Máximo {maxPhotos} personas/mascotas por pedido.</span>
+        <span className="flex items-center gap-1.5"><MiCamera /> Las fotos de cuerpo entero con fondos sencillos funcionan mejor.</span>
+        <span className="flex items-center gap-1.5"><MiPaw /> Mascotas: de pie o sentadas, no acurrucadas.</span>
       </div>
     </div>
   );
