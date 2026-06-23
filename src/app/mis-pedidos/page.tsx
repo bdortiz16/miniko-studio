@@ -51,6 +51,9 @@ export default function MisPedidosPage() {
         setAuthed(true);
         setEmail(data.email);
         setOrders(data.orders || []);
+        try {
+          localStorage.setItem("miniko_customer_email", data.email);
+        } catch {}
       } else {
         setAuthed(false);
       }
@@ -223,6 +226,14 @@ function Login({ onDone }: { onDone: () => void }) {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Recuerda el último correo usado para no escribirlo de nuevo.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("miniko_customer_email");
+      if (saved) setEmail(saved);
+    } catch {}
+  }, []);
 
   async function sendCode() {
     setError(null);
