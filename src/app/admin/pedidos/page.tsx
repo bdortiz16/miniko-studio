@@ -334,25 +334,45 @@ function Tracking({ order }: { order: Order }) {
   const [genLoading, setGenLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
-  async function generarGuia() {
+  const seq = FULFILLMENT.map((f) => f.key);
+  const curIdx = Math.max(0, seq.indexOf(fulfillment));
+
+  // Avanza el estado (secuencial). No toca transportadora/guía.
+  async function updateState(next: string) {
+    const res = await fetch("/api/admin/order-update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference: order.id, fulfillment: next }),
+    });
+    if (res.ok) setFulfillment(next);
+    return res.ok;
+  }
+
+  async function advance(next: string) {
+    setSaving(true);
+    try {
+      await updateState(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Genera la guía con Envia (datos del cliente) y marca como Enviado.
+  async function generarGuiaYEnviar() {
     setGenLoading(true);
     setGenError(null);
     try {
       const res = await fetch("/api/admin/generar-guia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reference: order.id,
-          phone,
-          state: depto,
-          postalCode: postal,
-        }),
+        body: JSON.stringify({ reference: order.id, phone, state: depto, postalCode: postal }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo generar la guía.");
       if (data.carrier) setCarrier(data.carrier);
       if (data.tracking) setTracking(data.tracking);
       if (data.labelUrl) setLabelUrl(data.labelUrl);
+      await updateState("ENVIADO");
     } catch (e) {
       setGenError(e instanceof Error ? e.message : "Error de red.");
     } finally {
@@ -360,14 +380,14 @@ function Tracking({ order }: { order: Order }) {
     }
   }
 
-  async function save() {
+  async function saveNota() {
     setSaving(true);
     setSaved(false);
     try {
       const res = await fetch("/api/admin/order-update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: order.id, fulfillment, carrier, tracking, adminNote }),
+        body: JSON.stringify({ reference: order.id, adminNote }),
       });
       if (res.ok) {
         setSaved(true);
@@ -439,74 +459,123 @@ function Tracking({ order }: { order: Order }) {
     w.document.close();
   }
 
+  const shipped = fulfillment === "ENVIADO" || fulfillment === "ENTREGADO";
+
   return (
     <div className="mt-5 rounded-xl border border-line bg-mist/60 p-4">
       <p className="text-sm font-semibold">📦 Seguimiento del cliente</p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
-        <label className="text-xs font-medium text-ink/60">
-          Estado
-          <select value={fulfillment} onChange={(e) => setFulfillment(e.target.value)} className={`mt-1 ${input}`}>
-            {FULFILLMENT.map((f) => (
-              <option key={f.key} value={f.key}>{f.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-xs font-medium text-ink/60">
-          Transportadora
-          <input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="Servientrega…" className={`mt-1 ${input}`} />
-        </label>
-        <label className="text-xs font-medium text-ink/60">
-          Número de guía
-          <input value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="123456789" className={`mt-1 ${input}`} />
-        </label>
-      </div>
-      <label className="mt-3 block text-xs font-medium text-ink/60">
-        Nota para el cliente (opcional)
-        <input value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Tu figura está en producción 🎨" className={`mt-1 ${input}`} />
-      </label>
 
-      {/* Generar guía automática con Envia.com */}
-      <div className="mt-4 rounded-xl border border-line bg-white p-4">
-        <p className="text-sm font-semibold">🚚 Generar guía con Envia.com</p>
-        <p className="mt-1 text-xs text-ink/55">
-          Completa el teléfono y departamento del destinatario (la API los exige) y
-          genera la guía. Se rellena la transportadora, la guía y la etiqueta oficial.
-        </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <label className="text-xs font-medium text-ink/60">
-            Teléfono destinatario
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="3001234567" className={`mt-1 ${input}`} />
-          </label>
-          <label className="text-xs font-medium text-ink/60">
-            Departamento
-            <input value={depto} onChange={(e) => setDepto(e.target.value)} placeholder="Antioquia" className={`mt-1 ${input}`} />
-          </label>
-          <label className="text-xs font-medium text-ink/60">
-            Código postal (opcional)
-            <input value={postal} onChange={(e) => setPostal(e.target.value)} placeholder="050001" className={`mt-1 ${input}`} />
-          </label>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button onClick={generarGuia} disabled={genLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
-            {genLoading ? "Generando…" : "Generar guía"}
+      {/* Progreso secuencial (no se salta de un paso a otro) */}
+      <div className="mt-4 flex items-center">
+        {FULFILLMENT.map((f, i) => {
+          const done = i <= curIdx;
+          return (
+            <div key={f.key} className="flex flex-1 items-center last:flex-none">
+              <div className="flex flex-col items-center">
+                <span className={`grid h-8 w-8 place-items-center rounded-full border text-xs font-bold ${
+                  done ? "border-brand bg-brand text-white" : "border-line bg-white text-ink/40"
+                }`}>
+                  {done ? "✓" : i + 1}
+                </span>
+                <span className={`mt-1 text-center text-[10px] sm:text-xs ${
+                  i === curIdx ? "font-bold text-ink" : done ? "text-ink/70" : "text-ink/40"
+                }`}>
+                  {f.label}
+                </span>
+              </div>
+              {i < FULFILLMENT.length - 1 && (
+                <span className={`mx-1 h-0.5 flex-1 ${i < curIdx ? "bg-brand" : "bg-line"}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Acción del paso actual */}
+      <div className="mt-5">
+        {fulfillment === "RECIBIDO" && (
+          <button onClick={() => advance("EN_PRODUCCION")} disabled={saving} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+            {saving ? "Guardando…" : "Pasar a producción →"}
           </button>
-          {labelUrl && (
-            <a href={labelUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-brand underline underline-offset-2">
-              Ver etiqueta oficial (PDF) ↗
-            </a>
-          )}
-        </div>
-        {genError && (
-          <p className="mt-2 rounded-lg border border-brand/40 px-3 py-2 text-xs text-brand">{genError}</p>
+        )}
+
+        {fulfillment === "EN_PRODUCCION" && (
+          <div className="rounded-xl border border-line bg-white p-4">
+            <p className="text-sm font-semibold">🚚 Generar guía y enviar</p>
+            <p className="mt-1 text-xs text-ink/55">
+              Verifica los datos del destinatario (vienen del cliente) y genera la guía con Envia.com.
+              Esto crea la guía y la etiqueta, marca el pedido como <b>Enviado</b> y avisa al cliente.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <label className="text-xs font-medium text-ink/60">
+                Teléfono destinatario
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="3001234567" className={`mt-1 ${input}`} />
+              </label>
+              <label className="text-xs font-medium text-ink/60">
+                Departamento
+                <input value={depto} onChange={(e) => setDepto(e.target.value)} placeholder="Antioquia" className={`mt-1 ${input}`} />
+              </label>
+              <label className="text-xs font-medium text-ink/60">
+                Código postal (opcional)
+                <input value={postal} onChange={(e) => setPostal(e.target.value)} placeholder="050001" className={`mt-1 ${input}`} />
+              </label>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <button onClick={generarGuiaYEnviar} disabled={genLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+                {genLoading ? "Generando guía…" : "Generar guía y marcar Enviado"}
+              </button>
+              <button onClick={() => advance("ENVIADO")} disabled={saving} className="text-xs text-ink/50 underline underline-offset-2 hover:text-ink">
+                Marcar enviado sin guía
+              </button>
+            </div>
+            {genError && (
+              <p className="mt-2 rounded-lg border border-brand/40 px-3 py-2 text-xs text-brand">{genError}</p>
+            )}
+          </div>
+        )}
+
+        {fulfillment === "ENVIADO" && (
+          <button onClick={() => advance("ENTREGADO")} disabled={saving} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+            {saving ? "Guardando…" : "Marcar entregado →"}
+          </button>
+        )}
+
+        {fulfillment === "ENTREGADO" && (
+          <p className="text-sm font-semibold text-green-600">✓ Pedido entregado</p>
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <button onClick={save} disabled={saving} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
-          {saving ? "Guardando…" : "Guardar seguimiento"}
-        </button>
-        <button onClick={printLabel} type="button" className="btn-secondary px-5 py-2 text-sm">
-          🖨️ Imprimir etiqueta
+      {/* Datos de envío: solo cuando ya está enviado */}
+      {shipped && (
+        <div className="mt-4 rounded-xl border border-line bg-white p-4 text-sm">
+          <p className="font-semibold">🚚 Envío</p>
+          {carrier && <p className="mt-1 text-ink/70">Transportadora: <b className="text-ink">{carrier}</b></p>}
+          {tracking ? (
+            <p className="mt-0.5 text-ink/70">Guía: <b className="font-mono text-ink">{tracking}</b></p>
+          ) : (
+            <p className="mt-1 text-xs text-ink/50">Enviado sin guía generada.</p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            {labelUrl && (
+              <a href={labelUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-brand underline underline-offset-2">
+                Ver etiqueta oficial (PDF) ↗
+              </a>
+            )}
+            <button onClick={printLabel} type="button" className="btn-secondary px-4 py-1.5 text-xs">
+              🖨️ Imprimir etiqueta
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Nota para el cliente */}
+      <label className="mt-4 block text-xs font-medium text-ink/60">
+        Nota para el cliente (opcional)
+        <input value={adminNote} onChange={(e) => setAdminNote(e.target.value)} placeholder="Tu figura está en producción 🎨" className={`mt-1 ${input}`} />
+      </label>
+      <div className="mt-3 flex items-center gap-3">
+        <button onClick={saveNota} disabled={saving} className="btn-secondary px-5 py-2 text-sm disabled:opacity-50">
+          Guardar nota
         </button>
         {saved && <span className="text-sm font-semibold text-green-600">✓ Guardado</span>}
       </div>
