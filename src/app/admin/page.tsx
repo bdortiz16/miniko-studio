@@ -45,8 +45,19 @@ function money(amount: number, currency = "COP") {
   }
 }
 
+type Period = "dia" | "semana" | "mes" | "ano";
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "dia", label: "Hoy" },
+  { key: "semana", label: "Semana" },
+  { key: "mes", label: "Mes" },
+  { key: "ano", label: "Año" },
+];
+const MES_LBL = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [orders, setOrders] = useState<{ created: number; amount: number }[]>([]);
+  const [period, setPeriod] = useState<Period>("mes");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +68,8 @@ export default function AdminDashboard() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error al cargar.");
         setStats(data);
+        const o = await fetch("/api/admin/orders").then((r) => r.json()).catch(() => ({}));
+        setOrders(o.orders || []);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Error de red.");
       } finally {
@@ -66,7 +79,29 @@ export default function AdminDashboard() {
   }, []);
 
   const cur = stats?.currency || "COP";
-  const maxDaily = Math.max(1, ...(stats?.daily?.map((d) => d.amount) || [1]));
+
+  // Gráfica filtrable por período (a partir de los pedidos pagados).
+  const chart = (() => {
+    const now = new Date();
+    const inP = (ts: number) => {
+      const d = new Date(ts * 1000);
+      if (period === "dia") return d.toDateString() === now.toDateString();
+      if (period === "semana") return (now.getTime() - d.getTime()) / 86400000 <= 7;
+      if (period === "mes") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      return d.getFullYear() === now.getFullYear();
+    };
+    const map = new Map<string, number>();
+    let total = 0;
+    for (const o of orders) {
+      if (!inP(o.created)) continue;
+      const d = new Date(o.created * 1000);
+      const key = period === "ano" ? MES_LBL[d.getMonth()] : `${d.getDate()}/${d.getMonth() + 1}`;
+      map.set(key, (map.get(key) || 0) + o.amount / 100);
+      total += o.amount / 100;
+    }
+    const entries = Array.from(map.entries());
+    return { entries, max: Math.max(1, ...entries.map((e) => e[1])), total };
+  })();
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -112,32 +147,44 @@ export default function AdminDashboard() {
             <Kpi label="Ticket promedio" value={money(stats.avgOrder || 0, cur)} Icon={MiReceipt} tone="ink" />
           </div>
 
-          {/* Gráfico de ingresos por día */}
+          {/* Gráfico de ingresos con filtro de período */}
           <section className="mt-8 rounded-2xl border border-line bg-white p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-bold">Ingresos · últimos 14 días</h2>
-              <Link href="/admin/contabilidad" className="text-sm font-semibold text-brand underline underline-offset-2">
-                Contabilidad y utilidad real →
-              </Link>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-lg font-bold">Ingresos del período</h2>
+                <p className="mt-0.5 text-sm text-ink/55">Total: <b className="text-ink">{money(chart.total * 100, cur)}</b></p>
+              </div>
+              <div className="inline-flex rounded-full border border-line bg-white p-1">
+                {PERIODS.map((p) => (
+                  <button
+                    key={p.key}
+                    onClick={() => setPeriod(p.key)}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${period === p.key ? "bg-ink text-white" : "text-ink/60"}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            {stats.orders === 0 ? (
-              <p className="mt-4 text-sm text-ink/50">Aún no hay ventas para mostrar.</p>
+            {chart.entries.length === 0 ? (
+              <p className="mt-4 text-sm text-ink/50">Sin ventas en este período.</p>
             ) : (
-              <div className="mt-6 flex items-end gap-1.5" style={{ height: 140 }}>
-                {stats.daily?.map((d, i) => (
+              <div className="mt-6 flex items-end gap-1.5" style={{ height: 150 }}>
+                {chart.entries.map(([label, val], i) => (
                   <div key={i} className="flex flex-1 flex-col items-center gap-2">
                     <div className="flex w-full flex-1 items-end">
-                      <div
-                        className="w-full rounded-t bg-brand/80 transition-all"
-                        style={{ height: `${(d.amount / maxDaily) * 100}%`, minHeight: d.amount > 0 ? 4 : 0 }}
-                        title={money(d.amount, cur)}
-                      />
+                      <div className="w-full rounded-t bg-brand/80 transition-all" style={{ height: `${(val / chart.max) * 100}%`, minHeight: 4 }} title={money(val * 100, cur)} />
                     </div>
-                    <span className="text-[9px] text-ink/40">{d.label}</span>
+                    <span className="text-[9px] text-ink/40">{label}</span>
                   </div>
                 ))}
               </div>
             )}
+            <div className="mt-4 text-right">
+              <Link href="/admin/contabilidad" className="text-sm font-semibold text-brand underline underline-offset-2">
+                Ver contabilidad y utilidad real →
+              </Link>
+            </div>
           </section>
 
           {/* Desgloses */}
