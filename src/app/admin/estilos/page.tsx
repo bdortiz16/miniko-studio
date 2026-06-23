@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface Result {
@@ -23,6 +23,42 @@ export default function AdminEstilos() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [ts, setTs] = useState(Date.now());
+
+  // Íconos Funko (IA) para los botones flotantes (soporte / asistente).
+  const [whatsappIcon, setWhatsappIcon] = useState("");
+  const [supportIcon, setSupportIcon] = useState("");
+  const [genIcons, setGenIcons] = useState(false);
+  const [iconMsg, setIconMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        const data = await res.json();
+        if (res.ok && data.settings) {
+          setWhatsappIcon(data.settings.whatsappIcon || "");
+          setSupportIcon(data.settings.supportIcon || "");
+        }
+      } catch {}
+    })();
+  }, []);
+
+  async function generarIconos() {
+    setGenIcons(true);
+    setIconMsg(null);
+    try {
+      const res = await fetch("/api/admin/generate-icons", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudieron generar los íconos.");
+      setWhatsappIcon(data.whatsappIcon || "");
+      setSupportIcon(data.supportIcon || "");
+      setIconMsg({ ok: true, text: "✓ Funkos generados. Ya aparecen en los botones." });
+    } catch (e) {
+      setIconMsg({ ok: false, text: e instanceof Error ? e.message : "Error al generar." });
+    } finally {
+      setGenIcons(false);
+    }
+  }
 
   async function generate(style?: string) {
     setLoading(true);
@@ -163,6 +199,33 @@ export default function AdminEstilos() {
             </ul>
           </div>
         )}
+
+        {/* Íconos Funko (IA) — botones flotantes de soporte y asistente */}
+        <section className="mt-10 rounded-2xl border border-line bg-white p-6">
+          <h2 className="font-display text-lg font-bold">Íconos Funko (IA)</h2>
+          <p className="mt-1 text-sm text-ink/55">
+            Genera con IA un Funko con camiseta de WhatsApp (para el botón de soporte) y un Funko
+            asistente. Reemplazan los íconos actuales de los botones flotantes.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            {whatsappIcon && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={whatsappIcon} alt="Funko WhatsApp" className="h-20 w-20 rounded-xl border border-line object-contain" />
+            )}
+            {supportIcon && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={supportIcon} alt="Funko soporte" className="h-20 w-20 rounded-xl border border-line object-contain" />
+            )}
+            <button onClick={generarIconos} disabled={genIcons} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+              {genIcons ? "Generando… (puede tardar)" : whatsappIcon ? "Regenerar Funkos" : "Generar Funkos con IA"}
+            </button>
+          </div>
+          {iconMsg && (
+            <p className={`mt-4 rounded-lg border px-3 py-2 text-sm ${iconMsg.ok ? "border-green-300 text-green-600" : "border-brand/40 text-brand"}`}>
+              {iconMsg.text}
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );
