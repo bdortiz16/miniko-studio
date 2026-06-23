@@ -39,13 +39,11 @@ export default function AdminPedidos() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notify, setNotify] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   const knownIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
-  const audioCtx = useRef<AudioContext | null>(null);
 
   function money(amount: number, currency: string) {
     try {
@@ -57,38 +55,11 @@ export default function AdminPedidos() {
     }
   }
 
-  // Sonido de aviso (dos tonos) generado en el navegador, sin archivo.
-  function playDing() {
-    const ctx = audioCtx.current;
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    [880, 1320].forEach((freq, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = freq;
-      o.connect(g);
-      g.connect(ctx.destination);
-      const start = now + i * 0.18;
-      g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
-      o.start(start);
-      o.stop(start + 0.18);
-    });
-  }
-
+  // El asistente global (campana + Funko) hace el sonido y la notificación;
+  // aquí solo mostramos un banner visual en la propia página.
   function onNewOrders(fresh: Order[]) {
     const n = fresh.length;
     setBanner(`¡${n} pedido${n > 1 ? "s" : ""} nuevo${n > 1 ? "s" : ""}!`);
-    playDing();
-    try {
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        new Notification("🎉 Nuevo pedido en Miniko", {
-          body: `${fresh[0].email} · ${money(fresh[0].amount, fresh[0].currency)}`,
-        });
-      }
-    } catch {}
     window.setTimeout(() => setBanner(null), 20000);
   }
 
@@ -112,25 +83,6 @@ export default function AdminPedidos() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }
-
-  // Activa avisos: desbloquea el sonido (gesto del usuario) y pide permiso de
-  // notificaciones del navegador.
-  async function enableNotify() {
-    try {
-      const Ctx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      audioCtx.current = new Ctx();
-      if (audioCtx.current.state === "suspended") await audioCtx.current.resume();
-    } catch {}
-    try {
-      if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
-        await Notification.requestPermission();
-      }
-    } catch {}
-    setNotify(true);
-    playDing();
   }
 
   // Carga automática al entrar y refresco cada 20s.
@@ -165,14 +117,6 @@ export default function AdminPedidos() {
           </Link>
           <button onClick={() => load()} disabled={loading} className="btn-primary disabled:opacity-50">
             {loading ? "Cargando…" : "Actualizar"}
-          </button>
-          <button
-            onClick={enableNotify}
-            className={`rounded-full border px-5 py-2 text-sm font-semibold ${
-              notify ? "border-green-600 text-green-700" : "border-line text-ink/70 hover:border-ink"
-            }`}
-          >
-            {notify ? "🔔 Avisos activos" : "🔔 Activar avisos"}
           </button>
           {orders && (
             <span className="text-sm text-ink/55">

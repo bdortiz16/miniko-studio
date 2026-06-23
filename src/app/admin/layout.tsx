@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/Header";
+import AdminAssistant from "@/components/AdminAssistant";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: "▦" },
@@ -79,6 +80,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <main className="flex-1 p-6 sm:p-10">{children}</main>
       </div>
+
+      {/* Asistente global: campana + Funko con avisos de pedidos */}
+      <AdminAssistant />
     </div>
   );
 }
