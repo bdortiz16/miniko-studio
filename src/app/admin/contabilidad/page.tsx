@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Settings } from "@/lib/settings";
 import { orderEconomics, Costs } from "@/lib/accounting";
+import type { WalletMovement } from "@/lib/wallet";
 
 interface Order {
   id: string;
@@ -37,15 +38,24 @@ export default function AdminContabilidad() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  // Billetera (movimientos manuales).
+  const [movements, setMovements] = useState<WalletMovement[]>([]);
+  const [mvType, setMvType] = useState<"egreso" | "ingreso">("egreso");
+  const [mvConcept, setMvConcept] = useState("");
+  const [mvAmount, setMvAmount] = useState("");
+  const [mvSaving, setMvSaving] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
-        const [o, s] = await Promise.all([
+        const [o, s, w] = await Promise.all([
           fetch("/api/admin/orders").then((r) => r.json()),
           fetch("/api/admin/settings").then((r) => r.json()),
+          fetch("/api/admin/wallet").then((r) => r.json()),
         ]);
         setOrders(o.orders || []);
         setSettings(s.settings);
+        setMovements(w.movements || []);
       } finally {
         setLoading(false);
       }
@@ -93,6 +103,43 @@ export default function AdminContabilidad() {
     const max = Math.max(1, ...entries.map((e) => e[1]));
     return { entries, max };
   }, [filtered, period]);
+
+  // Billetera: neto que entra por TODAS las ventas (no filtrado) − egresos.
+  const allTimeNet = useMemo(() => {
+    if (!costs) return 0;
+    return orders.reduce(
+      (s, o) => s + orderEconomics({ amount: o.amount, styleId: o.styleId, personas: o.personasNum, mascotas: o.mascotasNum }, costs).net,
+      0
+    );
+  }, [orders, costs]);
+  const egresos = movements.filter((m) => m.type === "egreso").reduce((s, m) => s + m.amount, 0);
+  const ingresosManuales = movements.filter((m) => m.type === "ingreso").reduce((s, m) => s + m.amount, 0);
+  const saldo = allTimeNet + ingresosManuales - egresos;
+
+  async function addMovement() {
+    const amount = Number(mvAmount.replace(/[^\d]/g, ""));
+    if (!amount) return;
+    setMvSaving(true);
+    try {
+      const res = await fetch("/api/admin/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: mvType, concept: mvConcept, amount }),
+      });
+      const data = await res.json();
+      if (res.ok && data.movement) {
+        setMovements((m) => [data.movement, ...m]);
+        setMvConcept("");
+        setMvAmount("");
+      }
+    } finally {
+      setMvSaving(false);
+    }
+  }
+  async function delMovement(id: string) {
+    await fetch(`/api/admin/wallet?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    setMovements((m) => m.filter((x) => x.id !== id));
+  }
 
   async function saveCosts() {
     if (!settings) return;
@@ -230,6 +277,60 @@ export default function AdminContabilidad() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* Billetera Wompi */}
+      <section className="mt-6 rounded-2xl border border-line bg-white p-6">
+        <h2 className="font-display text-lg font-bold">💼 Billetera Wompi</h2>
+        <p className="mt-1 text-sm text-ink/55">
+          Saldo estimado = lo neto que entra por ventas (todas) menos los egresos que registres
+          (retiros, compras de material, etc.).
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+            <p className="font-display text-2xl font-extrabold text-blue-700">{cop(saldo)}</p>
+            <p className="mt-0.5 text-xs font-medium text-ink/55">Saldo estimado en Wompi</p>
+          </div>
+          <div className="rounded-xl border border-line p-4">
+            <p className="font-display text-xl font-extrabold text-green-600">{cop(allTimeNet + ingresosManuales)}</p>
+            <p className="mt-0.5 text-xs font-medium text-ink/55">Total entradas (ventas netas + manual)</p>
+          </div>
+          <div className="rounded-xl border border-line p-4">
+            <p className="font-display text-xl font-extrabold text-brand">{cop(egresos)}</p>
+            <p className="mt-0.5 text-xs font-medium text-ink/55">Total egresos</p>
+          </div>
+        </div>
+
+        {/* Form para registrar movimiento */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-[auto_1fr_auto_auto]">
+          <select value={mvType} onChange={(e) => setMvType(e.target.value as "egreso" | "ingreso")} className="rounded-xl border border-line bg-white px-3 py-2 text-sm">
+            <option value="egreso">Egreso</option>
+            <option value="ingreso">Ingreso</option>
+          </select>
+          <input value={mvConcept} onChange={(e) => setMvConcept(e.target.value)} placeholder="Concepto (ej: retiro, compra de cajas)" className="rounded-xl border border-line px-3 py-2 text-sm outline-none focus:border-ink" />
+          <input value={mvAmount} onChange={(e) => setMvAmount(e.target.value)} inputMode="numeric" placeholder="Monto" className="w-32 rounded-xl border border-line px-3 py-2 text-sm outline-none focus:border-ink" />
+          <button onClick={addMovement} disabled={mvSaving || !mvAmount} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">Registrar</button>
+        </div>
+
+        {movements.length > 0 && (
+          <div className="mt-4 divide-y divide-line">
+            {movements.slice(0, 30).map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-bold ${m.type === "egreso" ? "bg-brand/10 text-brand" : "bg-green-100 text-green-700"}`}>
+                    {m.type === "egreso" ? "−" : "+"}
+                  </span>
+                  <span className="text-ink/70">{m.concept || "(sin concepto)"}</span>
+                  <span className="ml-2 text-xs text-ink/40">{new Date(m.date * 1000).toLocaleDateString("es-CO")}</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className={`font-semibold ${m.type === "egreso" ? "text-brand" : "text-green-600"}`}>{m.type === "egreso" ? "−" : "+"}{cop(m.amount)}</span>
+                  <button onClick={() => delMovement(m.id)} className="text-ink/40 hover:text-brand" aria-label="Eliminar">✕</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>
