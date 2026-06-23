@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/Header";
 import AdminAssistant from "@/components/AdminAssistant";
 import AdminIdle from "@/components/AdminIdle";
+import AdminSessionGate from "@/components/AdminSessionGate";
 import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear, MiUser } from "@/components/MiniIcons";
 
 const NAV = [
@@ -87,6 +88,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 p-6 sm:p-10">{children}</main>
       </div>
 
+      {/* Cada pestaña nueva debe iniciar sesión (clave + código) */}
+      <AdminSessionGate />
       {/* Asistente global: campana + Funko con avisos de pedidos */}
       <AdminAssistant />
       {/* Cierre de sesión por inactividad (2 h) */}

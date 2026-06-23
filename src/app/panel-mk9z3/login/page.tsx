@@ -2,6 +2,14 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PANEL_SESSION_KEY } from "@/components/AdminSessionGate";
+
+// Marca esta pestaña como autenticada (la lee AdminSessionGate).
+function markTabAuthed() {
+  try {
+    sessionStorage.setItem(PANEL_SESSION_KEY, "1");
+  } catch {}
+}
 
 function LoginForm() {
   const router = useRouter();
@@ -68,6 +76,7 @@ function LoginForm() {
         setCooldown(30);
         setLoading(false);
       } else {
+        markTabAuthed();
         router.replace(next);
       }
     } catch (e) {
@@ -88,6 +97,7 @@ function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Código incorrecto.");
+      markTabAuthed();
       router.replace(next);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
