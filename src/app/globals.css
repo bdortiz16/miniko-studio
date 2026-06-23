@@ -5,6 +5,50 @@
 :root {
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-display: "Poppins", "Inter", system-ui, sans-serif;
+  /* Colores (canales RGB) — valores claros del sitio público. */
+  --c-ink: 20 20 20;
+  --c-brand: 229 50 45;
+  --c-mist: 246 246 246;
+  --c-line: 231 231 231;
+}
+
+/* Tema OSCURO del panel admin (estilo SaaS). Solo afecta a .admin-dark. */
+.admin-dark {
+  --c-ink: 233 234 240;
+  --c-brand: 244 95 90;
+  --c-mist: 28 28 34;
+  --c-line: 42 42 50;
+  background-color: #0b0b0f;
+  color: rgb(var(--c-ink));
+}
+.admin-dark .bg-white {
+  background-color: #16161c !important;
+}
+/* Elementos con bg-ink (toggles activos, chips) -> rojo de marca en oscuro. */
+.admin-dark .bg-ink {
+  background-color: rgb(var(--c-brand)) !important;
+}
+.admin-dark .btn-primary {
+  background-color: rgb(var(--c-brand));
+  color: #fff;
+}
+.admin-dark .btn-primary:hover {
+  background-color: #d8403b;
+}
+.admin-dark .btn-secondary {
+  background-color: #16161c;
+  color: rgb(var(--c-ink));
+  border-color: rgb(var(--c-line));
+}
+.admin-dark input,
+.admin-dark select,
+.admin-dark textarea {
+  background-color: #16161c;
+  color: rgb(var(--c-ink));
+}
+.admin-dark input::placeholder,
+.admin-dark textarea::placeholder {
+  color: rgb(var(--c-ink) / 0.4);
 }
 
 html {

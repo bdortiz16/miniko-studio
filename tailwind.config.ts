@@ -8,12 +8,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Marca Miniko: fondo blanco, texto negro, rojo solo para líneas/acentos.
-        ink: "#141414",
+        // Colores como variables CSS (permite el tema oscuro del admin sin
+        // tocar cada página). El sitio público usa los valores claros de :root.
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
         coal: "#0a0a0a",
-        brand: "#E5322D", // rojo: úsalo solo en líneas, bordes y detalles
-        mist: "#f6f6f6", // gris muy claro para secciones
-        line: "#e7e7e7", // bordes neutros
+        brand: "rgb(var(--c-brand) / <alpha-value>)",
+        mist: "rgb(var(--c-mist) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

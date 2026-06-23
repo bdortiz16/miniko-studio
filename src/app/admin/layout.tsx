@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // La página de login no lleva el panel (aún no hay sesión).
   if (pathname === "/admin/login") {
-    return <div className="min-h-screen bg-mist">{children}</div>;
+    return <div className="admin-dark min-h-screen">{children}</div>;
   }
 
   async function logout() {
@@ -29,12 +29,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-screen bg-mist">
+    <div className="admin-dark flex min-h-screen">
       {/* Sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-white p-5 md:flex">
         <Link href="/admin" className="flex items-center gap-2">
           <Wordmark className="text-xl" />
-          <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+          <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold uppercase text-white">
             admin
           </span>
         </Link>
@@ -46,7 +46,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={n.href}
                 href={n.href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
-                  active ? "bg-ink text-white" : "text-ink/70 hover:bg-mist"
+                  active ? "bg-brand text-white" : "text-ink/70 hover:bg-mist"
                 }`}
               >
                 <span>{n.icon}</span>
