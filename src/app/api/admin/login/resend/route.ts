@@ -26,24 +26,26 @@ export async function POST(request: Request) {
   if (!adminConfigured()) {
     return NextResponse.json({ error: "Login no configurado." }, { status: 500 });
   }
+  let email = "";
   let password = "";
   try {
-    ({ password } = await request.json());
+    ({ email = "", password = "" } = await request.json());
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Contraseña incorrecta." }, { status: 401 });
-  }
 
-  const email = await adminEmail();
-  if (!email || !emailConfigured()) {
+  const account = await adminEmail();
+  const emailOk = !account || email.trim().toLowerCase() === account.toLowerCase();
+  if (!emailOk || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: "Correo o contraseña incorrectos." }, { status: 401 });
+  }
+  if (!account || !emailConfigured()) {
     return NextResponse.json({ error: "No hay correo configurado para enviar el código." }, { status: 400 });
   }
 
   const code = generateCode();
-  const { token, exp } = makeToken(email, code);
-  await sendAdminLoginCode(email, code);
+  const { token, exp } = makeToken(account, code);
+  await sendAdminLoginCode(account, code);
 
-  return NextResponse.json({ ok: true, token, exp, hint: maskEmail(email) });
+  return NextResponse.json({ ok: true, token, exp, hint: maskEmail(account) });
 }

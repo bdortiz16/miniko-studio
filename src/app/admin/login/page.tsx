@@ -9,6 +9,7 @@ function LoginForm() {
   const next = params.get("next") || "/admin";
 
   const [step, setStep] = useState<"password" | "code">("password");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [token, setToken] = useState("");
@@ -32,7 +33,7 @@ function LoginForm() {
       const res = await fetch("/api/admin/login/resend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo reenviar.");
@@ -55,7 +56,7 @@ function LoginForm() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo entrar.");
@@ -100,19 +101,28 @@ function LoginForm() {
         <form onSubmit={submitPassword} className="w-full max-w-sm rounded-2xl border border-line bg-white p-7">
           <h1 className="font-display text-2xl font-extrabold">Panel de administración</h1>
           <div className="mt-2 h-px w-12 bg-brand/70" />
-          <p className="mt-3 text-sm text-ink/60">Introduce la contraseña para entrar.</p>
+          <p className="mt-3 text-sm text-ink/60">Introduce tu correo y contraseña para entrar.</p>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Correo"
+            autoComplete="username"
+            autoFocus
+            className="mt-5 w-full rounded-full border border-line px-4 py-2.5 outline-none focus:border-ink"
+          />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Contraseña"
-            autoFocus
-            className="mt-5 w-full rounded-full border border-line px-4 py-2.5 outline-none focus:border-ink"
+            autoComplete="current-password"
+            className="mt-3 w-full rounded-full border border-line px-4 py-2.5 outline-none focus:border-ink"
           />
           {error && (
             <p className="mt-3 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">{error}</p>
           )}
-          <button type="submit" disabled={loading || !password} className="btn-primary mt-5 w-full disabled:opacity-50">
+          <button type="submit" disabled={loading || !email || !password} className="btn-primary mt-5 w-full disabled:opacity-50">
             {loading ? "Verificando…" : "Continuar"}
           </button>
         </form>

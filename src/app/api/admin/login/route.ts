@@ -21,7 +21,7 @@ function maskEmail(email: string): string {
   return `${shown}${"•".repeat(Math.max(1, user.length - 2))}@${domain}`;
 }
 
-// Paso 1 del login: valida la contraseña y envía un código al correo del admin.
+// Paso 1 del login: valida correo + contraseña y envía un código al correo.
 export async function POST(request: Request) {
   if (!adminConfigured()) {
     return NextResponse.json(
@@ -29,21 +29,23 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+  let email = "";
   let password = "";
   try {
-    ({ password } = await request.json());
+    ({ email = "", password = "" } = await request.json());
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Contraseña incorrecta." }, { status: 401 });
-  }
 
-  const email = await adminEmail();
+  const account = await adminEmail();
+  const emailOk = !account || email.trim().toLowerCase() === account.toLowerCase();
+  if (!emailOk || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: "Correo o contraseña incorrectos." }, { status: 401 });
+  }
 
   // Si no hay correo de avisos o el correo no está configurado, entramos directo
   // (no se puede enviar el código): así no quedas bloqueado fuera del panel.
-  if (!email || !emailConfigured()) {
+  if (!account || !emailConfigured()) {
     const res = NextResponse.json({ step: "done" });
     const session = makeSession(SESSION_TTL_MS);
     res.cookies.set(ADMIN_COOKIE, session.value, {
@@ -58,8 +60,8 @@ export async function POST(request: Request) {
 
   // Genera y envía el código; devolvemos el token firmado (no el código).
   const code = generateCode();
-  const { token, exp } = makeToken(email, code);
-  await sendAdminLoginCode(email, code);
+  const { token, exp } = makeToken(account, code);
+  await sendAdminLoginCode(account, code);
 
-  return NextResponse.json({ step: "code", token, exp, hint: maskEmail(email) });
+  return NextResponse.json({ step: "code", token, exp, hint: maskEmail(account) });
 }
