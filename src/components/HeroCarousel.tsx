@@ -142,7 +142,7 @@ export default function HeroCarousel() {
         fontFamily: "var(--font-sans), Inter, sans-serif",
       }}
     >
-      <div className="relative w-full" style={{ height: "100vh", overflow: "hidden" }}>
+      <div className="relative w-full" style={{ height: "100svh", overflow: "hidden" }}>
         {/* Grano */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -158,7 +158,7 @@ export default function HeroCarousel() {
         {/* Texto fantasma gigante */}
         <div
           className="absolute inset-x-0 flex items-center justify-center pointer-events-none select-none"
-          style={{ zIndex: 2, top: "18%" }}
+          style={{ zIndex: 2, top: "12%" }}
         >
           <span
             style={{

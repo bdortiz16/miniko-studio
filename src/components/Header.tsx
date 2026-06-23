@@ -21,7 +21,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
         <svg
           viewBox="0 0 32 32"
           aria-hidden="true"
-          className="absolute -top-[0.34em] left-[112%] h-[0.46em] w-[0.46em] -translate-x-1/2 fill-brand"
+          className="animate-star absolute -top-[0.18em] left-[112%] h-[0.46em] w-[0.46em] fill-brand"
         >
           <path d="M16 4l3.6 7.3 8.1 1.2-5.9 5.7 1.4 8.1-7.2-3.8-7.2 3.8 1.4-8.1-5.9-5.7 8.1-1.2z" />
         </svg>

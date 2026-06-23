@@ -21,6 +21,29 @@ body {
   @apply bg-white text-ink antialiased;
 }
 
+/* Saludo del Funko (bamboleo). */
+@keyframes miniko-wave {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-8deg); }
+  40% { transform: rotate(8deg); }
+  60% { transform: rotate(-5deg); }
+  80% { transform: rotate(5deg); }
+}
+.animate-wave {
+  animation: miniko-wave 2.4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Estrella del logo: rebote (manteniendo el centrado en X). */
+@keyframes miniko-star {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  40% { transform: translateX(-50%) translateY(-32%); }
+  70% { transform: translateX(-50%) translateY(-10%); }
+}
+.animate-star {
+  animation: miniko-star 1.6s ease-in-out infinite;
+}
+
 @layer components {
   /* Botón principal: negro sólido (el rojo se reserva para líneas/acentos). */
   .btn-primary {
