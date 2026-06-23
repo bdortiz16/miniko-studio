@@ -47,7 +47,7 @@ export default function AdminPerfil() {
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
-    router.replace("/admin/login");
+    router.replace("/panel-mk9z3/login");
   }
 
   const inputCls = "w-full rounded-xl border border-line px-4 py-2.5 outline-none focus:border-ink";
@@ -59,7 +59,7 @@ export default function AdminPerfil() {
       <div className="mt-4 h-px w-16 bg-brand/70" />
 
       <div className="mt-6">
-        <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">← Panel</Link>
+        <Link href="/panel-mk9z3" className="btn-secondary px-5 py-2 text-sm">← Panel</Link>
       </div>
 
       {loading ? (

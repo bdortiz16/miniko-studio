@@ -8,15 +8,15 @@ import AdminIdle from "@/components/AdminIdle";
 import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear, MiUser } from "@/components/MiniIcons";
 
 const NAV = [
-  { href: "/admin", label: "Dashboard", Icon: MiGrid },
-  { href: "/admin/pedidos", label: "Pedidos", Icon: MiBox },
-  { href: "/admin/clientes", label: "Clientes", Icon: MiPeople },
-  { href: "/admin/contabilidad", label: "Contabilidad", Icon: MiChart },
-  { href: "/admin/promociones", label: "Promociones", Icon: MiTicket },
-  { href: "/admin/correos", label: "Correos", Icon: MiMail },
-  { href: "/admin/precios", label: "Precios y envío", Icon: MiTag },
-  { href: "/admin/perfil", label: "Perfil", Icon: MiUser },
-  { href: "/admin/configuracion", label: "Configuración", Icon: MiGear },
+  { href: "/panel-mk9z3", label: "Dashboard", Icon: MiGrid },
+  { href: "/panel-mk9z3/pedidos", label: "Pedidos", Icon: MiBox },
+  { href: "/panel-mk9z3/clientes", label: "Clientes", Icon: MiPeople },
+  { href: "/panel-mk9z3/contabilidad", label: "Contabilidad", Icon: MiChart },
+  { href: "/panel-mk9z3/promociones", label: "Promociones", Icon: MiTicket },
+  { href: "/panel-mk9z3/correos", label: "Correos", Icon: MiMail },
+  { href: "/panel-mk9z3/precios", label: "Precios y envío", Icon: MiTag },
+  { href: "/panel-mk9z3/perfil", label: "Perfil", Icon: MiUser },
+  { href: "/panel-mk9z3/configuracion", label: "Configuración", Icon: MiGear },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -24,20 +24,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   // La página de login no lleva el panel (aún no hay sesión).
-  if (pathname === "/admin/login") {
+  if (pathname === "/panel-mk9z3/login") {
     return <div className="min-h-screen bg-mist">{children}</div>;
   }
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
-    router.replace("/admin/login");
+    router.replace("/panel-mk9z3/login");
   }
 
   return (
     <div className="flex min-h-screen bg-mist">
       {/* Sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-white p-5 md:flex">
-        <Link href="/admin" className="flex items-center gap-2">
+        <Link href="/panel-mk9z3" className="flex items-center gap-2">
           <Wordmark className="text-xl" />
           <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold uppercase text-white">
             admin

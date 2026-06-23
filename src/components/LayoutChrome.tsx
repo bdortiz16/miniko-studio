@@ -9,7 +9,7 @@ import FloatingWhatsApp from "./FloatingWhatsApp";
 // cabecera y el pie públicos.
 export default function LayoutChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) {
+  if (pathname?.startsWith("/panel-mk9z3")) {
     return <>{children}</>;
   }
   return (

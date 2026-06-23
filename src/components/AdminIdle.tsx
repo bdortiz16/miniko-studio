@@ -31,7 +31,7 @@ export default function AdminIdle() {
       if (Date.now() - lastActivity.current > IDLE_MS) {
         fetch("/api/admin/logout", { method: "POST" })
           .catch(() => {})
-          .finally(() => router.replace("/admin/login"));
+          .finally(() => router.replace("/panel-mk9z3/login"));
       }
     }, 30 * 1000);
 

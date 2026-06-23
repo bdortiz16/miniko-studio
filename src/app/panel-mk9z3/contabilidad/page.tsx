@@ -200,7 +200,7 @@ export default function AdminContabilidad() {
       <div className="mt-4 h-px w-16 bg-brand/70" />
 
       <div className="mt-6 flex items-center gap-2">
-        <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">← Panel</Link>
+        <Link href="/panel-mk9z3" className="btn-secondary px-5 py-2 text-sm">← Panel</Link>
         <div className="ml-auto inline-flex rounded-full border border-line bg-white p-1">
           {PERIODS.map((p) => (
             <button

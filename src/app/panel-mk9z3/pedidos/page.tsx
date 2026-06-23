@@ -124,7 +124,7 @@ export default function AdminPedidos() {
         <div className="mt-4 h-px w-16 bg-brand/70" />
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">
+          <Link href="/panel-mk9z3" className="btn-secondary px-5 py-2 text-sm">
             ← Panel
           </Link>
           <button onClick={() => load()} disabled={loading} className="btn-primary disabled:opacity-50">

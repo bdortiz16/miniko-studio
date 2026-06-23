@@ -39,13 +39,13 @@ export async function middleware(req: NextRequest) {
   if (!pw) return NextResponse.next();
 
   const { pathname } = req.nextUrl;
-  if (pathname === "/admin/login") return NextResponse.next();
+  if (pathname === "/panel-mk9z3/login") return NextResponse.next();
 
   const cookie = req.cookies.get("miniko_admin")?.value || "";
 
   if (!(await valid(cookie, pw))) {
     const url = req.nextUrl.clone();
-    url.pathname = "/admin/login";
+    url.pathname = "/panel-mk9z3/login";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
@@ -64,5 +64,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: ["/panel-mk9z3", "/panel-mk9z3/:path*"],
 };

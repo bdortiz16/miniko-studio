@@ -181,7 +181,7 @@ export default function AdminDashboard() {
               </div>
             )}
             <div className="mt-4 text-right">
-              <Link href="/admin/contabilidad" className="text-sm font-semibold text-brand underline underline-offset-2">
+              <Link href="/panel-mk9z3/contabilidad" className="text-sm font-semibold text-brand underline underline-offset-2">
                 Ver contabilidad y utilidad real →
               </Link>
             </div>
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
           <section className="mt-6 rounded-2xl border border-line bg-white p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-lg font-bold">Últimos pedidos</h2>
-              <Link href="/admin/pedidos" className="text-sm font-semibold text-brand underline underline-offset-2">
+              <Link href="/panel-mk9z3/pedidos" className="text-sm font-semibold text-brand underline underline-offset-2">
                 Ver todos →
               </Link>
             </div>
@@ -228,10 +228,10 @@ export default function AdminDashboard() {
       {/* Accesos rápidos */}
       <h2 className="mt-10 font-display text-lg font-bold">Gestión</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <QuickLink href="/admin/pedidos" Icon={MiBox} title="Pedidos" desc="Foto, diseño IA y envío." />
-        <QuickLink href="/admin/clientes" Icon={MiPeople} title="Clientes" desc="Agrupados por correo." />
-        <QuickLink href="/admin/precios" Icon={MiTag} title="Precios y envío" desc="Precios COP y envío." />
-        <QuickLink href="/admin/configuracion" Icon={MiGear} title="Configuración" desc="WhatsApp, estilos y avisos." />
+        <QuickLink href="/panel-mk9z3/pedidos" Icon={MiBox} title="Pedidos" desc="Foto, diseño IA y envío." />
+        <QuickLink href="/panel-mk9z3/clientes" Icon={MiPeople} title="Clientes" desc="Agrupados por correo." />
+        <QuickLink href="/panel-mk9z3/precios" Icon={MiTag} title="Precios y envío" desc="Precios COP y envío." />
+        <QuickLink href="/panel-mk9z3/configuracion" Icon={MiGear} title="Configuración" desc="WhatsApp, estilos y avisos." />
       </div>
     </div>
   );

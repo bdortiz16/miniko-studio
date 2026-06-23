@@ -173,8 +173,8 @@ export default function AdminAssistant() {
           </div>
 
           <div className="mt-3 space-y-2 text-sm">
-            <Row label="Pedidos por producir" value={recibidos} href="/admin/pedidos" />
-            <Row label="Pedidos sin guía" value={sinGuia} href="/admin/pedidos" />
+            <Row label="Pedidos por producir" value={recibidos} href="/panel-mk9z3/pedidos" />
+            <Row label="Pedidos sin guía" value={sinGuia} href="/panel-mk9z3/pedidos" />
           </div>
 
           {orders.length > 0 && (
@@ -192,7 +192,7 @@ export default function AdminAssistant() {
           )}
 
           <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
-            <Link href="/admin/pedidos" className="btn-primary flex-1 px-3 py-2 text-center text-xs">
+            <Link href="/panel-mk9z3/pedidos" className="btn-primary flex-1 px-3 py-2 text-center text-xs">
               Ver pedidos
             </Link>
             {!notify && (

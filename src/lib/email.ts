@@ -194,7 +194,7 @@ export async function sendAdminNewOrder(order: Order): Promise<void> {
       ${row("Total", `<b>${money(order.amount, order.currency)}</b>`)}
       ${row("Enviar a", `${s.name || "—"}${dir ? `<br>${dir}` : ""}`)}
     </table>
-    <p style="font-size:14px"><a href="${SITE}/admin/pedidos" style="color:#E5322D">Abrir el panel de pedidos</a></p>`;
+    <p style="font-size:14px"><a href="${SITE}/panel-mk9z3/pedidos" style="color:#E5322D">Abrir el panel de pedidos</a></p>`;
   await send(to, `Nuevo pedido ${num} · ${money(order.amount, order.currency)}`, shell("Nuevo pedido", inner));
 }
 

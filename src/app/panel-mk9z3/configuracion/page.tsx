@@ -57,7 +57,7 @@ export default function AdminConfiguracion() {
       <div className="mt-4 h-px w-16 bg-brand/70" />
 
       <div className="mt-6">
-        <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">← Panel</Link>
+        <Link href="/panel-mk9z3" className="btn-secondary px-5 py-2 text-sm">← Panel</Link>
       </div>
 
       {loading ? (
@@ -123,7 +123,7 @@ export default function AdminConfiguracion() {
               flotantes que ven los clientes. Cambia el escaparate de la tienda, hazlo con cuidado.
             </p>
             <Link
-              href="/admin/estilos"
+              href="/panel-mk9z3/estilos"
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
             >
               ⚠️ Administrar estilos
