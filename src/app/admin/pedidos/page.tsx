@@ -315,6 +315,11 @@ function Tracking({ order }: { order: Order }) {
   const [genLoading, setGenLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
+  // Guía manual: cuando se genera por fuera (otra transportadora/contraentrega).
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualError, setManualError] = useState<string | null>(null);
+
   const seq = FULFILLMENT.map((f) => f.key);
   const curIdx = Math.max(0, seq.indexOf(fulfillment));
 
@@ -358,6 +363,34 @@ function Tracking({ order }: { order: Order }) {
       setGenError(e instanceof Error ? e.message : "Error de red.");
     } finally {
       setGenLoading(false);
+    }
+  }
+
+  // Guarda una guía escrita a mano (transportadora + número) y marca Enviado.
+  // El pedido SIEMPRE queda con guía: no se puede enviar sin ella.
+  async function guardarGuiaManual() {
+    const t = tracking.trim();
+    const c = carrier.trim();
+    if (!c || !t) {
+      setManualError("Escribe la transportadora y el número de guía.");
+      return;
+    }
+    setManualLoading(true);
+    setManualError(null);
+    try {
+      const res = await fetch("/api/admin/order-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: order.id, carrier: c, tracking: t, fulfillment: "ENVIADO" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar la guía.");
+      setFulfillment("ENVIADO");
+      setManualOpen(false);
+    } catch (e) {
+      setManualError(e instanceof Error ? e.message : "Error de red.");
+    } finally {
+      setManualLoading(false);
     }
   }
 
@@ -505,12 +538,44 @@ function Tracking({ order }: { order: Order }) {
               <button onClick={generarGuiaYEnviar} disabled={genLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
                 {genLoading ? "Generando guía…" : "Generar guía y marcar Enviado"}
               </button>
-              <button onClick={() => advance("ENVIADO")} disabled={saving} className="text-xs text-ink/50 underline underline-offset-2 hover:text-ink">
-                Marcar enviado sin guía
+              <button onClick={() => { setManualOpen((v) => !v); setManualError(null); }} className="text-sm font-semibold text-ink/70 underline underline-offset-2 hover:text-ink">
+                Colocar guía manual
               </button>
             </div>
             {genError && (
               <p className="mt-2 rounded-lg border border-brand/40 px-3 py-2 text-xs text-brand">{genError}</p>
+            )}
+
+            {/* Guía manual: el pedido se marca Enviado solo con su número de guía. */}
+            {manualOpen && (
+              <div className="mt-4 rounded-xl border border-line bg-mist/50 p-4">
+                <p className="text-sm font-semibold">📝 Guía manual</p>
+                <p className="mt-1 text-xs text-ink/55">
+                  Si generaste la guía por fuera, escribe la transportadora y el número.
+                  El pedido se marcará como <b>Enviado</b> con esa guía y se avisará al cliente.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="block text-xs font-medium text-ink/60">
+                    Transportadora
+                    <input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="Interrapidísimo, Servientrega…" className={`mt-1 ${input}`} />
+                  </label>
+                  <label className="block text-xs font-medium text-ink/60">
+                    Número de guía
+                    <input value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="Ej. 990123456789" className={`mt-1 ${input}`} />
+                  </label>
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <button onClick={guardarGuiaManual} disabled={manualLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+                    {manualLoading ? "Guardando…" : "Guardar guía y marcar Enviado"}
+                  </button>
+                  <button onClick={() => setManualOpen(false)} className="text-xs text-ink/50 underline underline-offset-2 hover:text-ink">
+                    Cancelar
+                  </button>
+                </div>
+                {manualError && (
+                  <p className="mt-2 rounded-lg border border-brand/40 px-3 py-2 text-xs text-brand">{manualError}</p>
+                )}
+              </div>
             )}
           </div>
         )}

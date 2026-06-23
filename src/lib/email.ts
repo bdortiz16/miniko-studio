@@ -10,14 +10,21 @@ const FROM = process.env.EMAIL_FROM || "Miniko Studio <onboarding@resend.dev>";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://miniko.com.co";
 
 // Bloque de soporte por WhatsApp (si hay número configurado en el panel).
+// Muestra el Funko Pop de soporte/WhatsApp y un botón verde para escribir.
 async function supportBlock(): Promise<string> {
   try {
     const s = await getSettings();
     const wa = waUrl(s.whatsapp, "Hola Miniko 👋, tengo una duda sobre mi pedido.");
     if (!wa) return "";
-    return `<div style="text-align:center;margin:22px 0 4px">
-      <a href="${wa}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:999px">
-        💬 ¿Necesitas ayuda? Escríbenos por WhatsApp
+    const icon = s.whatsappIcon || s.supportIcon || "";
+    const funko = icon
+      ? `<a href="${wa}" style="text-decoration:none"><img src="${icon}" alt="Soporte Miniko" width="84" height="84" style="display:inline-block;width:84px;height:84px;object-fit:contain;border:0" /></a>`
+      : "";
+    return `<div style="text-align:center;margin:26px 0 4px;padding-top:18px;border-top:1px solid #f0f0f0">
+      ${funko}
+      <p style="font-size:13px;color:#666;margin:8px 0 12px">¿Necesitas ayuda con tu pedido?</p>
+      <a href="${wa}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 20px;border-radius:999px">
+        💬 Escríbenos por WhatsApp
       </a>
     </div>`;
   } catch {
@@ -46,7 +53,7 @@ function shell(title: string, inner: string): string {
     <div style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #ececec;border-radius:16px;overflow:hidden">
       <div style="height:6px;background:#E5322D"></div>
       <div style="padding:32px 32px 8px">
-        <div style="font-size:26px;font-weight:800;color:#111;margin-bottom:18px">miniko<span style="color:#E5322D">.</span></div>
+        <div style="font-size:26px;font-weight:800;color:#111;margin-bottom:18px;white-space:nowrap">miniko<span style="color:#E5322D">.</span><span style="color:#E5322D;font-size:15px;vertical-align:super;line-height:0;margin-left:1px">&#9733;</span></div>
         <h1 style="font-size:18px;margin:0 0 12px;color:#111">${title}</h1>
         <div style="font-size:14px;color:#444;line-height:1.6">${inner}</div>
       </div>
