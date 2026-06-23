@@ -3,6 +3,7 @@ import { makeSession, ADMIN_COOKIE, adminConfigured, SESSION_TTL_MS } from "@/li
 import { getSettings } from "@/lib/settings";
 import { generateCode, makeToken } from "@/lib/verify";
 import { sendAdminLoginCode, emailConfigured } from "@/lib/email";
+import { hitRateLimit, clientIp } from "@/lib/rate-limit";
 
 // Correo al que se envía el código de acceso (correo de avisos del admin).
 async function adminEmail(): Promise<string> {
@@ -27,6 +28,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Configura ADMIN_PASSWORD en Vercel para activar el login." },
       { status: 500 }
+    );
+  }
+  // Anti fuerza bruta: máx 8 intentos por IP cada 10 minutos.
+  const rl = hitRateLimit(`login:${clientIp(request)}`, 8, 10 * 60 * 1000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Demasiados intentos. Espera ${Math.ceil(rl.retryAfterSec / 60)} min e inténtalo de nuevo.` },
+      { status: 429 }
     );
   }
   let email = "";

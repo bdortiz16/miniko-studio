@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { makeSession, ADMIN_COOKIE, adminConfigured, SESSION_TTL_MS } from "@/lib/admin-auth";
 import { getSettings } from "@/lib/settings";
 import { verifyToken } from "@/lib/verify";
+import { hitRateLimit, clientIp } from "@/lib/rate-limit";
 
 async function adminEmail(): Promise<string> {
   try {
@@ -16,6 +17,14 @@ async function adminEmail(): Promise<string> {
 export async function POST(request: Request) {
   if (!adminConfigured()) {
     return NextResponse.json({ error: "Login no configurado." }, { status: 500 });
+  }
+  // Anti fuerza bruta del código: máx 10 intentos por IP cada 10 minutos.
+  const rl = hitRateLimit(`verify:${clientIp(request)}`, 10, 10 * 60 * 1000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Demasiados intentos. Espera ${Math.ceil(rl.retryAfterSec / 60)} min.` },
+      { status: 429 }
+    );
   }
   let body: { code?: string; token?: string; exp?: number };
   try {
