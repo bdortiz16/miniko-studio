@@ -22,6 +22,7 @@ const STYLE_PROMPT: Record<string, string> = {
 const COMMON_PROMPT =
   "Keep the SAME face and a clear, accurate, recognizable likeness of the person in the photo: same face shape, eyes, nose, mouth, eyebrows, cheeks, jawline, facial hair, same hairstyle, hair length and hair color, same skin tone, and keep their glasses/sunglasses or cap if they wear any — the face must be an accurate portrait of the SAME specific person, never a generic or different-looking character. " +
   "If the person is wearing dark sunglasses that hide the eyes, KEEP the exact same dark sunglasses covering the eyes — do NOT remove them and do NOT invent or draw eyes behind them; just keep the sunglasses as they are. " +
+  "EYEWEAR: only include glasses if the person is ACTUALLY wearing them in the photo. If the person is NOT wearing any glasses, do NOT add glasses, eyeglasses or spectacles of any kind — show the eyes uncovered. " +
   "Do NOT add, remove or change facial hair: keep EXACTLY the same beard, mustache, goatee or stubble as in the photo, in the same shape and density (if the person only has a chin goatee, keep only that — do NOT add a mustache or a fuller beard that is not there). Do not change their age. " +
   "Keep the EXACT same skin color and tone from the photo — do NOT lighten, whiten or change the skin tone. " +
   "Preserve any distinctive marks exactly and in the same place: moles, beauty marks, freckles, birthmarks or scars (for example a mole on the cheek) must remain. " +
