@@ -391,16 +391,17 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
           )}
         </div>
 
-        {/* Navegación (el paso de pago tiene su propio botón). */}
-        {step < 5 && (
-          <div className="mt-10 flex items-center justify-between">
-            <button
-              onClick={back}
-              disabled={step === 0}
-              className="btn-secondary disabled:invisible"
-            >
-              ← Atrás
-            </button>
+        {/* Navegación. En el paso de pago solo va "Atrás" (el botón Pagar está
+            dentro del propio paso). */}
+        <div className="mt-10 flex items-center justify-between">
+          <button
+            onClick={back}
+            disabled={step === 0}
+            className="btn-secondary disabled:invisible"
+          >
+            ← Atrás
+          </button>
+          {step < 5 && (
             <button
               onClick={next}
               disabled={!canContinue}
@@ -408,8 +409,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
             >
               Continuar →
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Resumen permanente abajo. */}
         <div className="mt-10 flex items-center justify-between border-t border-line pt-5 text-sm">

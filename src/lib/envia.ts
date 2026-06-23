@@ -13,9 +13,13 @@
 //   ENVIA_PKG_WEIGHT (kg), ENVIA_PKG_LENGTH, ENVIA_PKG_WIDTH, ENVIA_PKG_HEIGHT (cm)
 
 const TOKEN = process.env.ENVIA_API_TOKEN || "";
-// Envia exige una transportadora en el envío. Configurable; por defecto Inter
-// Rapidísimo. Slugs comunes: interrapidisimo, servientrega, coordinadora, tcc, envia.
-const CARRIER = (process.env.ENVIA_CARRIER || "interrapidisimo").toLowerCase().trim();
+// Envia exige una transportadora en el envío. Probamos varias y usamos la que
+// funcione (la más barata primero). Configurable con ENVIA_CARRIER (lista
+// separada por comas). Slugs: servientrega, interrapidisimo, coordinadora, tcc, envia.
+const CARRIERS = (process.env.ENVIA_CARRIER || "servientrega,interrapidisimo,coordinadora,envia")
+  .split(",")
+  .map((s) => s.toLowerCase().trim())
+  .filter(Boolean);
 
 export function enviaConfigured(): boolean {
   return !!TOKEN;
@@ -155,29 +159,33 @@ async function call(path: string, body: unknown): Promise<{ meta?: string; data?
   return json;
 }
 
-// Cotiza y devuelve las opciones ordenadas por precio (más barata primero).
+// Cotiza UNA transportadora. No lanza: si falla, devuelve [].
 export async function quote(
   origin: Address,
   destination: Address,
-  declaredValue: number
+  declaredValue: number,
+  carrier: string
 ): Promise<RateOption[]> {
-  const json = await call("/ship/rate/", {
-    origin: withStateCode(origin),
-    destination: withStateCode(destination),
-    packages: [defaultPackage(declaredValue)],
-    shipment: { type: 1, carrier: CARRIER },
-  });
-  const data = Array.isArray(json.data) ? (json.data as Record<string, unknown>[]) : [];
-  return data
-    .map((d) => ({
-      carrier: String(d.carrier ?? ""),
-      service: String(d.service ?? ""),
-      serviceDescription: d.serviceDescription ? String(d.serviceDescription) : undefined,
-      totalPrice: Number(d.totalPrice ?? d.basePrice ?? 0),
-      deliveryEstimate: d.deliveryEstimate ? String(d.deliveryEstimate) : undefined,
-    }))
-    .filter((o) => o.carrier && o.service)
-    .sort((a, b) => a.totalPrice - b.totalPrice);
+  try {
+    const json = await call("/ship/rate/", {
+      origin: withStateCode(origin),
+      destination: withStateCode(destination),
+      packages: [defaultPackage(declaredValue)],
+      shipment: { type: 1, carrier },
+    });
+    const data = Array.isArray(json.data) ? (json.data as Record<string, unknown>[]) : [];
+    return data
+      .map((d) => ({
+        carrier: String(d.carrier ?? carrier),
+        service: String(d.service ?? ""),
+        serviceDescription: d.serviceDescription ? String(d.serviceDescription) : undefined,
+        totalPrice: Number(d.totalPrice ?? d.basePrice ?? 0),
+        deliveryEstimate: d.deliveryEstimate ? String(d.deliveryEstimate) : undefined,
+      }))
+      .filter((o) => o.carrier && o.service);
+  } catch {
+    return [];
+  }
 }
 
 // Genera la guía con un carrier/service concreto.
@@ -219,12 +227,28 @@ export async function generateBestGuide(
       "Falta configurar la dirección de origen (ENVIA_FROM_*) en Vercel."
     );
   }
-  const options = await quote(origin, destination, declaredValue);
-  if (options.length === 0) {
+  // Cotiza todas las transportadoras configuradas y junta las opciones.
+  const all: RateOption[] = [];
+  for (const c of CARRIERS) {
+    const opts = await quote(origin, destination, declaredValue, c);
+    all.push(...opts);
+  }
+  all.sort((a, b) => a.totalPrice - b.totalPrice);
+  if (all.length === 0) {
     throw new Error(
-      `Envia no devolvió tarifas para la transportadora "${CARRIER}". Revisa que esté habilitada en tu cuenta (o cambia ENVIA_CARRIER) y la ciudad/departamento.`
+      "Envia no devolvió tarifas. Revisa el saldo de tu cuenta, que la información de facturación esté validada, y la ciudad/departamento."
     );
   }
-  const best = options[0];
-  return generate(origin, destination, declaredValue, best.carrier || CARRIER, best.service);
+  // Intenta generar con cada opción (más barata primero) hasta que una funcione.
+  let lastErr = "";
+  for (const opt of all.slice(0, 6)) {
+    try {
+      return await generate(origin, destination, declaredValue, opt.carrier, opt.service);
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : String(e);
+    }
+  }
+  throw new Error(
+    `No se pudo generar la guía con ninguna transportadora. Último error: ${lastErr}. Suele ser por falta de SALDO en Envia o por la información de facturación sin validar.`
+  );
 }
