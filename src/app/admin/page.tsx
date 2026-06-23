@@ -3,7 +3,7 @@
 import { useEffect, useState, ComponentType } from "react";
 import Link from "next/link";
 import {
-  MiMoney, MiChart, MiBox, MiPeople, MiReceipt, MiPalette, MiTag, MiGear,
+  MiMoney, MiChart, MiBox, MiPeople, MiReceipt, MiTag, MiGear,
 } from "@/components/MiniIcons";
 
 type IconType = ComponentType<{ className?: string }>;
@@ -178,9 +178,8 @@ export default function AdminDashboard() {
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <QuickLink href="/admin/pedidos" Icon={MiBox} title="Pedidos" desc="Foto, diseño IA y envío." />
         <QuickLink href="/admin/clientes" Icon={MiPeople} title="Clientes" desc="Agrupados por correo." />
-        <QuickLink href="/admin/estilos" Icon={MiPalette} title="Estilos" desc="Figuras de ejemplo y mascotas." />
         <QuickLink href="/admin/precios" Icon={MiTag} title="Precios y envío" desc="Precios COP y envío." />
-        <QuickLink href="/admin/configuracion" Icon={MiGear} title="Configuración" desc="WhatsApp y correo de avisos." />
+        <QuickLink href="/admin/configuracion" Icon={MiGear} title="Configuración" desc="WhatsApp, estilos y avisos." />
       </div>
     </div>
   );

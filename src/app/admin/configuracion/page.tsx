@@ -154,11 +154,22 @@ export default function AdminConfiguracion() {
             </div>
           </section>
 
-          {msg && (
-            <p className={`mt-6 rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-green-300 text-green-600" : "border-brand/40 text-brand"}`}>
-              {msg.text}
+          {/* Estilos (zona avanzada) */}
+          <section className="mt-6 rounded-2xl border border-red-200 bg-red-50/40 p-6">
+            <h2 className="font-display text-lg font-bold text-red-700">Estilos</h2>
+            <p className="mt-1 text-sm text-ink/60">
+              Zona avanzada: edita las figuras de ejemplo y las mascotas que ven los clientes.
+              Cambia el escaparate de la tienda, hazlo con cuidado.
             </p>
-          )}
+            <Link
+              href="/admin/estilos"
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+            >
+              ⚠️ Administrar estilos
+            </Link>
+          </section>
+
+          {msg && (
 
           <div className="mt-6 flex justify-end">
             <button onClick={save} disabled={saving} className="btn-primary px-8 disabled:opacity-50">
