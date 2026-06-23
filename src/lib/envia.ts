@@ -13,6 +13,9 @@
 //   ENVIA_PKG_WEIGHT (kg), ENVIA_PKG_LENGTH, ENVIA_PKG_WIDTH, ENVIA_PKG_HEIGHT (cm)
 
 const TOKEN = process.env.ENVIA_API_TOKEN || "";
+// Envia exige una transportadora en el envío. Configurable; por defecto Inter
+// Rapidísimo. Slugs comunes: interrapidisimo, servientrega, coordinadora, tcc, envia.
+const CARRIER = (process.env.ENVIA_CARRIER || "interrapidisimo").toLowerCase().trim();
 
 export function enviaConfigured(): boolean {
   return !!TOKEN;
@@ -162,7 +165,7 @@ export async function quote(
     origin: withStateCode(origin),
     destination: withStateCode(destination),
     packages: [defaultPackage(declaredValue)],
-    shipment: { type: 1 },
+    shipment: { type: 1, carrier: CARRIER },
   });
   const data = Array.isArray(json.data) ? (json.data as Record<string, unknown>[]) : [];
   return data
@@ -218,8 +221,10 @@ export async function generateBestGuide(
   }
   const options = await quote(origin, destination, declaredValue);
   if (options.length === 0) {
-    throw new Error("Envia no devolvió tarifas para esta dirección. Revisa ciudad/departamento.");
+    throw new Error(
+      `Envia no devolvió tarifas para la transportadora "${CARRIER}". Revisa que esté habilitada en tu cuenta (o cambia ENVIA_CARRIER) y la ciudad/departamento.`
+    );
   }
   const best = options[0];
-  return generate(origin, destination, declaredValue, best.carrier, best.service);
+  return generate(origin, destination, declaredValue, best.carrier || CARRIER, best.service);
 }
