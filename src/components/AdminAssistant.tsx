@@ -33,7 +33,8 @@ export default function AdminAssistant() {
   const [orders, setOrders] = useState<OrderLite[]>([]);
   const [newCount, setNewCount] = useState(0);
   const [bump, setBump] = useState(false);
-  const [notify, setNotify] = useState(false);
+  // Estado del permiso de notificaciones del navegador.
+  const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
   const [icon, setIcon] = useState("");
 
   const known = useRef<Set<string>>(new Set());
@@ -90,38 +91,50 @@ export default function AdminAssistant() {
     } catch {}
   }
 
-  async function enableSound() {
+  // Prepara el audio con un gesto del usuario (abrir el panel ya cuenta).
+  function ensureAudio() {
+    if (audio.current) return;
     try {
       const Ctx =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       audio.current = new Ctx();
-      if (audio.current.state === "suspended") await audio.current.resume();
+      if (audio.current.state === "suspended") audio.current.resume();
     } catch {}
+  }
+
+  // Pide permiso de notificaciones solo si aún no se ha concedido.
+  async function askNotifications() {
+    ensureAudio();
     try {
-      if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
-        await Notification.requestPermission();
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
+        const result = await Notification.requestPermission();
+        setPerm(result);
       }
     } catch {}
-    setNotify(true);
     playDing();
   }
 
   useEffect(() => {
     load();
+    if (typeof Notification !== "undefined") setPerm(Notification.permission);
+    else setPerm("unsupported");
     getSettings().then((s) => { if (s.supportIcon) setIcon(s.supportIcon); }).catch(() => {});
     const t = window.setInterval(load, 25000);
     return () => window.clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sinGuia = orders.filter((o) => !o.tracking).length;
+  // "Sin guía" solo cuenta los pedidos YA enviados que no tienen guía: los que
+  // siguen en producción aún no necesitan guía, así que no se alertan.
+  const sinGuia = orders.filter((o) => o.fulfillment === "ENVIADO" && !o.tracking).length;
   const recibidos = orders.filter((o) => (o.fulfillment || "RECIBIDO") === "RECIBIDO").length;
   const pendientes = sinGuia + recibidos;
   const badge = newCount > 0 ? newCount : pendientes;
   const badgeColor = newCount > 0 ? "bg-brand" : "bg-amber-500";
 
   function togglePanel() {
+    ensureAudio(); // abrir el panel es un gesto: habilita el sonido
     setOpen((v) => !v);
     setNewCount(0);
   }
@@ -195,13 +208,20 @@ export default function AdminAssistant() {
             <Link href="/panel-mk9z3/pedidos" className="btn-primary flex-1 px-3 py-2 text-center text-xs">
               Ver pedidos
             </Link>
-            {!notify && (
-              <button onClick={enableSound} className="rounded-full border border-line px-3 py-2 text-xs font-semibold text-ink/70 hover:border-ink">
+            {perm === "default" && (
+              <button onClick={askNotifications} className="rounded-full border border-line px-3 py-2 text-xs font-semibold text-ink/70 hover:border-ink">
                 🔔 Activar avisos
               </button>
             )}
           </div>
-          {notify && <p className="mt-2 text-center text-[11px] text-green-600">✓ Avisos activos (deja el panel abierto)</p>}
+          {perm === "granted" && (
+            <p className="mt-2 text-center text-[11px] text-green-600">✓ Avisos activos (deja el panel abierto)</p>
+          )}
+          {perm === "denied" && (
+            <p className="mt-2 text-center text-[11px] text-ink/50">
+              Activa las notificaciones de este sitio en el navegador para recibir avisos.
+            </p>
+          )}
         </div>
       )}
     </>

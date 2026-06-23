@@ -42,7 +42,9 @@ type FilterKey = "ALL" | "RECIBIDO" | "EN_PRODUCCION" | "ENVIADO" | "ENTREGADO" 
 function matchesFilter(o: Order, f: FilterKey): boolean {
   const status = o.fulfillment || "RECIBIDO";
   if (f === "ALL") return true;
-  if (f === "SIN_GUIA") return !o.tracking;
+  // "Sin guía" = ya enviado pero sin número de guía (los que siguen en
+  // producción aún no necesitan guía).
+  if (f === "SIN_GUIA") return status === "ENVIADO" && !o.tracking;
   return status === f;
 }
 
@@ -304,7 +306,7 @@ function OrdersDashboard({
 }) {
   const total = orders.length;
   const by = (k: string) => orders.filter((o) => (o.fulfillment || "RECIBIDO") === k).length;
-  const sinGuia = orders.filter((o) => !o.tracking).length;
+  const sinGuia = orders.filter((o) => (o.fulfillment || "RECIBIDO") === "ENVIADO" && !o.tracking).length;
 
   const cards: { key: FilterKey; label: string; value: number; color: string }[] = [
     { key: "RECIBIDO", label: "Pendientes", value: by("RECIBIDO"), color: "text-ink" },
