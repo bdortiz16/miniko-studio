@@ -23,20 +23,22 @@ export async function POST(request: Request) {
 
   const code = generateCode();
   const { token, exp } = makeToken(email, code);
-  const from = process.env.EMAIL_FROM || "Miniko Studio <onboarding@resend.dev>";
+  const from = process.env.EMAIL_FROM || "Miniko <onboarding@resend.dev>";
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
       from,
       to: email,
-      subject: `Tu código de verificación: ${code}`,
+      subject: "Tu código de acceso · Miniko",
       html: `
-        <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px">
-          <h2 style="color:#d98c5f">Miniko Studio</h2>
-          <p>Tu código de verificación es:</p>
-          <p style="font-size:32px;font-weight:800;letter-spacing:6px;color:#2b2b2b">${code}</p>
-          <p style="color:#666;font-size:14px">Caduca en 10 minutos. Si no lo solicitaste, ignora este email.</p>
+        <div style="font-family:system-ui,Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#2b2b2b">
+          <h2 style="margin:0 0 4px;font-size:24px">miniko<span style="color:#E5322D">.</span></h2>
+          <h3 style="margin:16px 0 8px">Tu código de acceso</h3>
+          <p style="font-size:14px;color:#555">Úsalo para entrar a tu zona de pedidos:</p>
+          <p style="font-size:34px;font-weight:800;letter-spacing:8px;color:#111;margin:12px 0">${code}</p>
+          <p style="color:#888;font-size:13px">Caduca en 10 minutos. Si no lo solicitaste, ignora este correo.</p>
+          <p style="color:#999;font-size:12px;margin-top:24px">Miniko · Pereira, Colombia · miniko.com.co</p>
         </div>`,
     });
     if (error) throw new Error(error.message);
