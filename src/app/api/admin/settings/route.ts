@@ -56,7 +56,10 @@ export async function POST(request: Request) {
       ? Math.round(Number(body.freeFromPeople))
       : def.freeFromPeople;
 
-  const settings: Settings = { prices, shippingCop, freeFromPeople };
+  const whatsapp =
+    typeof body.whatsapp === "string" ? body.whatsapp.replace(/[^\d+\s]/g, "").trim() : def.whatsapp;
+
+  const settings: Settings = { prices, shippingCop, freeFromPeople, whatsapp };
 
   try {
     const { error } = await supabaseAdmin.storage

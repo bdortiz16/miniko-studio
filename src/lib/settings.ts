@@ -6,6 +6,7 @@ export interface Settings {
   prices: Record<string, number>; // variantId -> precio en COP
   shippingCop: number; // costo de envío en COP
   freeFromPeople: number; // envío gratis desde N personajes
+  whatsapp: string; // número de WhatsApp de soporte (solo el número)
 }
 
 const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,6 +17,7 @@ export function defaultSettings(): Settings {
     prices: Object.fromEntries(VARIANTS.map((v) => [v.id, v.priceCop])),
     shippingCop: SHIPPING.flatCop,
     freeFromPeople: SHIPPING.freeFromPeople,
+    whatsapp: "",
   };
 }
 
@@ -34,6 +36,7 @@ export async function getSettings(): Promise<Settings> {
       shippingCop: typeof data.shippingCop === "number" ? data.shippingCop : def.shippingCop,
       freeFromPeople:
         typeof data.freeFromPeople === "number" ? data.freeFromPeople : def.freeFromPeople,
+      whatsapp: typeof data.whatsapp === "string" ? data.whatsapp : def.whatsapp,
     };
   } catch {
     return def;

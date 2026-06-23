@@ -1,7 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Wordmark } from "./Header";
+import { getSettings } from "@/lib/settings";
+import { waUrl } from "@/lib/whatsapp";
 
 export default function Footer() {
+  const [contacto, setContacto] = useState("mailto:miniko.byandrea@gmail.com");
+  useEffect(() => {
+    getSettings()
+      .then((s) => {
+        const wa = waUrl(s.whatsapp, "Hola Miniko 👋, quiero información sobre mi figura.");
+        if (wa) setContacto(wa);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <footer className="border-t border-line bg-white">
       <div className="container-x grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -26,7 +41,7 @@ export default function Footer() {
           links={[
             { href: "/faq", label: "Preguntas frecuentes" },
             { href: "/#como-funciona", label: "Cómo funciona" },
-            { href: "mailto:miniko.byandrea@gmail.com", label: "Contacto" },
+            { href: contacto, label: "Contacto" },
           ]}
         />
         <FooterCol

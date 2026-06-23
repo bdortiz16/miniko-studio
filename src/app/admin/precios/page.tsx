@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { VARIANTS, formatCop } from "@/data/catalog";
 import type { Settings } from "@/lib/settings";
+import { waUrl } from "@/lib/whatsapp";
 
 export default function AdminPrecios() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -142,6 +143,35 @@ export default function AdminPrecios() {
                   Gratis con {settings.freeFromPeople} o más personajes
                 </p>
               </div>
+            </div>
+          </section>
+
+          {/* WhatsApp de soporte */}
+          <section className="mt-6 rounded-2xl border border-line bg-white p-6">
+            <h2 className="font-display text-lg font-bold">WhatsApp de soporte</h2>
+            <p className="mt-1 text-sm text-ink/55">
+              Escribe solo tu número (con o sin el 57). La web arma el enlace y manda al cliente a tu
+              WhatsApp Business. Aparece en el botón flotante y en &quot;Contacto&quot;.
+            </p>
+            <div className="mt-4">
+              <label className="text-sm font-medium">Número de WhatsApp</label>
+              <input
+                inputMode="tel"
+                value={settings.whatsapp || ""}
+                onChange={(e) => setSettings({ ...settings, whatsapp: e.target.value })}
+                placeholder="3001234567"
+                className={`mt-1.5 ${inputCls}`}
+              />
+              {settings.whatsapp && waUrl(settings.whatsapp) ? (
+                <p className="mt-2 text-xs text-ink/50">
+                  Enlace:{" "}
+                  <a href={waUrl(settings.whatsapp)} target="_blank" rel="noreferrer" className="text-brand underline">
+                    {waUrl(settings.whatsapp)}
+                  </a>
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-ink/40">Vacío = no se muestra el botón de WhatsApp.</p>
+              )}
             </div>
           </section>
 
