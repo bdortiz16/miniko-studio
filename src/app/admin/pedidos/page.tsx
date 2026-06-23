@@ -412,9 +412,10 @@ function Tracking({ order }: { order: Order }) {
     }
   }
 
-  // Guarda una guía escrita a mano (transportadora + número) y marca Enviado.
-  // El pedido SIEMPRE queda con guía: no se puede enviar sin ella.
-  async function guardarGuiaManual() {
+  // Guarda una guía escrita a mano (transportadora + número). Si markShipped es
+  // true (paso "En producción") marca el pedido como Enviado; si es false
+  // (pedido ya enviado/entregado sin guía) solo adjunta la guía sin tocar el estado.
+  async function guardarGuiaManual(markShipped = true) {
     const t = tracking.trim();
     const c = carrier.trim();
     if (!c || !t) {
@@ -427,11 +428,16 @@ function Tracking({ order }: { order: Order }) {
       const res = await fetch("/api/admin/order-update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: order.id, carrier: c, tracking: t, fulfillment: "ENVIADO" }),
+        body: JSON.stringify({
+          reference: order.id,
+          carrier: c,
+          tracking: t,
+          ...(markShipped ? { fulfillment: "ENVIADO" } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "No se pudo guardar la guía.");
-      setFulfillment("ENVIADO");
+      if (markShipped) setFulfillment("ENVIADO");
       setManualOpen(false);
     } catch (e) {
       setManualError(e instanceof Error ? e.message : "Error de red.");
@@ -611,7 +617,7 @@ function Tracking({ order }: { order: Order }) {
                   </label>
                 </div>
                 <div className="mt-3 flex items-center gap-3">
-                  <button onClick={guardarGuiaManual} disabled={manualLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+                  <button onClick={() => guardarGuiaManual(true)} disabled={manualLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
                     {manualLoading ? "Guardando…" : "Guardar guía y marcar Enviado"}
                   </button>
                   <button onClick={() => setManualOpen(false)} className="text-xs text-ink/50 underline underline-offset-2 hover:text-ink">
@@ -645,7 +651,7 @@ function Tracking({ order }: { order: Order }) {
           {tracking ? (
             <p className="mt-0.5 text-ink/70">Guía: <b className="font-mono text-ink">{tracking}</b></p>
           ) : (
-            <p className="mt-1 text-xs text-ink/50">Enviado sin guía generada.</p>
+            <p className="mt-1 text-xs text-ink/50">Enviado sin guía generada. Puedes colocarla a mano.</p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-4">
             {labelUrl && (
@@ -656,7 +662,42 @@ function Tracking({ order }: { order: Order }) {
             <button onClick={printLabel} type="button" className="btn-secondary px-4 py-1.5 text-xs">
               🖨️ Imprimir etiqueta
             </button>
+            <button
+              onClick={() => { setManualOpen((v) => !v); setManualError(null); }}
+              type="button"
+              className="text-xs font-semibold text-ink/70 underline underline-offset-2 hover:text-ink"
+            >
+              {tracking ? "Editar guía manual" : "Colocar guía manual"}
+            </button>
           </div>
+
+          {/* Editor de guía manual para un pedido ya enviado/entregado: solo
+              adjunta la guía, no cambia el estado del pedido. */}
+          {manualOpen && (
+            <div className="mt-3 rounded-xl border border-line bg-mist/50 p-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-xs font-medium text-ink/60">
+                  Transportadora
+                  <input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="Interrapidísimo, Servientrega…" className={`mt-1 ${input}`} />
+                </label>
+                <label className="block text-xs font-medium text-ink/60">
+                  Número de guía
+                  <input value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="Ej. 990123456789" className={`mt-1 ${input}`} />
+                </label>
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <button onClick={() => guardarGuiaManual(false)} disabled={manualLoading} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
+                  {manualLoading ? "Guardando…" : "Guardar guía"}
+                </button>
+                <button onClick={() => setManualOpen(false)} className="text-xs text-ink/50 underline underline-offset-2 hover:text-ink">
+                  Cancelar
+                </button>
+              </div>
+              {manualError && (
+                <p className="mt-2 rounded-lg border border-brand/40 px-3 py-2 text-xs text-brand">{manualError}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
