@@ -1,4 +1,5 @@
 import { VARIANTS, SHIPPING } from "@/data/catalog";
+import { Costs, defaultCosts } from "@/lib/accounting";
 
 // Configuración editable desde el panel admin (precios y envío).
 // Se guarda como JSON en Supabase Storage: config/settings.json
@@ -10,6 +11,7 @@ export interface Settings {
   adminEmail: string; // correo donde llegan los avisos de pedidos nuevos
   whatsappIcon: string; // URL del Funko (camiseta WhatsApp) generado con IA
   supportIcon: string; // URL del Funko de soporte/asistente generado con IA
+  costs: Costs; // costos para la contabilidad
 }
 
 const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -24,6 +26,36 @@ export function defaultSettings(): Settings {
     adminEmail: "",
     whatsappIcon: "",
     supportIcon: "",
+    costs: defaultCosts(),
+  };
+}
+
+// Merge profundo de costos (para no perder claves nuevas).
+function mergeCosts(data: Partial<Costs> | undefined, def: Costs): Costs {
+  if (!data || typeof data !== "object") return def;
+  const num = (v: unknown, d: number) => (Number.isFinite(Number(v)) ? Number(v) : d);
+  const production = { ...def.production };
+  if (data.production && typeof data.production === "object") {
+    for (const k of Object.keys(def.production)) {
+      const p = data.production[k];
+      production[k] = {
+        persona: num(p?.persona, def.production[k].persona),
+        mascota: num(p?.mascota, def.production[k].mascota),
+      };
+    }
+  }
+  return {
+    production,
+    paints: num(data.paints, def.paints),
+    brush: num(data.brush, def.brush),
+    paper: num(data.paper, def.paper),
+    box: num(data.box, def.box),
+    wrapping: num(data.wrapping, def.wrapping),
+    cards: num(data.cards, def.cards),
+    shippingCost: num(data.shippingCost, def.shippingCost),
+    ivaRate: num(data.ivaRate, def.ivaRate),
+    wompiPct: num(data.wompiPct, def.wompiPct),
+    wompiFixed: num(data.wompiFixed, def.wompiFixed),
   };
 }
 
@@ -46,6 +78,7 @@ export async function getSettings(): Promise<Settings> {
       adminEmail: typeof data.adminEmail === "string" ? data.adminEmail : def.adminEmail,
       whatsappIcon: typeof data.whatsappIcon === "string" ? data.whatsappIcon : def.whatsappIcon,
       supportIcon: typeof data.supportIcon === "string" ? data.supportIcon : def.supportIcon,
+      costs: mergeCosts(data.costs, def.costs),
     };
   } catch {
     return def;

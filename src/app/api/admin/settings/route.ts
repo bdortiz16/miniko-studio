@@ -64,9 +64,12 @@ export async function POST(request: Request) {
     typeof body.whatsappIcon === "string" ? body.whatsappIcon : def.whatsappIcon;
   const supportIcon =
     typeof body.supportIcon === "string" ? body.supportIcon : def.supportIcon;
+  // costs: si vienen, los validamos con getSettings/merge; si no, conservamos.
+  const current = await getSettings();
+  const costs = body.costs ? { ...current.costs, ...body.costs } : current.costs;
 
   const settings: Settings = {
-    prices, shippingCop, freeFromPeople, whatsapp, adminEmail, whatsappIcon, supportIcon,
+    prices, shippingCop, freeFromPeople, whatsapp, adminEmail, whatsappIcon, supportIcon, costs,
   };
 
   try {
