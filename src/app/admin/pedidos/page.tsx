@@ -41,6 +41,7 @@ export default function AdminPedidos() {
   const [error, setError] = useState<string | null>(null);
   const [notify, setNotify] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const knownIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
@@ -231,27 +232,27 @@ export default function AdminPedidos() {
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-[auto_1fr]">
-                {/* Imágenes */}
+                {/* Imágenes (clic = ampliar) */}
                 <div className="flex gap-2">
                   {o.fotos.map((f, i) => (
-                    <a key={i} href={f} target="_blank" rel="noreferrer" className="block">
+                    <button key={i} type="button" onClick={() => setLightbox(f)} className="block cursor-zoom-in">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={f}
                         alt={`Foto ${i + 1}`}
                         className="h-24 w-24 rounded-lg border border-line object-cover"
                       />
-                    </a>
+                    </button>
                   ))}
                   {o.figuras_ia?.map((f, i) => (
-                    <a key={`ia${i}`} href={f} target="_blank" rel="noreferrer" className="block">
+                    <button key={`ia${i}`} type="button" onClick={() => setLightbox(f)} className="block cursor-zoom-in">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={f}
                         alt={`Diseño IA ${i + 1}`}
                         className="h-24 w-24 rounded-lg border-2 border-brand object-contain"
                       />
-                    </a>
+                    </button>
                   ))}
                 </div>
 
@@ -281,6 +282,45 @@ export default function AdminPedidos() {
           <p className="mt-8 text-sm text-ink/45">Cargando pedidos…</p>
         )}
       </div>
+
+      {lightbox && <Lightbox url={lightbox} onClose={() => setLightbox(null)} />}
+    </div>
+  );
+}
+
+// Visor de imagen ampliada con descarga, sin salir de la página.
+function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
+  async function download() {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const obj = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = obj;
+      a.download = `miniko-${Date.now()}.${(blob.type.split("/")[1] || "png").replace("jpeg", "jpg")}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(obj);
+    } catch {
+      window.open(url, "_blank");
+    }
+  }
+  return (
+    <div onClick={onClose} className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 p-4">
+      <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt="Imagen del pedido" className="max-h-[80vh] w-auto rounded-xl bg-white object-contain shadow-2xl" />
+        <div className="mt-4 flex gap-3">
+          <button onClick={download} className="btn-primary px-5 py-2 text-sm">⬇️ Descargar</button>
+          <button onClick={onClose} className="rounded-full border border-white/60 bg-white/10 px-5 py-2 text-sm font-semibold text-white hover:bg-white/20">
+            Cerrar
+          </button>
+        </div>
+      </div>
+      <button onClick={onClose} aria-label="Cerrar" className="absolute right-5 top-4 text-4xl leading-none text-white/80 hover:text-white">
+        ×
+      </button>
     </div>
   );
 }
