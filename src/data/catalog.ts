@@ -42,7 +42,7 @@ export interface Variant {
 export const STYLES: FigureStyle[] = [
   {
     id: "kawaii",
-    name: "Funko Pop",
+    name: "Clásico",
     tagline: "Cabezón y adorable",
     description:
       "Cabeza grande, cuerpo pequeño y esos ojos negros tan característicos. El estilo coleccionable más reconocible y divertido.",
@@ -51,7 +51,7 @@ export const STYLES: FigureStyle[] = [
   },
   {
     id: "caricatura",
-    name: "Disney",
+    name: "Animado",
     tagline: "Estilo animación",
     description:
       "Acabado 3D tipo película de animación: gestos expresivos, mirada simpática y mucho encanto. Como sacado de tu peli favorita.",
@@ -165,14 +165,14 @@ export interface Mascot {
   id: string;
   label: string; // "Perro", "Gato"…
   styleId: StyleId; // estilo con el que se muestra y se pide
-  styleName: string; // "Funko Pop", "Disney", "Realista"
+  styleName: string; // "Clásico", "Animado", "Realista"
   emoji: string; // fallback si no hay imagen generada
   image: string;
 }
 
 export const MASCOTS: Mascot[] = [
-  { id: "dog", label: "Perro", styleId: "kawaii", styleName: "Funko Pop", emoji: "🐶", image: mascotImage("dog") },
-  { id: "cat", label: "Gato", styleId: "caricatura", styleName: "Disney", emoji: "🐱", image: mascotImage("cat") },
+  { id: "dog", label: "Perro", styleId: "kawaii", styleName: "Clásico", emoji: "🐶", image: mascotImage("dog") },
+  { id: "cat", label: "Gato", styleId: "caricatura", styleName: "Animado", emoji: "🐱", image: mascotImage("cat") },
   { id: "dogreal", label: "Perro", styleId: "realista", styleName: "Realista", emoji: "🐶", image: mascotImage("dogreal") },
 ];
 

@@ -98,7 +98,7 @@ export default function Home() {
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  "Los 3 estilos también para mascotas: Funko Pop, Disney y Realista",
+                  "Los 3 estilos también para mascotas: Clásico, Animado y Realista",
                   "Tú o tu mascota, o ambos juntos en la misma base",
                   "Un recuerdo único de tu mejor amigo",
                 ].map((item) => (

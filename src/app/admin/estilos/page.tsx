@@ -11,11 +11,11 @@ interface Result {
 }
 
 const LABELS: Record<string, string> = {
-  kawaii: "Funko Pop",
-  caricatura: "Disney",
+  kawaii: "Clásico",
+  caricatura: "Animado",
   realista: "Realista",
-  dog: "Perro (Funko)",
-  cat: "Gato (Disney)",
+  dog: "Perro (Clásico)",
+  cat: "Gato (Animado)",
   dogreal: "Perro (Realista)",
 };
 
