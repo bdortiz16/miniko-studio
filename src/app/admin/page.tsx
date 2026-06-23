@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ComponentType } from "react";
 import Link from "next/link";
+import {
+  MiMoney, MiChart, MiBox, MiPeople, MiReceipt, MiPalette, MiTag, MiGear,
+} from "@/components/MiniIcons";
+
+type IconType = ComponentType<{ className?: string }>;
 
 interface Recent {
   id: string;
@@ -98,13 +103,13 @@ export default function AdminDashboard() {
         <>
           {/* KPIs */}
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Kpi label="Ingresos totales" value={money(stats.revenue || 0, cur)} icon="💰" />
-            <Kpi label="Últimos 30 días" value={money(stats.revenue30 || 0, cur)} icon="📈" />
-            <Kpi label="Pedidos" value={String(stats.orders || 0)} icon="📦" />
-            <Kpi label="Clientes" value={String(stats.customers || 0)} icon="👥" />
+            <Kpi label="Ingresos totales" value={money(stats.revenue || 0, cur)} Icon={MiMoney} tone="green" />
+            <Kpi label="Últimos 30 días" value={money(stats.revenue30 || 0, cur)} Icon={MiChart} tone="blue" />
+            <Kpi label="Pedidos" value={String(stats.orders || 0)} Icon={MiBox} tone="brand" />
+            <Kpi label="Clientes" value={String(stats.customers || 0)} Icon={MiPeople} tone="amber" />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Kpi label="Ticket promedio" value={money(stats.avgOrder || 0, cur)} icon="🧾" />
+            <Kpi label="Ticket promedio" value={money(stats.avgOrder || 0, cur)} Icon={MiReceipt} tone="ink" />
           </div>
 
           {/* Gráfico de ingresos por día */}
@@ -171,23 +176,32 @@ export default function AdminDashboard() {
       {/* Accesos rápidos */}
       <h2 className="mt-10 font-display text-lg font-bold">Gestión</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <QuickLink href="/admin/pedidos" icon="📦" title="Pedidos" desc="Foto, diseño IA y envío." />
-        <QuickLink href="/admin/clientes" icon="👥" title="Clientes" desc="Agrupados por correo." />
-        <QuickLink href="/admin/estilos" icon="🎨" title="Estilos" desc="Figuras de ejemplo y mascotas." />
-        <QuickLink href="/admin/precios" icon="🏷️" title="Precios y envío" desc="Precios COP y envío." />
+        <QuickLink href="/admin/pedidos" Icon={MiBox} title="Pedidos" desc="Foto, diseño IA y envío." />
+        <QuickLink href="/admin/clientes" Icon={MiPeople} title="Clientes" desc="Agrupados por correo." />
+        <QuickLink href="/admin/estilos" Icon={MiPalette} title="Estilos" desc="Figuras de ejemplo y mascotas." />
+        <QuickLink href="/admin/precios" Icon={MiTag} title="Precios y envío" desc="Precios COP y envío." />
+        <QuickLink href="/admin/configuracion" Icon={MiGear} title="Configuración" desc="WhatsApp y correo de avisos." />
       </div>
     </div>
   );
 }
 
-function Kpi({ label, value, icon }: { label: string; value: string; icon: string }) {
+const TONES: Record<string, string> = {
+  green: "bg-green-50 text-green-600",
+  blue: "bg-blue-50 text-blue-600",
+  brand: "bg-brand/10 text-brand",
+  amber: "bg-amber-50 text-amber-600",
+  ink: "bg-mist text-ink",
+};
+
+function Kpi({ label, value, Icon, tone = "ink" }: { label: string; value: string; Icon: IconType; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-white p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-ink/45">{label}</span>
-        <span className="text-lg">{icon}</span>
+    <div className="rounded-2xl border border-line bg-white p-5 transition hover:shadow-sm">
+      <div className={`grid h-10 w-10 place-items-center rounded-xl ${TONES[tone] || TONES.ink}`}>
+        <Icon className="h-5 w-5" />
       </div>
-      <p className="mt-2 font-display text-2xl font-extrabold">{value}</p>
+      <p className="mt-3 font-display text-2xl font-extrabold">{value}</p>
+      <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-ink/45">{label}</p>
     </div>
   );
 }
@@ -233,22 +247,24 @@ function Breakdown({
 
 function QuickLink({
   href,
-  icon,
+  Icon,
   title,
   desc,
 }: {
   href: string;
-  icon: string;
+  Icon: IconType;
   title: string;
   desc: string;
 }) {
   return (
     <Link
       href={href}
-      className="rounded-2xl border border-line bg-white p-5 transition hover:-translate-y-0.5 hover:border-ink/30"
+      className="group rounded-2xl border border-line bg-white p-5 transition hover:-translate-y-0.5 hover:border-ink/30 hover:shadow-sm"
     >
-      <div className="text-2xl">{icon}</div>
-      <h3 className="mt-2 font-display font-bold">{title}</h3>
+      <div className="grid h-10 w-10 place-items-center rounded-xl bg-mist text-ink transition group-hover:bg-brand/10 group-hover:text-brand">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="mt-3 font-display font-bold">{title}</h3>
       <p className="mt-0.5 text-xs text-ink/55">{desc}</p>
     </Link>
   );

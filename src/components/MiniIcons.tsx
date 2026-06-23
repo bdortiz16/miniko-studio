@@ -113,6 +113,69 @@ export function MiX({ className = "", ...p }: P) {
   );
 }
 
+// Billete / ingresos.
+export function MiMoney({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <rect x="2.5" y="6" width="19" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.6" />
+      <path d="M6 9.5v5M18 9.5v5" />
+    </svg>
+  );
+}
+
+// Gráfica al alza.
+export function MiChart({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <path d="M3 3v18h18" />
+      <path d="M7 15l4-4 3 3 5-6" />
+    </svg>
+  );
+}
+
+// Recibo / ticket.
+export function MiReceipt({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <path d="M5 3h14v18l-2.3-1.5L14.3 21 12 19.5 9.7 21 7.3 19.5 5 21z" />
+      <path d="M9 8h6M9 12h6" />
+    </svg>
+  );
+}
+
+// Paleta (estilos).
+export function MiPalette({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-.9 2-1.8 0-1.2-1-1.7-1-2.7 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z" />
+      <circle cx="8" cy="11" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="11" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+// Etiqueta de precio.
+export function MiTag({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <path d="M3 12.5V4h8.5L21 13.5 13.5 21 3 12.5z" />
+      <circle cx="7.5" cy="8" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+// Engranaje (configuración).
+export function MiGear({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
+    </svg>
+  );
+}
+
 // Triángulo de alerta — error.
 export function MiWarn({ className = "", ...p }: P) {
   return (
