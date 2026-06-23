@@ -489,7 +489,7 @@ function Tracking({ order }: { order: Order }) {
 </style></head>
 <body onload="window.print()">
   <div class="label">
-    <div class="top"><span class="brand">miniko<span style="color:#E5322D">.</span></span><span class="tag">Envío</span></div>
+    <div class="top"><span class="brand">miniko<span style="color:#E5322D;font-size:0.55em;vertical-align:super;line-height:0;margin-left:1px">&#9733;</span></span><span class="tag">Envío</span></div>
     <div>
       <div class="sec">Destinatario</div>
       <div class="big">${esc(order.envio_nombre) || "—"}</div>

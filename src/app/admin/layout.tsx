@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/Header";
 import AdminAssistant from "@/components/AdminAssistant";
-import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiGear } from "@/components/MiniIcons";
+import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear } from "@/components/MiniIcons";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", Icon: MiGrid },
@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/clientes", label: "Clientes", Icon: MiPeople },
   { href: "/admin/contabilidad", label: "Contabilidad", Icon: MiChart },
   { href: "/admin/promociones", label: "Promociones", Icon: MiTicket },
+  { href: "/admin/correos", label: "Correos", Icon: MiMail },
   { href: "/admin/precios", label: "Precios y envío", Icon: MiTag },
   { href: "/admin/configuracion", label: "Configuración", Icon: MiGear },
 ];

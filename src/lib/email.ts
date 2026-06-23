@@ -53,7 +53,7 @@ function shell(title: string, inner: string): string {
     <div style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #ececec;border-radius:16px;overflow:hidden">
       <div style="height:6px;background:#E5322D"></div>
       <div style="padding:32px 32px 8px">
-        <div style="font-size:26px;font-weight:800;color:#111;margin-bottom:18px;white-space:nowrap">miniko<span style="color:#E5322D">.</span><span style="color:#E5322D;font-size:15px;vertical-align:super;line-height:0;margin-left:1px">&#9733;</span></div>
+        <div style="font-size:26px;font-weight:800;color:#111;margin-bottom:18px;white-space:nowrap">miniko<span style="color:#E5322D;font-size:15px;vertical-align:super;line-height:0;margin-left:1px">&#9733;</span></div>
         <h1 style="font-size:18px;margin:0 0 12px;color:#111">${title}</h1>
         <div style="font-size:14px;color:#444;line-height:1.6">${inner}</div>
       </div>
@@ -85,12 +85,13 @@ async function send(to: string, subject: string, html: string): Promise<void> {
 }
 
 // Envío masivo (campaña) a varios correos. Manda un correo individual a cada
-// destinatario (no se exponen entre sí) usando el envío por lotes de Resend.
+// destinatario (no se exponen entre sí), igual que los correos transaccionales
+// que sí llegan. Comprueba el error que devuelve Resend (no lanza excepción).
 export async function sendCampaign(
   recipients: string[],
   subject: string,
   html: string
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; error?: string }> {
   if (!process.env.RESEND_API_KEY) {
     throw new Error("Falta configurar el correo (RESEND_API_KEY).");
   }
@@ -98,18 +99,24 @@ export async function sendCampaign(
   const unique = Array.from(new Set(recipients.map((r) => r.trim().toLowerCase()).filter(Boolean)));
   let sent = 0;
   let failed = 0;
-  // Resend admite hasta 100 correos por lote.
-  for (let i = 0; i < unique.length; i += 100) {
-    const chunk = unique.slice(i, i + 100);
+  let lastError = "";
+  for (const to of unique) {
     try {
-      await resend.batch.send(chunk.map((to) => ({ from: FROM, to, subject, html })));
-      sent += chunk.length;
+      const { error } = await resend.emails.send({ from: FROM, to, subject, html });
+      if (error) {
+        failed += 1;
+        lastError = error.message || String(error);
+        console.error("[campaign] error:", error);
+      } else {
+        sent += 1;
+      }
     } catch (err) {
-      console.error("[campaign] error de lote:", err);
-      failed += chunk.length;
+      failed += 1;
+      lastError = err instanceof Error ? err.message : "Error de red.";
+      console.error("[campaign] excepción:", err);
     }
   }
-  return { sent, failed };
+  return { sent, failed, error: failed ? lastError : undefined };
 }
 
 // Confirmación al cliente cuando el pago queda aprobado.

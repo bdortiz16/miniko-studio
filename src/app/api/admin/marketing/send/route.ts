@@ -49,8 +49,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { sent, failed } = await sendCampaign(emails, subject, html);
-    return NextResponse.json({ ok: true, sent, failed, total: emails.length });
+    const { sent, failed, error } = await sendCampaign(emails, subject, html);
+    if (sent === 0 && failed > 0) {
+      return NextResponse.json(
+        { error: `No se pudo enviar: ${error || "revisa la configuración del correo."}` },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ ok: true, sent, failed, total: emails.length, error });
   } catch (err) {
     const message = err instanceof Error ? err.message : "No se pudo enviar la campaña.";
     return NextResponse.json({ error: message }, { status: 500 });

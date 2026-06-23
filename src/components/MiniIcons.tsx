@@ -199,6 +199,16 @@ export function MiTicket({ className = "", ...p }: P) {
   );
 }
 
+// Sobre / correo.
+export function MiMail({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="M3.5 7l8.5 6 8.5-6" />
+    </svg>
+  );
+}
+
 // Engranaje (configuración).
 export function MiGear({ className = "", ...p }: P) {
   return (
