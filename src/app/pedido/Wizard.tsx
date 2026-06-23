@@ -85,6 +85,45 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     getSettings().then(setSettings).catch(() => {});
   }, []);
 
+  // Persistencia: el avance del wizard NO se pierde al recargar la página.
+  const STORAGE_KEY = isPet ? "miniko_wizard_pet" : "miniko_wizard";
+  const restored = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.styleId && STYLES.some((x) => x.id === s.styleId)) setStyleId(s.styleId);
+        if (typeof s.step === "number") setStep(s.step);
+        if (Array.isArray(s.photos)) setPhotos(s.photos);
+        if (Array.isArray(s.previews)) setPreviews(s.previews);
+        if (typeof s.email === "string") setEmail(s.email);
+        if (typeof s.emailVerified === "boolean") setEmailVerified(s.emailVerified);
+        if (s.detected) setDetected(s.detected);
+        if (s.manual) setManual(s.manual);
+        if (s.shipping) setShipping(s.shipping);
+      }
+    } catch {
+      /* almacenamiento no disponible */
+    }
+    restored.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!restored.current) return;
+    try {
+      // No guardamos previews "data:" (pesadas); las URL de Supabase sí.
+      const safePreviews = previews.map((p) => (p && p.startsWith("data:") ? null : p));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ step, styleId, photos, previews: safePreviews, email, emailVerified, detected, manual, shipping })
+      );
+    } catch {
+      /* cuota excedida o no disponible */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, styleId, photos, previews, email, emailVerified, detected, manual, shipping]);
+
   // Analiza las fotos para contar personas y mascotas automáticamente.
   const detect = useCallback(async (urls: string[]) => {
     setManual(null);
@@ -802,9 +841,9 @@ function StepEmail({
         title="Verifica tu email"
         subtitle="Te enviamos un código de 6 dígitos para confirmar tu dirección."
       />
-      <div className="mx-auto mt-8 max-w-md">
-        <label className="text-sm font-medium">Email</label>
-        <div className="mt-1.5 flex gap-2">
+      <div className="mx-auto mt-8 max-w-md rounded-2xl border border-line bg-white p-6 text-center sm:p-8">
+        <label className="block text-sm font-medium">Email</label>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
             type="email"
             value={email}
@@ -815,7 +854,7 @@ function StepEmail({
               setVerified(false);
             }}
             placeholder="tu@email.com"
-            className="w-full rounded-full border border-line px-4 py-2.5 outline-none focus:border-ink"
+            className="w-full rounded-full border border-line px-4 py-2.5 text-center outline-none focus:border-ink"
           />
           {!verified && (
             <button
@@ -829,21 +868,21 @@ function StepEmail({
         </div>
 
         {verified ? (
-          <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-green-600">
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-sm font-medium text-green-600">
             ✓ Verificado — puedes continuar
           </p>
         ) : (
           sent && (
             <div className="mt-5">
-              <label className="text-sm font-medium">Código de 6 dígitos</label>
-              <div className="mt-1.5 flex gap-2">
+              <label className="block text-sm font-medium">Código de 6 dígitos</label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                 <input
                   inputMode="numeric"
                   maxLength={6}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="••••••"
-                  className="w-full rounded-full border border-line px-4 py-2.5 tracking-[0.5em] outline-none focus:border-ink"
+                  className="w-full rounded-full border border-line px-4 py-2.5 text-center tracking-[0.5em] outline-none focus:border-ink"
                 />
                 <button
                   onClick={verify}
@@ -865,7 +904,7 @@ function StepEmail({
         )}
 
         {!verified && (
-          <p className="mt-3 text-center text-xs text-ink/45">
+          <p className="mt-3 text-xs text-ink/45">
             Ingresa el código que te enviamos al correo para continuar.
           </p>
         )}
@@ -1095,6 +1134,13 @@ function StepPay({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo iniciar el pago.");
+      // Pago iniciado: limpiamos el progreso guardado para el próximo pedido.
+      try {
+        localStorage.removeItem("miniko_wizard");
+        localStorage.removeItem("miniko_wizard_pet");
+      } catch {
+        /* ignore */
+      }
       if (data.url) window.location.href = data.url;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error inesperado.");
