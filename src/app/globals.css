@@ -44,6 +44,17 @@ body {
   animation: miniko-star 1.6s ease-in-out infinite;
 }
 
+/* Huellitas de mascota: aparecen una tras otra como un animalito caminando. */
+@keyframes miniko-paw {
+  0% { opacity: 0; transform: translateY(3px) scale(0.6); }
+  15% { opacity: 1; transform: translateY(0) scale(1); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-2px) scale(0.9); }
+}
+.animate-paw {
+  animation: miniko-paw 1.8s ease-in-out infinite;
+}
+
 @layer components {
   /* Botón principal: negro sólido (el rojo se reserva para líneas/acentos). */
   .btn-primary {

@@ -11,6 +11,30 @@ const NAV = [
   { href: "/faq", label: "FAQ" },
 ];
 
+// Huellita de mascota (rellena), pequeña.
+function Paw({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={`fill-brand ${className}`}>
+      <ellipse cx="12" cy="15.5" rx="5" ry="4" />
+      <circle cx="5.5" cy="9.5" r="1.9" />
+      <circle cx="18.5" cy="9.5" r="1.9" />
+      <circle cx="9" cy="6" r="1.9" />
+      <circle cx="15" cy="6" r="1.9" />
+    </svg>
+  );
+}
+
+// Fila de huellitas animadas que caminan (aparecen una tras otra).
+function PawTrail() {
+  return (
+    <span className="pointer-events-none absolute -top-2.5 left-1/2 flex -translate-x-1/2 items-end gap-[3px]">
+      <Paw className="animate-paw h-2 w-2 -rotate-12 [animation-delay:0ms]" />
+      <Paw className="animate-paw h-2.5 w-2.5 translate-y-[-2px] [animation-delay:220ms]" />
+      <Paw className="animate-paw h-2 w-2 rotate-12 [animation-delay:440ms]" />
+    </span>
+  );
+}
+
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`font-display font-extrabold lowercase tracking-tight ${className}`}>
@@ -41,16 +65,22 @@ export default function Header() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group relative text-[13px] font-semibold uppercase tracking-wider text-ink/70 transition hover:text-ink"
-            >
-              {item.label}
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full" />
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            const isMascotas = item.href === "/#mascotas";
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`group relative text-[13px] font-semibold uppercase tracking-wider transition ${
+                  isMascotas ? "text-brand hover:text-brand" : "text-ink/70 hover:text-ink"
+                }`}
+              >
+                {isMascotas && <PawTrail />}
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full" />
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -74,16 +104,28 @@ export default function Header() {
       {open && (
         <div className="border-t border-line bg-white md:hidden">
           <nav className="container-x flex flex-col py-3">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="py-2.5 text-sm font-medium text-ink/80"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {NAV.map((item) => {
+              const isMascotas = item.href === "/#mascotas";
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-2 py-2.5 text-sm font-medium ${
+                    isMascotas ? "font-bold text-brand" : "text-ink/80"
+                  }`}
+                >
+                  {item.label}
+                  {isMascotas && (
+                    <span className="flex items-end gap-[3px]">
+                      <Paw className="animate-paw h-2.5 w-2.5 -rotate-12 [animation-delay:0ms]" />
+                      <Paw className="animate-paw h-3 w-3 [animation-delay:220ms]" />
+                      <Paw className="animate-paw h-2.5 w-2.5 rotate-12 [animation-delay:440ms]" />
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
             <Link href="/mis-pedidos" onClick={() => setOpen(false)} className="btn-primary mt-2 text-sm">
               Mis pedidos →
             </Link>
