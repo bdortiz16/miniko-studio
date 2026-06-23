@@ -170,6 +170,10 @@ export default function AdminConfiguracion() {
           </section>
 
           {msg && (
+            <p className={`mt-6 rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-green-300 text-green-600" : "border-brand/40 text-brand"}`}>
+              {msg.text}
+            </p>
+          )}
 
           <div className="mt-6 flex justify-end">
             <button onClick={save} disabled={saving} className="btn-primary px-8 disabled:opacity-50">
