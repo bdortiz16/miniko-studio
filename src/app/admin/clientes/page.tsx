@@ -58,6 +58,12 @@ export default function AdminClientes() {
     return c.email.includes(t) || c.name.toLowerCase().includes(t);
   });
 
+  const cur0 = customers?.[0]?.currency || "COP";
+  const totalIngresos = customers?.reduce((s, c) => s + c.totalSpent, 0) || 0;
+  const totalPedidos = customers?.reduce((s, c) => s + c.orders, 0) || 0;
+  const initials = (name: string, email: string) =>
+    (name || email || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
+
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="font-display text-3xl font-extrabold">Clientes</h1>
@@ -82,6 +88,23 @@ export default function AdminClientes() {
         <p className="mt-5 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">
           {error}
         </p>
+      )}
+
+      {customers && customers.length > 0 && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-line bg-white p-5">
+            <p className="font-display text-2xl font-extrabold">{customers.length}</p>
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-ink/45">Clientes</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-white p-5">
+            <p className="font-display text-2xl font-extrabold text-green-600">{money(totalIngresos, cur0)}</p>
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-ink/45">Ingresos de clientes</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-white p-5">
+            <p className="font-display text-2xl font-extrabold">{totalPedidos}</p>
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-ink/45">Pedidos totales</p>
+          </div>
+        </div>
       )}
 
       {customers && customers.length > 0 && (
@@ -111,17 +134,22 @@ export default function AdminClientes() {
               key={c.email}
               className="grid gap-1 border-b border-line px-5 py-4 last:border-0 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center sm:gap-0"
             >
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{c.name || "—"}</p>
-                <a
-                  href={`mailto:${c.email}`}
-                  className="truncate text-sm text-ink/60 underline decoration-line underline-offset-2 hover:text-ink"
-                >
-                  {c.email}
-                </a>
-                {c.lastAddress && (
-                  <p className="mt-0.5 truncate text-xs text-ink/40">{c.lastAddress}</p>
-                )}
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand/10 text-sm font-bold text-brand">
+                  {initials(c.name, c.email)}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{c.name || "—"}</p>
+                  <a
+                    href={`mailto:${c.email}`}
+                    className="block truncate text-sm text-ink/60 underline decoration-line underline-offset-2 hover:text-ink"
+                  >
+                    {c.email}
+                  </a>
+                  {c.lastAddress && (
+                    <p className="mt-0.5 truncate text-xs text-ink/40">{c.lastAddress}</p>
+                  )}
+                </div>
               </div>
               <span className="px-4 text-sm sm:text-right">
                 <span className="sm:hidden text-ink/50">Pedidos: </span>
