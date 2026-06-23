@@ -11,7 +11,7 @@ export default function Footer() {
   useEffect(() => {
     getSettings()
       .then((s) => {
-        const wa = waUrl(s.whatsapp, "Hola Miniko 👋, quiero información sobre mi figura.");
+        const wa = waUrl(s.whatsapp, "Hola Miniko 👋, tengo una duda sobre mi pedido.");
         if (wa) setContacto(wa);
       })
       .catch(() => {});

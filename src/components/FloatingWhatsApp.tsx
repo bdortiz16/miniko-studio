@@ -12,7 +12,7 @@ export default function FloatingWhatsApp() {
 
   useEffect(() => {
     getSettings()
-      .then((s) => setHref(waUrl(s.whatsapp, "Hola Miniko 👋, quiero información sobre mi figura.")))
+      .then((s) => setHref(waUrl(s.whatsapp, "Hola Miniko 👋, tengo una duda sobre mi pedido.")))
       .catch(() => {});
   }, []);
 
