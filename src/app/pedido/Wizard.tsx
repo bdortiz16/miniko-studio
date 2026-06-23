@@ -299,10 +299,10 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
       !!shipping.department);
 
   return (
-    <div className="section">
+    <div className="pt-6 pb-16 sm:pt-8 sm:pb-20">
       <div className="container-x max-w-3xl">
         {isPet && (
-          <div className="mb-6 flex items-center justify-center">
+          <div className="mb-5 flex items-center justify-center">
             <span className="rounded-full border border-brand bg-white px-4 py-1.5 text-sm font-semibold text-brand">
               🐾 Pedido de mascota
             </span>
@@ -310,7 +310,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
         )}
         <Stepper step={step} />
 
-        <div className="mt-12">
+        <div className="mt-8">
           {step === 0 && (
             <StepStyle styleId={styleId} setStyleId={setStyleId} isPet={isPet} />
           )}
