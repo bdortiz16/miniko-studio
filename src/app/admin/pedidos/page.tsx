@@ -94,6 +94,8 @@ export default function AdminPedidos() {
           <p className="mt-8 text-ink/55">Aún no hay pedidos pagados.</p>
         )}
 
+        {orders && orders.length > 0 && <OrdersDashboard orders={orders} />}
+
         <div className="mt-8 space-y-5">
           {orders?.map((o) => (
             <div key={o.id} className="rounded-2xl border border-line bg-white p-5">
@@ -173,6 +175,37 @@ export default function AdminPedidos() {
             Pulsa &quot;Cargar pedidos&quot; para ver los pedidos pagados.
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Resumen tipo "Estado de envíos": conteos por estado y guía.
+function OrdersDashboard({ orders }: { orders: Order[] }) {
+  const total = orders.length;
+  const by = (k: string) => orders.filter((o) => (o.fulfillment || "RECIBIDO") === k).length;
+  const conGuia = orders.filter((o) => o.tracking).length;
+  const sinGuia = total - conGuia;
+
+  const cards: { label: string; value: number; color: string }[] = [
+    { label: "Pedidos pagados", value: total, color: "text-ink" },
+    { label: "Recibidos", value: by("RECIBIDO"), color: "text-ink" },
+    { label: "En producción", value: by("EN_PRODUCCION"), color: "text-amber-600" },
+    { label: "Enviados", value: by("ENVIADO"), color: "text-blue-600" },
+    { label: "Entregados", value: by("ENTREGADO"), color: "text-green-600" },
+    { label: "Sin guía", value: sinGuia, color: sinGuia > 0 ? "text-brand" : "text-ink/40" },
+  ];
+
+  return (
+    <div className="mt-8">
+      <h2 className="font-display text-lg font-bold">Estado de envíos</h2>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {cards.map((c) => (
+          <div key={c.label} className="rounded-2xl border border-line bg-white p-4">
+            <p className={`font-display text-2xl font-extrabold ${c.color}`}>{c.value}</p>
+            <p className="mt-0.5 text-xs font-medium text-ink/55">{c.label}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
