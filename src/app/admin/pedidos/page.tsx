@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { MiFigure } from "@/components/MiniIcons";
 
 interface Order {
   id: string;
@@ -38,21 +39,12 @@ export default function AdminPedidos() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notify, setNotify] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/admin/orders`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al cargar.");
-      setOrders(data.orders);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error de red.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const knownIds = useRef<Set<string>>(new Set());
+  const firstLoad = useRef(true);
+  const audioCtx = useRef<AudioContext | null>(null);
 
   function money(amount: number, currency: string) {
     try {
@@ -64,10 +56,102 @@ export default function AdminPedidos() {
     }
   }
 
+  // Sonido de aviso (dos tonos) generado en el navegador, sin archivo.
+  function playDing() {
+    const ctx = audioCtx.current;
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [880, 1320].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = freq;
+      o.connect(g);
+      g.connect(ctx.destination);
+      const start = now + i * 0.18;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+      o.start(start);
+      o.stop(start + 0.18);
+    });
+  }
+
+  function onNewOrders(fresh: Order[]) {
+    const n = fresh.length;
+    setBanner(`¡${n} pedido${n > 1 ? "s" : ""} nuevo${n > 1 ? "s" : ""}!`);
+    playDing();
+    try {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        new Notification("🎉 Nuevo pedido en Miniko", {
+          body: `${fresh[0].email} · ${money(fresh[0].amount, fresh[0].currency)}`,
+        });
+      }
+    } catch {}
+    window.setTimeout(() => setBanner(null), 20000);
+  }
+
+  async function load(silent = false) {
+    if (!silent) setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/orders`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cargar.");
+      const list: Order[] = data.orders || [];
+      if (!firstLoad.current) {
+        const fresh = list.filter((o) => !knownIds.current.has(o.id));
+        if (fresh.length > 0) onNewOrders(fresh);
+      }
+      knownIds.current = new Set(list.map((o) => o.id));
+      firstLoad.current = false;
+      setOrders(list);
+    } catch (e) {
+      if (!silent) setError(e instanceof Error ? e.message : "Error de red.");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }
+
+  // Activa avisos: desbloquea el sonido (gesto del usuario) y pide permiso de
+  // notificaciones del navegador.
+  async function enableNotify() {
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      audioCtx.current = new Ctx();
+      if (audioCtx.current.state === "suspended") await audioCtx.current.resume();
+    } catch {}
+    try {
+      if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+        await Notification.requestPermission();
+      }
+    } catch {}
+    setNotify(true);
+    playDing();
+  }
+
+  // Carga automática al entrar y refresco cada 20s.
+  useEffect(() => {
+    load();
+    const t = window.setInterval(() => load(true), 20000);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div>
       <div className="mx-auto max-w-5xl">
-        <h1 className="font-display text-3xl font-extrabold">Pedidos</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-3xl font-extrabold">Pedidos</h1>
+          <span className="relative inline-grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-brand">
+            <MiFigure className={`h-5 w-5 ${banner ? "animate-bounce" : ""}`} />
+            {banner && (
+              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand" />
+            )}
+          </span>
+        </div>
         <p className="mt-2 text-ink/60">
           Pedidos pagados pendientes de preparar. Aquí ves la foto, el diseño IA
           y los datos de envío de cada cliente.
@@ -78,13 +162,33 @@ export default function AdminPedidos() {
           <Link href="/admin" className="btn-secondary px-5 py-2 text-sm">
             ← Panel
           </Link>
-          <button onClick={load} disabled={loading} className="btn-primary disabled:opacity-50">
-            {loading ? "Cargando…" : orders ? "Actualizar" : "Cargar pedidos"}
+          <button onClick={() => load()} disabled={loading} className="btn-primary disabled:opacity-50">
+            {loading ? "Cargando…" : "Actualizar"}
+          </button>
+          <button
+            onClick={enableNotify}
+            className={`rounded-full border px-5 py-2 text-sm font-semibold ${
+              notify ? "border-green-600 text-green-700" : "border-line text-ink/70 hover:border-ink"
+            }`}
+          >
+            {notify ? "🔔 Avisos activos" : "🔔 Activar avisos"}
           </button>
           {orders && (
-            <span className="text-sm text-ink/55">{orders.length} pedido(s)</span>
+            <span className="text-sm text-ink/55">
+              {orders.length} pedido(s) · se actualiza solo
+            </span>
           )}
         </div>
+
+        {banner && (
+          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-green-500/50 bg-green-50 px-4 py-3 text-green-800">
+            <MiFigure className="h-6 w-6 animate-bounce" />
+            <span className="font-semibold">{banner} Revisa abajo 👇</span>
+            <button onClick={() => setBanner(null)} className="ml-auto text-sm underline">
+              Cerrar
+            </button>
+          </div>
+        )}
 
         {error && (
           <p className="mt-5 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">
@@ -174,9 +278,7 @@ export default function AdminPedidos() {
         </div>
 
         {!orders && !loading && (
-          <p className="mt-8 text-sm text-ink/45">
-            Pulsa &quot;Cargar pedidos&quot; para ver los pedidos pagados.
-          </p>
+          <p className="mt-8 text-sm text-ink/45">Cargando pedidos…</p>
         )}
       </div>
     </div>
