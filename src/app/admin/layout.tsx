@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/Header";
 import AdminAssistant from "@/components/AdminAssistant";
-import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear } from "@/components/MiniIcons";
+import AdminIdle from "@/components/AdminIdle";
+import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear, MiUser } from "@/components/MiniIcons";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", Icon: MiGrid },
@@ -14,6 +15,7 @@ const NAV = [
   { href: "/admin/promociones", label: "Promociones", Icon: MiTicket },
   { href: "/admin/correos", label: "Correos", Icon: MiMail },
   { href: "/admin/precios", label: "Precios y envío", Icon: MiTag },
+  { href: "/admin/perfil", label: "Perfil", Icon: MiUser },
   { href: "/admin/configuracion", label: "Configuración", Icon: MiGear },
 ];
 
@@ -87,6 +89,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Asistente global: campana + Funko con avisos de pedidos */}
       <AdminAssistant />
+      {/* Cierre de sesión por inactividad (2 h) */}
+      <AdminIdle />
     </div>
   );
 }

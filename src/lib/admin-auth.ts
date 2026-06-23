@@ -1,30 +1,55 @@
 import crypto from "crypto";
 
-// Autenticación simple de administrador con contraseña (ADMIN_PASSWORD).
-// El token de sesión es un HMAC derivado de la contraseña, guardado en una
-// cookie httpOnly. Solo quien conoce la contraseña puede generarlo (vía login).
+// Sesión de administrador con vencimiento por inactividad (2 horas).
+// El token de cookie es `${exp}.${firma}` con firma = HMAC(secreto, "v2:exp").
+// El secreto deriva de ADMIN_PASSWORD: si cambias la contraseña, las sesiones
+// existentes dejan de valer. La cookie se renueva (sliding) en cada navegación
+// del panel (middleware) y con la actividad real del usuario (heartbeat).
 
-const SESSION_MSG = "miniko-admin-session-v1";
 export const ADMIN_COOKIE = "miniko_admin";
+const SESSION_PREFIX = "miniko-admin-v2";
+export const SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas de inactividad
+
+function secret(): string {
+  return process.env.ADMIN_PASSWORD || process.env.AUTH_SECRET || "miniko-dev-secret";
+}
 
 export function adminConfigured(): boolean {
   return !!process.env.ADMIN_PASSWORD;
 }
 
-export function adminToken(): string {
-  const pw = process.env.ADMIN_PASSWORD || "";
-  return crypto.createHmac("sha256", pw).update(SESSION_MSG).digest("hex");
+function sign(exp: number): string {
+  return crypto.createHmac("sha256", secret()).update(`${SESSION_PREFIX}:${exp}`).digest("hex");
+}
+
+// Crea el valor de cookie de sesión que vence dentro de `ttlMs`.
+export function makeSession(ttlMs: number = SESSION_TTL_MS): { value: string; maxAge: number } {
+  const exp = Date.now() + ttlMs;
+  return { value: `${exp}.${sign(exp)}`, maxAge: Math.floor(ttlMs / 1000) };
+}
+
+// Valida el token: firma correcta y no vencido.
+export function validateToken(value: string): boolean {
+  const dot = value.indexOf(".");
+  if (dot < 0) return false;
+  const exp = Number(value.slice(0, dot));
+  const sig = value.slice(dot + 1);
+  if (!exp || Number.isNaN(exp) || Date.now() > exp) return false;
+  const expected = sign(exp);
+  if (sig.length !== expected.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 // Comprueba si la petición está autenticada como admin.
-// Si ADMIN_PASSWORD no está configurada, el panel queda abierto (sin proteger)
-// para que puedas usarlo mientras configuras la contraseña.
+// Si ADMIN_PASSWORD no está configurada, el panel queda abierto (sin proteger).
 export function isAdmin(request: Request): boolean {
   if (!adminConfigured()) return true;
   const cookie = request.headers.get("cookie") || "";
   const m = cookie.match(/(?:^|;\s*)miniko_admin=([^;]+)/);
   const value = m ? decodeURIComponent(m[1]) : "";
-  const expected = adminToken();
-  if (value.length !== expected.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(value), Buffer.from(expected));
+  return validateToken(value);
 }

@@ -119,6 +119,17 @@ export async function sendCampaign(
   return { sent, failed, error: failed ? lastError : undefined };
 }
 
+// Código de acceso (2.º paso) para entrar al panel de administración.
+export async function sendAdminLoginCode(to: string, code: string): Promise<void> {
+  const inner = `
+    <p>Usa este código para entrar al panel de administración de miniko:</p>
+    <div style="margin:18px 0;text-align:center">
+      <span style="display:inline-block;font-size:30px;font-weight:800;letter-spacing:8px;background:#f4f4f5;border:1px solid #ececec;border-radius:12px;padding:14px 22px;color:#111">${code}</span>
+    </div>
+    <p style="font-size:13px;color:#888">El código vence en 10 minutos. Si no intentaste iniciar sesión, ignora este correo y cambia tu contraseña.</p>`;
+  await send(to, `Tu código de acceso: ${code}`, shell("Código de acceso", inner));
+}
+
 // Confirmación al cliente cuando el pago queda aprobado.
 export async function sendOrderConfirmation(order: Order): Promise<void> {
   if (!order.email) return;
