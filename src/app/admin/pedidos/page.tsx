@@ -52,7 +52,7 @@ export default function AdminPedidos() {
   const [error, setError] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterKey>("ALL");
+  const [filter, setFilter] = useState<FilterKey>("RECIBIDO");
 
   const knownIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
@@ -307,8 +307,8 @@ function OrdersDashboard({
   const sinGuia = orders.filter((o) => !o.tracking).length;
 
   const cards: { key: FilterKey; label: string; value: number; color: string }[] = [
-    { key: "ALL", label: "Todos", value: total, color: "text-ink" },
     { key: "RECIBIDO", label: "Pendientes", value: by("RECIBIDO"), color: "text-ink" },
+    { key: "ALL", label: "Todos", value: total, color: "text-ink" },
     { key: "EN_PRODUCCION", label: "En producción", value: by("EN_PRODUCCION"), color: "text-amber-600" },
     { key: "ENVIADO", label: "En envío", value: by("ENVIADO"), color: "text-blue-600" },
     { key: "ENTREGADO", label: "Completados", value: by("ENTREGADO"), color: "text-green-600" },
