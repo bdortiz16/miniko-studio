@@ -228,9 +228,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
   const canContinue =
     (step === 0 && !!styleId) ||
     (step === 1 && photos.length > 0 && !detecting && hasFigures) ||
-    // Basta con un email válido para avanzar. La verificación por código es un
-    // extra (funciona cuando Resend está configurado) pero no bloquea el flujo.
-    (step === 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
+    // Obligatorio: hay que verificar el código del correo para continuar.
+    (step === 2 && emailVerified) ||
     step === 3 ||
     (step === 4 &&
       !!shipping.name &&
@@ -867,7 +866,7 @@ function StepEmail({
 
         {!verified && (
           <p className="mt-3 text-center text-xs text-ink/45">
-            La verificación por código es opcional: puedes continuar con un email válido.
+            Ingresa el código que te enviamos al correo para continuar.
           </p>
         )}
       </div>
