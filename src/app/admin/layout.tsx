@@ -4,14 +4,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/Header";
 import AdminAssistant from "@/components/AdminAssistant";
+import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiGear } from "@/components/MiniIcons";
 
 const NAV = [
-  { href: "/admin", label: "Dashboard", icon: "▦" },
-  { href: "/admin/pedidos", label: "Pedidos", icon: "📦" },
-  { href: "/admin/clientes", label: "Clientes", icon: "👥" },
-  { href: "/admin/contabilidad", label: "Contabilidad", icon: "📊" },
-  { href: "/admin/precios", label: "Precios y envío", icon: "🏷️" },
-  { href: "/admin/configuracion", label: "Configuración", icon: "⚙️" },
+  { href: "/admin", label: "Dashboard", Icon: MiGrid },
+  { href: "/admin/pedidos", label: "Pedidos", Icon: MiBox },
+  { href: "/admin/clientes", label: "Clientes", Icon: MiPeople },
+  { href: "/admin/contabilidad", label: "Contabilidad", Icon: MiChart },
+  { href: "/admin/precios", label: "Precios y envío", Icon: MiTag },
+  { href: "/admin/configuracion", label: "Configuración", Icon: MiGear },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // La página de login no lleva el panel (aún no hay sesión).
   if (pathname === "/admin/login") {
-    return <div className="admin-dark min-h-screen">{children}</div>;
+    return <div className="min-h-screen bg-mist">{children}</div>;
   }
 
   async function logout() {
@@ -29,12 +30,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="admin-dark flex min-h-screen">
+    <div className="flex min-h-screen bg-mist">
       {/* Sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-white p-5 md:flex">
         <Link href="/admin" className="flex items-center gap-2">
           <Wordmark className="text-xl" />
-          <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+          <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold uppercase text-white">
             admin
           </span>
         </Link>
@@ -46,10 +47,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={n.href}
                 href={n.href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
-                  active ? "bg-brand text-white" : "text-ink/70 hover:bg-mist"
+                  active ? "bg-ink text-white" : "text-ink/70 hover:bg-mist"
                 }`}
               >
-                <span>{n.icon}</span>
+                <n.Icon className="h-5 w-5" />
                 {n.label}
               </Link>
             );
@@ -68,13 +69,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Barra superior (móvil) */}
         <div className="flex items-center justify-between border-b border-line bg-white px-5 py-3 md:hidden">
           <Wordmark className="text-lg" />
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-1 text-sm">
             {NAV.map((n) => (
-              <Link key={n.href} href={n.href} className="rounded-lg px-2 py-1 text-ink/70">
-                {n.icon}
+              <Link key={n.href} href={n.href} className={`rounded-lg p-2 ${pathname === n.href ? "text-brand" : "text-ink/60"}`}>
+                <n.Icon className="h-5 w-5" />
               </Link>
             ))}
-            <button onClick={logout} className="rounded-lg px-2 py-1 text-ink/70">
+            <button onClick={logout} className="rounded-lg p-2 text-ink/60">
               ↩
             </button>
           </div>

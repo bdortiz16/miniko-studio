@@ -166,6 +166,18 @@ export function MiTag({ className = "", ...p }: P) {
   );
 }
 
+// Cuadrícula (dashboard).
+export function MiGrid({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
 // Engranaje (configuración).
 export function MiGear({ className = "", ...p }: P) {
   return (
