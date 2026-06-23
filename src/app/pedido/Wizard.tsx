@@ -104,7 +104,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
 
   // Persistencia: el avance del wizard NO se pierde al recargar la página.
   const STORAGE_KEY = isPet ? "miniko_wizard_pet" : "miniko_wizard";
-  const restored = useRef(false);
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -128,11 +128,11 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     } catch {
       /* almacenamiento no disponible */
     }
-    restored.current = true;
+    setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (!restored.current) return;
+    if (!hydrated) return; // no guardar hasta haber restaurado (evita pisar datos)
     try {
       // No guardamos previews "data:" (pesadas); las URL de Supabase sí.
       const safePreviews = previews.map((p) => (p && p.startsWith("data:") ? null : p));
@@ -144,7 +144,7 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
       /* cuota excedida o no disponible */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, styleId, photos, previews, email, emailVerified, detected, manual, shipping]);
+  }, [hydrated, step, styleId, photos, previews, email, emailVerified, detected, manual, shipping]);
 
   // Analiza las fotos para contar personas y mascotas automáticamente.
   const detect = useCallback(async (urls: string[]) => {
