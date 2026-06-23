@@ -1127,10 +1127,14 @@ function StepShipping({
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setShipping({ ...shipping, [k]: e.target.value }),
   });
-  // Al cambiar departamento: limpia la ciudad y autocompleta el código postal.
+  // Al cambiar departamento: limpia ciudad y postal (se ponen al elegir ciudad).
   const onDept = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const department = e.target.value;
-    setShipping({ ...shipping, department, city: "", zip: postalOf(department) });
+    setShipping({ ...shipping, department: e.target.value, city: "", zip: "" });
+  };
+  // Al elegir la ciudad: autocompleta el código postal de ESE municipio.
+  const onCity = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    setShipping({ ...shipping, city, zip: postalOf(shipping.department, city) });
   };
   const input =
     "w-full rounded-xl border border-line px-4 py-2.5 outline-none focus:border-ink";
@@ -1188,11 +1192,11 @@ function StepShipping({
               className={`mt-1 ${input} bg-white disabled:opacity-50`}
               value={shipping.city}
               disabled={!shipping.department}
-              onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+              onChange={onCity}
             >
               <option value="">{shipping.department ? "Selecciona…" : "Elige departamento"}</option>
               {cities.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c.name} value={c.name}>{c.name}</option>
               ))}
             </select>
           </label>
