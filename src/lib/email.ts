@@ -1,11 +1,29 @@
 import { Resend } from "resend";
 import { Order } from "@/lib/orders";
+import { getSettings } from "@/lib/settings";
+import { waUrl } from "@/lib/whatsapp";
 
-// Correos transaccionales del pedido (confirmación de pago y aviso de envío).
+// Correos transaccionales del pedido (confirmación de pago y avisos de estado).
 // Reutiliza RESEND_API_KEY y EMAIL_FROM ya configurados.
 
 const FROM = process.env.EMAIL_FROM || "Miniko Studio <onboarding@resend.dev>";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://miniko.com.co";
+
+// Bloque de soporte por WhatsApp (si hay número configurado en el panel).
+async function supportBlock(): Promise<string> {
+  try {
+    const s = await getSettings();
+    const wa = waUrl(s.whatsapp, "Hola Miniko 👋, tengo una duda sobre mi pedido.");
+    if (!wa) return "";
+    return `<div style="text-align:center;margin:22px 0 4px">
+      <a href="${wa}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:999px">
+        💬 ¿Necesitas ayuda? Escríbenos por WhatsApp
+      </a>
+    </div>`;
+  } catch {
+    return "";
+  }
+}
 
 export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
@@ -69,9 +87,35 @@ export async function sendOrderConfirmation(order: Order): Promise<void> {
       ${row("Estilo", `${order.estilo} · ${order.composicion}`)}
       ${row("Total", `<b>${money(order.amount, order.currency)}</b>`)}
     </table>
-    <p style="font-size:14px">Te avisaremos cuando salga para envío. Mira el estado en
+    <p style="font-size:14px">Te avisaremos en cada paso. Mira el estado en
       <a href="${SITE}/mis-pedidos" style="color:#E5322D">Mis pedidos</a>.</p>`;
-  await send(order.email, "Confirmación de tu pedido Miniko 🎁", shell("Pago confirmado", inner));
+  await send(order.email, "Confirmación de tu pedido Miniko 🎁", shell("Pago confirmado", inner + (await supportBlock())));
+}
+
+// Aviso al cliente cuando el pedido pasa a EN PRODUCCIÓN.
+export async function sendProductionNotice(order: Order): Promise<void> {
+  if (!order.email) return;
+  const inner = `
+    <p>¡Manos a la obra! 🎨 Tu figura ya entró en <b>producción</b>: la estamos modelando e imprimiendo en 3D.</p>
+    <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
+      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Estilo", `${order.estilo} · ${order.composicion}`)}
+    </table>
+    <p style="font-size:14px">Te avisaremos cuando salga para envío. Sigue tu pedido en
+      <a href="${SITE}/mis-pedidos" style="color:#E5322D">Mis pedidos</a>.</p>`;
+  await send(order.email, "Tu figura Miniko ya está en producción 🎨", shell("En producción", inner + (await supportBlock())));
+}
+
+// Aviso al cliente cuando el pedido se marca como ENTREGADO.
+export async function sendDeliveredNotice(order: Order): Promise<void> {
+  if (!order.email) return;
+  const inner = `
+    <p>¡Tu pedido fue <b>entregado</b>! 🎉 Esperamos que disfrutes pintando tu figura.</p>
+    <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
+      ${row("Pedido", `<b>${order.reference}</b>`)}
+    </table>
+    <p style="font-size:14px">¿Algún problema con tu entrega? Escríbenos, estamos para ayudarte.</p>`;
+  await send(order.email, "¡Tu pedido Miniko fue entregado! 🎉", shell("Entregado", inner + (await supportBlock())));
 }
 
 // Aviso al ADMIN (tú) cuando entra un pedido nuevo pagado.
@@ -105,5 +149,5 @@ export async function sendShippingNotice(order: Order): Promise<void> {
     </table>
     <p style="font-size:14px">Sigue tu pedido en
       <a href="${SITE}/mis-pedidos" style="color:#E5322D">Mis pedidos</a>.</p>`;
-  await send(order.email, "Tu pedido Miniko va en camino 🚚", shell("Pedido enviado", inner));
+  await send(order.email, "Tu pedido Miniko va en camino 🚚", shell("Pedido enviado", inner + (await supportBlock())));
 }

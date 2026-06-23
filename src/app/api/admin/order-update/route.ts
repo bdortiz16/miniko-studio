@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
 import { getOrder, updateOrderFulfillment, FulfillmentStatus } from "@/lib/orders";
-import { sendShippingNotice } from "@/lib/email";
+import { sendShippingNotice, sendProductionNotice, sendDeliveredNotice } from "@/lib/email";
 
 const VALID: FulfillmentStatus[] = ["RECIBIDO", "EN_PRODUCCION", "ENVIADO", "ENTREGADO"];
 
@@ -41,8 +41,11 @@ export async function POST(request: Request) {
   if (!order) {
     return NextResponse.json({ error: "Pedido no encontrado." }, { status: 404 });
   }
-  if (fulfillment === "ENVIADO" && prev?.fulfillment !== "ENVIADO") {
-    await sendShippingNotice(order);
+  // Avisos al cliente según el nuevo estado (solo en la primera transición).
+  if (fulfillment && prev?.fulfillment !== fulfillment) {
+    if (fulfillment === "EN_PRODUCCION") await sendProductionNotice(order);
+    else if (fulfillment === "ENVIADO") await sendShippingNotice(order);
+    else if (fulfillment === "ENTREGADO") await sendDeliveredNotice(order);
   }
   return NextResponse.json({ ok: true });
 }
