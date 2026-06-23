@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { DEPARTAMENTOS_CO, citiesOf, postalOf } from "@/data/colombia";
 
 interface Order {
   reference: string;
@@ -14,7 +15,7 @@ interface Order {
   composicion: string;
   previewUrls: string[];
   photoUrls: string[];
-  shipping: { name?: string; address?: string; city?: string; zip?: string; country?: string };
+  shipping: { name?: string; phone?: string; address?: string; reference?: string; city?: string; department?: string; zip?: string; country?: string };
   fulfillment: string;
   fulfillmentLabel: string;
   carrier: string;
@@ -123,7 +124,7 @@ export default function MisPedidosPage() {
             ) : (
               <div className="mt-8 space-y-6">
                 {orders.map((o) => (
-                  <OrderCard key={o.reference} order={o} />
+                  <OrderCard key={o.reference} order={o} email={email} onUpdated={load} />
                 ))}
               </div>
             )}
@@ -134,7 +135,9 @@ export default function MisPedidosPage() {
   );
 }
 
-function OrderCard({ order: o }: { order: Order }) {
+function OrderCard({ order: o, email, onUpdated }: { order: Order; email: string; onUpdated: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const canEdit = o.fulfillment === "RECIBIDO" || o.fulfillment === "EN_PRODUCCION";
   const currentIdx = Math.max(0, STEPS.findIndex((s) => s.key === o.fulfillment));
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white">
@@ -208,12 +211,137 @@ function OrderCard({ order: o }: { order: Order }) {
 
         {/* Detalles de envío */}
         {o.shipping?.name && (
-          <p className="mt-4 text-xs text-ink/50">
-            <span className="font-semibold text-ink/70">Enviar a:</span> {o.shipping.name},{" "}
-            {[o.shipping.address, o.shipping.city, o.shipping.zip, o.shipping.country].filter(Boolean).join(", ")}
-          </p>
+          <div className="mt-4 flex items-start justify-between gap-3">
+            <p className="text-xs text-ink/50">
+              <span className="font-semibold text-ink/70">Enviar a:</span> {o.shipping.name},{" "}
+              {[o.shipping.address, o.shipping.city, o.shipping.zip, o.shipping.country].filter(Boolean).join(", ")}
+            </p>
+            {canEdit && !editing && (
+              <button onClick={() => setEditing(true)} className="shrink-0 text-xs font-semibold text-brand underline underline-offset-2">
+                Editar dirección
+              </button>
+            )}
+          </div>
+        )}
+
+        {editing && (
+          <EditAddress
+            order={o}
+            email={email}
+            onClose={() => setEditing(false)}
+            onSaved={() => { setEditing(false); onUpdated(); }}
+          />
         )}
       </div>
+    </div>
+  );
+}
+
+// Editor de dirección con confirmación por código al correo.
+function EditAddress({ order, email, onClose, onSaved }: { order: Order; email: string; onClose: () => void; onSaved: () => void }) {
+  const s = order.shipping || {};
+  const [name, setName] = useState(s.name || "");
+  const [phone, setPhone] = useState(s.phone || "");
+  const [address, setAddress] = useState(s.address || "");
+  const [barrio, setBarrio] = useState(s.reference || "");
+  const [department, setDepartment] = useState(s.department || "");
+  const [city, setCity] = useState(s.city || "");
+  const [zip, setZip] = useState(s.zip || "");
+
+  const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [token, setToken] = useState("");
+  const [exp, setExp] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const input = "w-full rounded-xl border border-line px-3 py-2 text-sm outline-none focus:border-ink";
+
+  async function sendCode() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/email/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo enviar el código.");
+      setToken(data.token);
+      setExp(data.exp);
+      setSent(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function save() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mis-pedidos/update-address", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reference: order.reference,
+          code,
+          exp,
+          token,
+          shipping: { name, phone, address, reference: barrio, city, department, zip },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar.");
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const cities = citiesOf(department);
+
+  return (
+    <div className="mt-4 rounded-xl border border-line bg-mist/50 p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">✏️ Editar dirección</p>
+        <button onClick={onClose} className="text-ink/40 hover:text-ink">✕</button>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <input className={input} placeholder="Nombre y apellidos" value={name} onChange={(e) => setName(e.target.value)} />
+        <input className={input} placeholder="Celular" inputMode="tel" maxLength={10} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} />
+        <input className={`sm:col-span-2 ${input}`} placeholder="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className={`sm:col-span-2 ${input}`} placeholder="Referencia / barrio (opcional)" value={barrio} onChange={(e) => setBarrio(e.target.value)} />
+        <select className={`${input} bg-white`} value={department} onChange={(e) => { setDepartment(e.target.value); setCity(""); setZip(""); }}>
+          <option value="">Departamento…</option>
+          {DEPARTAMENTOS_CO.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+        </select>
+        <select className={`${input} bg-white disabled:opacity-50`} value={city} disabled={!department} onChange={(e) => { setCity(e.target.value); setZip(postalOf(department, e.target.value)); }}>
+          <option value="">{department ? "Ciudad…" : "Elige departamento"}</option>
+          {cities.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+        </select>
+        <input className={input} placeholder="Código postal" value={zip} onChange={(e) => setZip(e.target.value)} />
+      </div>
+
+      <p className="mt-3 text-xs text-ink/55">Para confirmar el cambio te enviamos un código a tu correo.</p>
+      {!sent ? (
+        <button onClick={sendCode} disabled={loading} className="btn-secondary mt-2 px-5 py-2 text-sm disabled:opacity-50">
+          {loading ? "Enviando…" : "Enviar código"}
+        </button>
+      ) : (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <input className={`w-40 ${input} tracking-[0.4em]`} placeholder="••••••" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
+          <button onClick={save} disabled={loading || code.length !== 6} className="btn-primary px-5 py-2 text-sm disabled:opacity-40">
+            {loading ? "Guardando…" : "Guardar dirección"}
+          </button>
+          <button onClick={sendCode} disabled={loading} className="text-xs text-ink/50 underline">Reenviar</button>
+        </div>
+      )}
+      {error && <p className="mt-2 text-xs font-medium text-brand">{error}</p>}
     </div>
   );
 }
