@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
-import { updateOrderFulfillment, FulfillmentStatus } from "@/lib/orders";
+import { getOrder, updateOrderFulfillment, FulfillmentStatus } from "@/lib/orders";
+import { sendShippingNotice } from "@/lib/email";
 
 const VALID: FulfillmentStatus[] = ["RECIBIDO", "EN_PRODUCCION", "ENVIADO", "ENTREGADO"];
 
@@ -29,6 +30,8 @@ export async function POST(request: Request) {
       ? (body.fulfillment as FulfillmentStatus)
       : undefined;
 
+  // Estado anterior, para enviar el aviso solo al pasar a ENVIADO la 1.ª vez.
+  const prev = await getOrder(body.reference);
   const order = await updateOrderFulfillment(body.reference, {
     fulfillment,
     carrier: body.carrier,
@@ -37,6 +40,9 @@ export async function POST(request: Request) {
   });
   if (!order) {
     return NextResponse.json({ error: "Pedido no encontrado." }, { status: 404 });
+  }
+  if (fulfillment === "ENVIADO" && prev?.fulfillment !== "ENVIADO") {
+    await sendShippingNotice(order);
   }
   return NextResponse.json({ ok: true });
 }

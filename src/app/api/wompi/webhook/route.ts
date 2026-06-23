@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyEventSignature } from "@/lib/wompi";
-import { updateOrderStatus, OrderStatus } from "@/lib/orders";
+import { getOrder, updateOrderStatus, OrderStatus } from "@/lib/orders";
+import { sendOrderConfirmation } from "@/lib/email";
 
 // Webhook de eventos de Wompi. Confirma el pago de forma fiable y actualiza
 // el estado del pedido en nuestro almacén. Configura esta URL en el panel de
@@ -35,7 +36,12 @@ export async function POST(request: Request) {
   const tx = event.data?.transaction;
   if (tx?.reference && tx.status) {
     const status = tx.status as OrderStatus;
-    await updateOrderStatus(tx.reference, status, tx.id);
+    // Estado anterior para detectar la PRIMERA aprobación y no duplicar correos.
+    const prev = await getOrder(tx.reference);
+    const order = await updateOrderStatus(tx.reference, status, tx.id);
+    if (order && status === "APPROVED" && prev?.status !== "APPROVED") {
+      await sendOrderConfirmation(order);
+    }
   }
 
   // Wompi espera 200 para no reintentar.
