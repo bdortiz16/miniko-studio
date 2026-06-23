@@ -7,6 +7,7 @@ export interface Settings {
   shippingCop: number; // costo de envío en COP
   freeFromPeople: number; // envío gratis desde N personajes
   whatsapp: string; // número de WhatsApp de soporte (solo el número)
+  adminEmail: string; // correo donde llegan los avisos de pedidos nuevos
 }
 
 const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,6 +19,7 @@ export function defaultSettings(): Settings {
     shippingCop: SHIPPING.flatCop,
     freeFromPeople: SHIPPING.freeFromPeople,
     whatsapp: "",
+    adminEmail: "",
   };
 }
 
@@ -37,6 +39,7 @@ export async function getSettings(): Promise<Settings> {
       freeFromPeople:
         typeof data.freeFromPeople === "number" ? data.freeFromPeople : def.freeFromPeople,
       whatsapp: typeof data.whatsapp === "string" ? data.whatsapp : def.whatsapp,
+      adminEmail: typeof data.adminEmail === "string" ? data.adminEmail : def.adminEmail,
     };
   } catch {
     return def;

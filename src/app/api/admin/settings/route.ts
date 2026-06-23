@@ -58,8 +58,10 @@ export async function POST(request: Request) {
 
   const whatsapp =
     typeof body.whatsapp === "string" ? body.whatsapp.replace(/[^\d+\s]/g, "").trim() : def.whatsapp;
+  const adminEmail =
+    typeof body.adminEmail === "string" ? body.adminEmail.trim() : def.adminEmail;
 
-  const settings: Settings = { prices, shippingCop, freeFromPeople, whatsapp };
+  const settings: Settings = { prices, shippingCop, freeFromPeople, whatsapp, adminEmail };
 
   try {
     const { error } = await supabaseAdmin.storage

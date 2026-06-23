@@ -120,8 +120,12 @@ export async function sendDeliveredNotice(order: Order): Promise<void> {
 
 // Aviso al ADMIN (tú) cuando entra un pedido nuevo pagado.
 export async function sendAdminNewOrder(order: Order): Promise<void> {
-  const to = process.env.ADMIN_EMAIL;
-  if (!to) return; // sin ADMIN_EMAIL configurado, no se envía
+  let to = process.env.ADMIN_EMAIL || "";
+  try {
+    const s = await getSettings();
+    if (s.adminEmail) to = s.adminEmail; // el panel manda sobre la variable
+  } catch {}
+  if (!to) return; // sin correo configurado, no se envía
   const s = order.shipping || {};
   const dir = [s.address, s.city, s.zip, s.country].filter(Boolean).join(", ");
   const inner = `

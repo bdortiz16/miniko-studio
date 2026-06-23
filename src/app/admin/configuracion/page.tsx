@@ -67,8 +67,26 @@ export default function AdminConfiguracion() {
         </p>
       ) : settings ? (
         <>
-          {/* WhatsApp de soporte */}
+          {/* Perfil / correo de avisos */}
           <section className="mt-8 rounded-2xl border border-line bg-white p-6">
+            <h2 className="font-display text-lg font-bold">Correo de avisos</h2>
+            <p className="mt-1 text-sm text-ink/55">
+              Aquí te llega el aviso cuando entra un pedido nuevo. Puedes cambiarlo cuando quieras.
+            </p>
+            <div className="mt-4">
+              <label className="text-sm font-medium">Tu correo</label>
+              <input
+                type="email"
+                value={settings.adminEmail || ""}
+                onChange={(e) => setSettings({ ...settings, adminEmail: e.target.value })}
+                placeholder="tucorreo@gmail.com"
+                className={`mt-1.5 ${inputCls}`}
+              />
+            </div>
+          </section>
+
+          {/* WhatsApp de soporte */}
+          <section className="mt-6 rounded-2xl border border-line bg-white p-6">
             <h2 className="font-display text-lg font-bold">WhatsApp de soporte</h2>
             <p className="mt-1 text-sm text-ink/55">
               Escribe solo tu número (con o sin el 57). La web arma el enlace y manda al cliente a tu
