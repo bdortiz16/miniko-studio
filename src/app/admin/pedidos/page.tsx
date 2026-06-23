@@ -6,6 +6,7 @@ import { MiFigure } from "@/components/MiniIcons";
 
 interface Order {
   id: string;
+  numero: string;
   created: number;
   email: string;
   amount: number;
@@ -35,12 +36,23 @@ const FULFILLMENT: { key: string; label: string }[] = [
   { key: "ENTREGADO", label: "Entregado" },
 ];
 
+// Filtros del tablero (clic en una tarjeta filtra la lista de abajo).
+type FilterKey = "ALL" | "RECIBIDO" | "EN_PRODUCCION" | "ENVIADO" | "ENTREGADO" | "SIN_GUIA";
+
+function matchesFilter(o: Order, f: FilterKey): boolean {
+  const status = o.fulfillment || "RECIBIDO";
+  if (f === "ALL") return true;
+  if (f === "SIN_GUIA") return !o.tracking;
+  return status === f;
+}
+
 export default function AdminPedidos() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterKey>("ALL");
 
   const knownIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
@@ -145,14 +157,25 @@ export default function AdminPedidos() {
           <p className="mt-8 text-ink/55">Aún no hay pedidos pagados.</p>
         )}
 
-        {orders && orders.length > 0 && <OrdersDashboard orders={orders} />}
+        {orders && orders.length > 0 && (
+          <OrdersDashboard orders={orders} filter={filter} onFilter={setFilter} />
+        )}
 
         <div className="mt-8 space-y-5">
-          {orders?.map((o) => (
+          {orders?.filter((o) => matchesFilter(o, filter)).length === 0 &&
+            orders.length > 0 && (
+              <p className="rounded-2xl border border-line bg-white p-6 text-center text-sm text-ink/55">
+                No hay pedidos en esta categoría.
+              </p>
+            )}
+          {orders?.filter((o) => matchesFilter(o, filter)).map((o) => (
             <div key={o.id} className="rounded-2xl border border-line bg-white p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-display text-lg font-bold">
+                    <span className="mr-2 rounded-lg bg-ink px-2 py-0.5 align-middle font-mono text-sm text-white">
+                      {o.numero}
+                    </span>
                     {o.tipo && (
                       <span
                         className={`mr-2 rounded-full border px-2 py-0.5 align-middle text-xs font-bold ${
@@ -269,32 +292,55 @@ function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
   );
 }
 
-// Resumen tipo "Estado de envíos": conteos por estado y guía.
-function OrdersDashboard({ orders }: { orders: Order[] }) {
+// Tablero "Estado de envíos": tarjetas que además FILTRAN la lista de abajo.
+function OrdersDashboard({
+  orders,
+  filter,
+  onFilter,
+}: {
+  orders: Order[];
+  filter: FilterKey;
+  onFilter: (f: FilterKey) => void;
+}) {
   const total = orders.length;
   const by = (k: string) => orders.filter((o) => (o.fulfillment || "RECIBIDO") === k).length;
-  const conGuia = orders.filter((o) => o.tracking).length;
-  const sinGuia = total - conGuia;
+  const sinGuia = orders.filter((o) => !o.tracking).length;
 
-  const cards: { label: string; value: number; color: string }[] = [
-    { label: "Pedidos pagados", value: total, color: "text-ink" },
-    { label: "Recibidos", value: by("RECIBIDO"), color: "text-ink" },
-    { label: "En producción", value: by("EN_PRODUCCION"), color: "text-amber-600" },
-    { label: "Enviados", value: by("ENVIADO"), color: "text-blue-600" },
-    { label: "Entregados", value: by("ENTREGADO"), color: "text-green-600" },
-    { label: "Sin guía", value: sinGuia, color: sinGuia > 0 ? "text-brand" : "text-ink/40" },
+  const cards: { key: FilterKey; label: string; value: number; color: string }[] = [
+    { key: "ALL", label: "Todos", value: total, color: "text-ink" },
+    { key: "RECIBIDO", label: "Pendientes", value: by("RECIBIDO"), color: "text-ink" },
+    { key: "EN_PRODUCCION", label: "En producción", value: by("EN_PRODUCCION"), color: "text-amber-600" },
+    { key: "ENVIADO", label: "En envío", value: by("ENVIADO"), color: "text-blue-600" },
+    { key: "ENTREGADO", label: "Completados", value: by("ENTREGADO"), color: "text-green-600" },
+    { key: "SIN_GUIA", label: "Sin guía", value: sinGuia, color: sinGuia > 0 ? "text-brand" : "text-ink/40" },
   ];
 
   return (
     <div className="mt-8">
-      <h2 className="font-display text-lg font-bold">Estado de envíos</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="font-display text-lg font-bold">Estado de envíos</h2>
+        {filter !== "ALL" && (
+          <button onClick={() => onFilter("ALL")} className="text-xs font-semibold text-brand underline underline-offset-2">
+            Quitar filtro
+          </button>
+        )}
+      </div>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {cards.map((c) => (
-          <div key={c.label} className="rounded-2xl border border-line bg-white p-4">
-            <p className={`font-display text-2xl font-extrabold ${c.color}`}>{c.value}</p>
-            <p className="mt-0.5 text-xs font-medium text-ink/55">{c.label}</p>
-          </div>
-        ))}
+        {cards.map((c) => {
+          const active = filter === c.key;
+          return (
+            <button
+              key={c.key}
+              onClick={() => onFilter(active ? "ALL" : c.key)}
+              className={`rounded-2xl border p-4 text-left transition ${
+                active ? "border-ink bg-ink text-white shadow-sm" : "border-line bg-white hover:border-ink/40"
+              }`}
+            >
+              <p className={`font-display text-2xl font-extrabold ${active ? "text-white" : c.color}`}>{c.value}</p>
+              <p className={`mt-0.5 text-xs font-medium ${active ? "text-white/80" : "text-ink/55"}`}>{c.label}</p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCustomerEmail } from "@/lib/customer-auth";
-import { listOrdersByEmail, FULFILLMENT_LABELS, FulfillmentStatus } from "@/lib/orders";
+import { listOrders, approvedSeqMap, shortRef, FULFILLMENT_LABELS, FulfillmentStatus } from "@/lib/orders";
 
 // Devuelve los pedidos pagados del cliente autenticado (cookie de sesión).
 export async function GET(request: Request) {
@@ -10,9 +10,15 @@ export async function GET(request: Request) {
   }
 
   try {
-    const orders = await listOrdersByEmail(email);
+    const e = email.toLowerCase().trim();
+    const all = await listOrders();
+    const seqMap = approvedSeqMap(all);
+    const orders = all.filter(
+      (o) => o.status === "APPROVED" && (o.email || "").toLowerCase() === e
+    );
     const data = orders.map((o) => ({
       reference: o.reference,
+      numero: shortRef(seqMap.get(o.reference)),
       createdAt: o.paidAt || o.createdAt,
       amount: o.amount,
       currency: o.currency,

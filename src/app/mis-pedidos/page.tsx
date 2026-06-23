@@ -7,6 +7,7 @@ import { DEPARTAMENTOS_CO, citiesOf, postalOf } from "@/data/colombia";
 
 interface Order {
   reference: string;
+  numero?: string;
   createdAt: number;
   amount: number;
   currency: string;
@@ -160,7 +161,7 @@ function OrderCard({ order: o, email, onUpdated }: { order: Order; email: string
               {o.estilo} · {o.composicion}
             </p>
             <p className="text-xs text-ink/50">
-              Pedido {o.reference.replace("miniko-", "#")} · {new Date(o.createdAt * 1000).toLocaleDateString("es-CO")}
+              Pedido {o.numero || o.reference.replace("miniko-", "#")} · {new Date(o.createdAt * 1000).toLocaleDateString("es-CO")}
             </p>
           </div>
         </div>

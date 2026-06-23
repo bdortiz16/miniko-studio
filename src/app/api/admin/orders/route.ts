@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
-import { listOrders } from "@/lib/orders";
+import { listOrders, approvedSeqMap, shortRef } from "@/lib/orders";
 
 // Lista los pedidos pagados (APPROVED) desde nuestro almacén para el panel.
 export async function GET(request: Request) {
@@ -10,10 +10,12 @@ export async function GET(request: Request) {
 
   try {
     const all = await listOrders();
+    const seqMap = approvedSeqMap(all);
     const orders = all
       .filter((o) => o.status === "APPROVED")
       .map((o) => ({
         id: o.reference,
+        numero: shortRef(seqMap.get(o.reference)),
         created: o.paidAt || o.createdAt,
         email: o.email,
         amount: o.amount,

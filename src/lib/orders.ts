@@ -129,6 +129,22 @@ export async function listOrdersByEmail(email: string): Promise<Order[]> {
   return all.filter((o) => o.status === "APPROVED" && (o.email || "").toLowerCase() === e);
 }
 
+// Número de pedido corto y legible (#001, #002…). Se asigna por orden de pago
+// sobre TODOS los pedidos pagados, así el mismo pedido tiene el mismo número en
+// el panel y en "Mis pedidos". Recibe la lista completa para no releerla.
+export function approvedSeqMap(all: Order[]): Map<string, number> {
+  const map = new Map<string, number>();
+  all
+    .filter((o) => o.status === "APPROVED")
+    .sort((a, b) => (a.paidAt || a.createdAt) - (b.paidAt || b.createdAt))
+    .forEach((o, i) => map.set(o.reference, i + 1));
+  return map;
+}
+
+export function shortRef(seq?: number): string {
+  return seq && seq > 0 ? `#${String(seq).padStart(3, "0")}` : "—";
+}
+
 // Actualiza los campos de seguimiento de un pedido (lo usa el admin).
 export async function updateOrderFulfillment(
   reference: string,
