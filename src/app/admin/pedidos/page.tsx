@@ -235,7 +235,7 @@ export default function AdminPedidos() {
                     {o.envio_telefono ? ` · 📱 ${o.envio_telefono}` : ""}
                   </p>
                   <p className="mt-1">{o.envio_direccion || "Sin dirección"}</p>
-                  <p className="mt-2 text-xs text-ink/40">ID: {o.id}</p>
+                  <p className="mt-2 text-xs text-ink/40">Pedido {o.numero}</p>
                 </div>
               </div>
 

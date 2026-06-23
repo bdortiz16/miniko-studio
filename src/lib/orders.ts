@@ -145,6 +145,13 @@ export function shortRef(seq?: number): string {
   return seq && seq > 0 ? `#${String(seq).padStart(3, "0")}` : "—";
 }
 
+// Número corto (#001) de un pedido concreto. Lista todos para mantener la
+// numeración global; úsalo donde no se tenga ya el mapa (p. ej. los correos).
+export async function shortRefFor(reference: string): Promise<string> {
+  const all = await listOrders();
+  return shortRef(approvedSeqMap(all).get(reference));
+}
+
 // Actualiza los campos de seguimiento de un pedido (lo usa el admin).
 export async function updateOrderFulfillment(
   reference: string,

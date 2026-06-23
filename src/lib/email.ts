@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { Order } from "@/lib/orders";
+import { Order, shortRefFor } from "@/lib/orders";
 import { getSettings } from "@/lib/settings";
 import { waUrl } from "@/lib/whatsapp";
 
@@ -84,13 +84,42 @@ async function send(to: string, subject: string, html: string): Promise<void> {
   }
 }
 
+// Envío masivo (campaña) a varios correos. Manda un correo individual a cada
+// destinatario (no se exponen entre sí) usando el envío por lotes de Resend.
+export async function sendCampaign(
+  recipients: string[],
+  subject: string,
+  html: string
+): Promise<{ sent: number; failed: number }> {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("Falta configurar el correo (RESEND_API_KEY).");
+  }
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const unique = Array.from(new Set(recipients.map((r) => r.trim().toLowerCase()).filter(Boolean)));
+  let sent = 0;
+  let failed = 0;
+  // Resend admite hasta 100 correos por lote.
+  for (let i = 0; i < unique.length; i += 100) {
+    const chunk = unique.slice(i, i + 100);
+    try {
+      await resend.batch.send(chunk.map((to) => ({ from: FROM, to, subject, html })));
+      sent += chunk.length;
+    } catch (err) {
+      console.error("[campaign] error de lote:", err);
+      failed += chunk.length;
+    }
+  }
+  return { sent, failed };
+}
+
 // Confirmación al cliente cuando el pago queda aprobado.
 export async function sendOrderConfirmation(order: Order): Promise<void> {
   if (!order.email) return;
+  const num = await shortRefFor(order.reference);
   const inner = `
     <p>¡Gracias por tu compra! Recibimos tu pago y ya estamos preparando tu figura. 🎉</p>
     <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
-      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Pedido", `<b>${num}</b>`)}
       ${row("Estilo", `${order.estilo} · ${order.composicion}`)}
       ${row("Total", `<b>${money(order.amount, order.currency)}</b>`)}
     </table>
@@ -102,10 +131,11 @@ export async function sendOrderConfirmation(order: Order): Promise<void> {
 // Aviso al cliente cuando el pedido pasa a EN PRODUCCIÓN.
 export async function sendProductionNotice(order: Order): Promise<void> {
   if (!order.email) return;
+  const num = await shortRefFor(order.reference);
   const inner = `
     <p>¡Manos a la obra! 🎨 Tu figura ya entró en <b>producción</b>: la estamos modelando e imprimiendo en 3D.</p>
     <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
-      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Pedido", `<b>${num}</b>`)}
       ${row("Estilo", `${order.estilo} · ${order.composicion}`)}
     </table>
     <p style="font-size:14px">Te avisaremos cuando salga para envío. Sigue tu pedido en
@@ -116,10 +146,11 @@ export async function sendProductionNotice(order: Order): Promise<void> {
 // Aviso al cliente cuando el pedido se marca como ENTREGADO.
 export async function sendDeliveredNotice(order: Order): Promise<void> {
   if (!order.email) return;
+  const num = await shortRefFor(order.reference);
   const inner = `
     <p>¡Tu pedido fue <b>entregado</b>! 🎉 Esperamos que disfrutes pintando tu figura.</p>
     <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
-      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Pedido", `<b>${num}</b>`)}
     </table>
     <p style="font-size:14px">¿Algún problema con tu entrega? Escríbenos, estamos para ayudarte.</p>`;
   await send(order.email, "¡Tu pedido Miniko fue entregado! 🎉", shell("Entregado", inner + (await supportBlock())));
@@ -133,28 +164,30 @@ export async function sendAdminNewOrder(order: Order): Promise<void> {
     if (s.adminEmail) to = s.adminEmail; // el panel manda sobre la variable
   } catch {}
   if (!to) return; // sin correo configurado, no se envía
+  const num = await shortRefFor(order.reference);
   const s = order.shipping || {};
   const dir = [s.address, s.city, s.zip, s.country].filter(Boolean).join(", ");
   const inner = `
     <p>Entró un pedido nuevo pagado. 🎉</p>
     <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
-      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Pedido", `<b>${num}</b>`)}
       ${row("Cliente", order.email || "—")}
       ${row("Estilo", `${order.estilo} · ${order.composicion}`)}
       ${row("Total", `<b>${money(order.amount, order.currency)}</b>`)}
       ${row("Enviar a", `${s.name || "—"}${dir ? `<br>${dir}` : ""}`)}
     </table>
     <p style="font-size:14px"><a href="${SITE}/admin/pedidos" style="color:#E5322D">Abrir el panel de pedidos</a></p>`;
-  await send(to, `Nuevo pedido ${order.reference} · ${money(order.amount, order.currency)}`, shell("Nuevo pedido", inner));
+  await send(to, `Nuevo pedido ${num} · ${money(order.amount, order.currency)}`, shell("Nuevo pedido", inner));
 }
 
 // Aviso de envío con la guía cuando el admin marca el pedido como ENVIADO.
 export async function sendShippingNotice(order: Order): Promise<void> {
   if (!order.email) return;
+  const num = await shortRefFor(order.reference);
   const inner = `
     <p>¡Tu figura va en camino! 🚚</p>
     <table style="font-size:14px;margin:12px 0;border-collapse:collapse">
-      ${row("Pedido", `<b>${order.reference}</b>`)}
+      ${row("Pedido", `<b>${num}</b>`)}
       ${order.carrier ? row("Transportadora", order.carrier) : ""}
       ${order.tracking ? row("Número de guía", `<b>${order.tracking}</b>`) : ""}
     </table>
