@@ -20,7 +20,7 @@ import {
   shipOf,
 } from "@/lib/settings";
 import StyleImage from "@/components/StyleImage";
-import { MiFigure, MiBox, MiTruck, MiPeople, MiCamera, MiPaw } from "@/components/MiniIcons";
+import { MiFigure, MiBox, MiTruck, MiPeople, MiCamera, MiPaw, MiLock } from "@/components/MiniIcons";
 import { DEPARTAMENTOS_CO, citiesOf, postalOf, isValidName, isValidCel } from "@/data/colombia";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
@@ -1386,7 +1386,9 @@ function StepPay({
           {loading ? "Redirigiendo…" : `Pagar ${formatCop(finalTotal)} →`}
         </button>
       </div>
-      <p className="mt-3 text-center text-xs text-ink/45">🔒 Pago seguro con Wompi · PSE, Nequi, Bancolombia y tarjetas</p>
+      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-ink/45">
+        <MiLock /> Pago seguro con Wompi · PSE, Nequi, Bancolombia y tarjetas
+      </p>
     </div>
   );
 }

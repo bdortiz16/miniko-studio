@@ -178,6 +178,17 @@ export function MiGrid({ className = "", ...p }: P) {
   );
 }
 
+// Candado (pago seguro).
+export function MiLock({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
+      <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+      <circle cx="12" cy="15.5" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 // Cupón / ticket de descuento.
 export function MiTicket({ className = "", ...p }: P) {
   return (
