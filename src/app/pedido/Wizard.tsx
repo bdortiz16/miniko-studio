@@ -21,6 +21,7 @@ import {
 } from "@/lib/settings";
 import StyleImage from "@/components/StyleImage";
 import { MiFigure, MiBox, MiTruck, MiPeople, MiCamera, MiPaw } from "@/components/MiniIcons";
+import { DEPARTAMENTOS_CO, citiesOf, postalOf, isValidName, isValidCel } from "@/data/colombia";
 
 const STEPS = ["Estilo", "Foto", "Email", "Preview", "Envío", "Pago"];
 const MAX_FIGURES = 8; // máximo de personas/mascotas por pedido
@@ -53,16 +54,6 @@ interface Shipping {
   zip: string;
   country: string;
 }
-
-// Departamentos de Colombia (los exige la transportadora).
-const DEPARTAMENTOS = [
-  "Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar",
-  "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó",
-  "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira",
-  "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío",
-  "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima",
-  "Valle del Cauca", "Vaupés", "Vichada",
-];
 
 export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}) {
   const params = useSearchParams();
@@ -316,8 +307,8 @@ export default function Wizard({ forcePet = false }: { forcePet?: boolean } = {}
     (step === 2 && emailVerified) ||
     step === 3 ||
     (step === 4 &&
-      !!shipping.name &&
-      !!shipping.phone &&
+      isValidName(shipping.name) &&
+      isValidCel(shipping.phone) &&
       !!shipping.address &&
       !!shipping.city &&
       !!shipping.department);
@@ -1136,9 +1127,17 @@ function StepShipping({
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setShipping({ ...shipping, [k]: e.target.value }),
   });
+  // Al cambiar departamento: limpia la ciudad y autocompleta el código postal.
+  const onDept = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const department = e.target.value;
+    setShipping({ ...shipping, department, city: "", zip: postalOf(department) });
+  };
   const input =
     "w-full rounded-xl border border-line px-4 py-2.5 outline-none focus:border-ink";
   const label = "text-xs font-medium text-ink/60";
+  const cities = citiesOf(shipping.department);
+  const nameBad = !!shipping.name && !isValidName(shipping.name);
+  const celBad = !!shipping.phone && !isValidCel(shipping.phone);
 
   return (
     <div>
@@ -1146,16 +1145,24 @@ function StepShipping({
       <div className="mx-auto mt-8 grid max-w-lg gap-3 text-left">
         <label className="block">
           <span className={label}>Nombre y apellidos *</span>
-          <input className={`mt-1 ${input}`} placeholder="Nombre completo" {...field("name")} />
+          <input
+            className={`mt-1 ${input} ${nameBad ? "border-brand" : ""}`}
+            placeholder="Nombre y apellidos"
+            {...field("name")}
+          />
+          {nameBad && <span className="mt-1 block text-xs text-brand">Escribe nombre y apellido (solo letras).</span>}
         </label>
         <label className="block">
           <span className={label}>Celular *</span>
           <input
-            className={`mt-1 ${input}`}
+            className={`mt-1 ${input} ${celBad ? "border-brand" : ""}`}
             inputMode="tel"
+            maxLength={10}
             placeholder="3001234567"
-            {...field("phone")}
+            value={shipping.phone}
+            onChange={(e) => setShipping({ ...shipping, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
           />
+          {celBad && <span className="mt-1 block text-xs text-brand">El celular debe tener 10 dígitos y empezar en 3.</span>}
         </label>
         <label className="block">
           <span className={label}>Dirección *</span>
@@ -1168,26 +1175,36 @@ function StepShipping({
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className={label}>Departamento *</span>
-            <select className={`mt-1 ${input} bg-white`} {...field("department")}>
+            <select className={`mt-1 ${input} bg-white`} value={shipping.department} onChange={onDept}>
               <option value="">Selecciona…</option>
-              {DEPARTAMENTOS.map((d) => (
-                <option key={d} value={d}>{d}</option>
+              {DEPARTAMENTOS_CO.map((d) => (
+                <option key={d.name} value={d.name}>{d.name}</option>
               ))}
             </select>
           </label>
           <label className="block">
             <span className={label}>Ciudad / Municipio *</span>
-            <input className={`mt-1 ${input}`} placeholder="Pereira" {...field("city")} />
+            <select
+              className={`mt-1 ${input} bg-white disabled:opacity-50`}
+              value={shipping.city}
+              disabled={!shipping.department}
+              onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+            >
+              <option value="">{shipping.department ? "Selecciona…" : "Elige departamento"}</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </label>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className={label}>Código postal (opcional)</span>
-            <input className={`mt-1 ${input}`} placeholder="660001" {...field("zip")} />
+            <span className={label}>Código postal</span>
+            <input className={`mt-1 ${input}`} placeholder="se completa solo" {...field("zip")} />
           </label>
           <label className="block">
             <span className={label}>País</span>
-            <input className={`mt-1 ${input}`} placeholder="País" {...field("country")} />
+            <input className={`mt-1 ${input} bg-mist text-ink/60`} value="Colombia" readOnly />
           </label>
         </div>
       </div>
