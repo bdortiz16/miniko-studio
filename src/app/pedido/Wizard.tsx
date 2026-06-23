@@ -1242,6 +1242,38 @@ function StepPay({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Cupón
+  const [coupon, setCoupon] = useState("");
+  const [couponPct, setCouponPct] = useState(0);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  const discount = Math.round(price * (couponPct / 100));
+  const finalTotal = Math.max(0, total - discount);
+
+  async function applyCoupon() {
+    setChecking(true);
+    setCouponMsg(null);
+    try {
+      const res = await fetch("/api/coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: coupon }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setCouponPct(data.percent);
+        setCouponMsg(`✓ Cupón ${data.code}: ${data.percent}% de descuento`);
+      } else {
+        setCouponPct(0);
+        setCouponMsg("Cupón no válido o vencido.");
+      }
+    } catch {
+      setCouponMsg("No se pudo validar el cupón.");
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function pay() {
     setLoading(true);
@@ -1254,6 +1286,7 @@ function StepPay({
           styleId: style.id,
           variantId: variant.id,
           email,
+          coupon: couponPct > 0 ? coupon : undefined,
           photoUrls: photos.map((p) => p.url),
           previewUrls: previews.filter((u): u is string => !!u),
           shipping,
@@ -1301,10 +1334,36 @@ function StepPay({
           <span className="text-ink/55">Envío</span>
           <span className="font-medium">{shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
         </div>
+        {couponPct > 0 && (
+          <div className={`${row} border-t border-line text-green-600`}>
+            <span>Descuento ({coupon} · {couponPct}%)</span>
+            <span className="font-medium">−{formatCop(discount)}</span>
+          </div>
+        )}
+
+        {/* Cupón */}
+        <div className="mt-3 border-t border-line pt-3">
+          <span className="text-xs font-medium text-ink/60">¿Tienes un cupón?</span>
+          <div className="mt-1.5 flex gap-2">
+            <input
+              value={coupon}
+              onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponPct(0); setCouponMsg(null); }}
+              placeholder="CÓDIGO"
+              className="w-full rounded-xl border border-line px-3 py-2 text-sm uppercase outline-none focus:border-ink"
+            />
+            <button onClick={applyCoupon} disabled={checking || !coupon} className="btn-secondary shrink-0 px-4 py-2 text-sm disabled:opacity-40">
+              {checking ? "…" : "Aplicar"}
+            </button>
+          </div>
+          {couponMsg && (
+            <p className={`mt-1.5 text-xs font-medium ${couponPct > 0 ? "text-green-600" : "text-brand"}`}>{couponMsg}</p>
+          )}
+        </div>
+
         <div className="my-1 h-px bg-brand/60" />
         <div className="flex items-center justify-between py-2">
           <span className="font-display text-lg font-bold">Total</span>
-          <span className="font-display text-lg font-extrabold">{formatCop(total)}</span>
+          <span className="font-display text-lg font-extrabold">{formatCop(finalTotal)}</span>
         </div>
         {shipping.name && (
           <p className="mt-2 text-xs text-ink/50">
@@ -1324,7 +1383,7 @@ function StepPay({
 
       <div className="mt-6 flex justify-center">
         <button onClick={pay} disabled={loading} className="btn-primary px-10 disabled:opacity-60">
-          {loading ? "Redirigiendo…" : `Pagar ${formatCop(total)} →`}
+          {loading ? "Redirigiendo…" : `Pagar ${formatCop(finalTotal)} →`}
         </button>
       </div>
       <p className="mt-3 text-center text-xs text-ink/45">🔒 Pago seguro con Wompi · PSE, Nequi, Bancolombia y tarjetas</p>

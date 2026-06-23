@@ -33,6 +33,8 @@ export interface Order {
     country?: string;
   };
   transactionId?: string;
+  coupon?: string; // código de cupón aplicado
+  discount?: number; // descuento en centavos
   // Seguimiento (lo edita el admin):
   fulfillment?: FulfillmentStatus; // estado de preparación/envío
   carrier?: string; // transportadora (Servientrega, Coordinadora…)

@@ -3,6 +3,7 @@ import { variantById, styleById } from "@/data/catalog";
 import { getSettings, priceOf, shipOf } from "@/lib/settings";
 import { buildCheckoutUrl, getSiteUrl, wompiConfigured } from "@/lib/wompi";
 import { saveOrder, Order } from "@/lib/orders";
+import { findValidCoupon } from "@/lib/coupons";
 
 // Dominio real de ESTA petición. Evita que redirect-url quede como
 // http://localhost:3000 (que el firewall de Wompi bloquea con 403).
@@ -24,6 +25,7 @@ interface OrderPayload {
   personas?: number;
   mascotas?: number;
   composicion?: string;
+  coupon?: string;
   photoUrls?: string[];
   previewUrls?: string[];
   shipping?: {
@@ -66,8 +68,20 @@ export async function POST(request: Request) {
   const settings = await getSettings();
   const priceCop = priceOf(settings, variant.id, variant.priceCop);
   const shippingCop = shipOf(settings, variant.people);
+
+  // Cupón: se valida en el servidor (no se confía en el cliente). El descuento
+  // se aplica solo sobre el precio del producto, no sobre el envío.
+  let couponCode: string | undefined;
+  let discountCents = 0;
+  if (body.coupon) {
+    const c = await findValidCoupon(body.coupon);
+    if (c) {
+      couponCode = c.code;
+      discountCents = Math.round(priceCop * (c.percent / 100)) * 100;
+    }
+  }
   // Wompi usa centavos: COP x100.
-  const amountInCents = (priceCop + shippingCop) * 100;
+  const amountInCents = Math.max(100, (priceCop + shippingCop) * 100 - discountCents);
 
   const reference = `miniko-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const photoUrls = (body.photoUrls ?? []).slice(0, 8);
@@ -80,6 +94,8 @@ export async function POST(request: Request) {
     email: body.email || "",
     amount: amountInCents,
     currency: "COP",
+    coupon: couponCode,
+    discount: discountCents || undefined,
     styleId: style.id,
     estilo: style.name,
     composicion: body.composicion || variant.name,

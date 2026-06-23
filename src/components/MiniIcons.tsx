@@ -178,6 +178,16 @@ export function MiGrid({ className = "", ...p }: P) {
   );
 }
 
+// Cupón / ticket de descuento.
+export function MiTicket({ className = "", ...p }: P) {
+  return (
+    <svg {...base} className={`${cls} ${className}`} {...p}>
+      <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5V10a2 2 0 0 0 0 4v2.5A1.5 1.5 0 0 1 19.5 18h-15A1.5 1.5 0 0 1 3 16.5V14a2 2 0 0 0 0-4z" />
+      <path d="M14 6l-4 12" strokeDasharray="1.5 2" />
+    </svg>
+  );
+}
+
 // Engranaje (configuración).
 export function MiGear({ className = "", ...p }: P) {
   return (
