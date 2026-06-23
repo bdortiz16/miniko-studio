@@ -142,20 +142,22 @@ export default function AdminAssistant() {
         )}
       </button>
 
-      {/* Funko asistente — abajo a la derecha */}
+      {/* Funko asistente — abajo a la derecha (solo el Funko, sin círculo) */}
       <button
         onClick={togglePanel}
         aria-label="Asistente"
-        className="fixed bottom-5 right-5 z-[80] grid h-16 w-16 place-items-center overflow-hidden rounded-full border-2 border-brand bg-white text-brand shadow-lg transition hover:scale-105"
+        className="fixed bottom-5 right-5 z-[80] text-brand transition hover:scale-105"
       >
         {icon ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={icon} alt="Asistente" className={`h-full w-full object-contain p-1 ${bump ? "animate-bounce" : ""}`} />
+          <img src={icon} alt="Asistente" className={`h-24 w-24 object-contain drop-shadow-xl ${bump ? "animate-bounce" : ""}`} />
         ) : (
-          <MiFigure className={`h-9 w-9 ${bump ? "animate-bounce" : ""}`} />
+          <span className="grid h-16 w-16 place-items-center rounded-full border-2 border-brand bg-white">
+            <MiFigure className={`h-9 w-9 ${bump ? "animate-bounce" : ""}`} />
+          </span>
         )}
         {badge > 0 && (
-          <span className={`absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full px-1 text-xs font-bold text-white ${badgeColor}`}>
+          <span className={`absolute right-0 top-0 grid h-6 min-w-6 place-items-center rounded-full px-1 text-xs font-bold text-white ${badgeColor}`}>
             {badge}
           </span>
         )}
