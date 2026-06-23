@@ -114,7 +114,12 @@ export default function AdminDashboard() {
 
           {/* Gráfico de ingresos por día */}
           <section className="mt-8 rounded-2xl border border-line bg-white p-6">
-            <h2 className="font-display text-lg font-bold">Ingresos · últimos 14 días</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">Ingresos · últimos 14 días</h2>
+              <Link href="/admin/contabilidad" className="text-sm font-semibold text-brand underline underline-offset-2">
+                Contabilidad y utilidad real →
+              </Link>
+            </div>
             {stats.orders === 0 ? (
               <p className="mt-4 text-sm text-ink/50">Aún no hay ventas para mostrar.</p>
             ) : (
