@@ -120,14 +120,36 @@ export async function sendCampaign(
 }
 
 // Código de acceso (2.º paso) para entrar al panel de administración.
-export async function sendAdminLoginCode(to: string, code: string): Promise<void> {
+// Devuelve el error real de Resend (si lo hay) para diagnosticar entregas.
+export async function sendAdminLoginCode(
+  to: string,
+  code: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!process.env.RESEND_API_KEY) return { ok: false, error: "Falta configurar el correo (RESEND_API_KEY)." };
+  if (!to) return { ok: false, error: "No hay correo de destino configurado." };
   const inner = `
     <p>Usa este código para entrar al panel de administración de miniko:</p>
     <div style="margin:18px 0;text-align:center">
       <span style="display:inline-block;font-size:30px;font-weight:800;letter-spacing:8px;background:#f4f4f5;border:1px solid #ececec;border-radius:12px;padding:14px 22px;color:#111">${code}</span>
     </div>
     <p style="font-size:13px;color:#888">El código vence en 10 minutos. Si no intentaste iniciar sesión, ignora este correo y cambia tu contraseña.</p>`;
-  await send(to, `Tu código de acceso: ${code}`, shell("Código de acceso", inner));
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Tu código de acceso: ${code}`,
+      html: shell("Código de acceso", inner),
+    });
+    if (error) {
+      console.error("[login-code] error:", error);
+      return { ok: false, error: error.message || String(error) };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("[login-code] excepción:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Error de red." };
+  }
 }
 
 // Confirmación al cliente cuando el pago queda aprobado.

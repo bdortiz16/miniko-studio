@@ -70,7 +70,13 @@ export async function POST(request: Request) {
   // Genera y envía el código; devolvemos el token firmado (no el código).
   const code = generateCode();
   const { token, exp } = makeToken(account, code);
-  await sendAdminLoginCode(account, code);
+  const mail = await sendAdminLoginCode(account, code);
+  if (!mail.ok) {
+    return NextResponse.json(
+      { error: `No se pudo enviar el código: ${mail.error || "revisa la configuración del correo."}` },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ step: "code", token, exp, hint: maskEmail(account) });
 }
