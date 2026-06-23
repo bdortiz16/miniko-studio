@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function LoginForm() {
@@ -16,6 +16,36 @@ function LoginForm() {
   const [hint, setHint] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldown]);
+
+  async function resend() {
+    setError(null);
+    setInfo(null);
+    try {
+      const res = await fetch("/api/admin/login/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo reenviar.");
+      setToken(data.token);
+      setExp(data.exp);
+      setHint(data.hint || hint);
+      setCode("");
+      setCooldown(30);
+      setInfo("✓ Te enviamos un código nuevo.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    }
+  }
 
   async function submitPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +64,7 @@ function LoginForm() {
         setExp(data.exp);
         setHint(data.hint || "");
         setStep("code");
+        setCooldown(30);
         setLoading(false);
       } else {
         router.replace(next);
@@ -101,19 +132,32 @@ function LoginForm() {
             autoFocus
             className="mt-5 w-full rounded-full border border-line px-4 py-2.5 text-center text-lg tracking-[0.5em] outline-none focus:border-ink"
           />
+          {info && (
+            <p className="mt-3 rounded-lg border border-green-300 px-3 py-2 text-sm text-green-600">{info}</p>
+          )}
           {error && (
             <p className="mt-3 rounded-lg border border-brand/40 px-3 py-2 text-sm text-brand">{error}</p>
           )}
           <button type="submit" disabled={loading || code.length < 6} className="btn-primary mt-5 w-full disabled:opacity-50">
             {loading ? "Entrando…" : "Entrar"}
           </button>
-          <button
-            type="button"
-            onClick={() => { setStep("password"); setCode(""); setError(null); }}
-            className="mt-3 w-full text-sm font-semibold text-ink/60 underline underline-offset-2 hover:text-ink"
-          >
-            ← Volver
-          </button>
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <button
+              type="button"
+              onClick={() => { setStep("password"); setCode(""); setError(null); setInfo(null); }}
+              className="font-semibold text-ink/60 underline underline-offset-2 hover:text-ink"
+            >
+              ← Volver
+            </button>
+            <button
+              type="button"
+              onClick={resend}
+              disabled={cooldown > 0}
+              className="font-semibold text-brand underline underline-offset-2 disabled:text-ink/40 disabled:no-underline"
+            >
+              {cooldown > 0 ? `Reenviar en ${cooldown}s` : "¿No llegó? Reenviar código"}
+            </button>
+          </div>
         </form>
       )}
     </div>
