@@ -11,6 +11,8 @@ interface Product {
   priceCop: number;
   image: string;
   stock?: number;
+  emoji?: string;
+  accent?: string;
 }
 
 function money(cop: number) {
@@ -58,12 +60,15 @@ export default function TiendaPage() {
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p) => (
               <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
-                <div className="aspect-square w-full overflow-hidden bg-mist">
+                <div
+                  className="grid aspect-square w-full place-items-center overflow-hidden bg-mist"
+                  style={p.image ? undefined : { background: `linear-gradient(135deg, ${p.accent || "#f1f1f2"}, #ffffff)` }}
+                >
                   {p.image ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="grid h-full w-full place-items-center text-5xl">📦</div>
+                    <span className="text-7xl drop-shadow-sm">{p.emoji || "📦"}</span>
                   )}
                 </div>
                 <div className="flex flex-1 flex-col p-4">
@@ -138,12 +143,15 @@ function BuyModal({ product, onClose }: { product: Product; onClose: () => void 
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
         <div className="flex items-center gap-3">
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
+          <div
+            className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-mist"
+            style={product.image ? undefined : { background: `linear-gradient(135deg, ${product.accent || "#f1f1f2"}, #fff)` }}
+          >
             {product.image ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
             ) : (
-              <div className="grid h-full w-full place-items-center">📦</div>
+              <span className="text-2xl">{product.emoji || "📦"}</span>
             )}
           </div>
           <div className="min-w-0 flex-1">

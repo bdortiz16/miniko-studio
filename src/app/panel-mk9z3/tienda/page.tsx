@@ -17,7 +17,24 @@ export default function AdminTienda() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function seedExamples() {
+    setSeeding(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/products/seed", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo cargar.");
+      setProducts(data.products || []);
+      setMsg({ ok: true, text: `✓ Se cargaron ${data.added} productos de ejemplo. Edítalos o cámbiales la foto.` });
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "Error." });
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   async function load() {
     try {
@@ -64,6 +81,11 @@ export default function AdminTienda() {
         >
           + Nuevo producto
         </button>
+        {products.length === 0 && (
+          <button onClick={seedExamples} disabled={seeding} className="btn-secondary px-5 py-2 text-sm disabled:opacity-50">
+            {seeding ? "Cargando…" : "Cargar ejemplos"}
+          </button>
+        )}
         <Link href="/tienda" target="_blank" className="text-sm font-semibold text-brand underline underline-offset-2">
           Ver tienda ↗
         </Link>
@@ -96,12 +118,15 @@ export default function AdminTienda() {
           <div className="space-y-3">
             {products.map((p) => (
               <div key={p.id} className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4">
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
+                <div
+                  className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-mist"
+                  style={p.image ? undefined : { background: `linear-gradient(135deg, ${p.accent || "#f1f1f2"}, #fff)` }}
+                >
                   {p.image ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="grid h-full w-full place-items-center text-xl">📦</div>
+                    <span className="text-2xl">{p.emoji || "📦"}</span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
