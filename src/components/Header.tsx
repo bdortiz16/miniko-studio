@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useCart } from "@/lib/cart";
 
 const NAV = [
   { href: "/#como-funciona", label: "Cómo funciona" },
@@ -57,6 +58,8 @@ export function Wordmark({ className = "" }: { className?: string }) {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const cart = useCart();
+  const cartCount = cart.reduce((n, i) => n + i.qty, 0);
 
   return (
     <header className="sticky top-0 z-50 border-b-2 border-brand bg-white/95 backdrop-blur-md">
@@ -85,6 +88,14 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link href="/tienda/carrito" aria-label="Carrito" className="relative grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-ink/40">
+            <span className="text-lg">🛒</span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-white">
+                {cartCount}
+              </span>
+            )}
+          </Link>
           <Link
             href="/mis-pedidos"
             className="hidden items-center gap-1.5 rounded-full bg-ink px-6 py-2.5 text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-black sm:inline-flex"

@@ -11,6 +11,7 @@ export interface Settings {
   adminEmail: string; // correo donde llegan los avisos de pedidos nuevos
   whatsappIcon: string; // URL del Funko (camiseta WhatsApp) generado con IA
   supportIcon: string; // URL del Funko de soporte/asistente generado con IA
+  tiendaShippingCop: number; // costo de envío de los productos de la Tienda
   costs: Costs; // costos para la contabilidad
 }
 
@@ -26,6 +27,7 @@ export function defaultSettings(): Settings {
     adminEmail: "",
     whatsappIcon: "",
     supportIcon: "",
+    tiendaShippingCop: SHIPPING.flatCop,
     costs: defaultCosts(),
   };
 }
@@ -78,6 +80,8 @@ export async function getSettings(): Promise<Settings> {
       adminEmail: typeof data.adminEmail === "string" ? data.adminEmail : def.adminEmail,
       whatsappIcon: typeof data.whatsappIcon === "string" ? data.whatsappIcon : def.whatsappIcon,
       supportIcon: typeof data.supportIcon === "string" ? data.supportIcon : def.supportIcon,
+      tiendaShippingCop:
+        typeof data.tiendaShippingCop === "number" ? data.tiendaShippingCop : def.tiendaShippingCop,
       costs: mergeCosts(data.costs, def.costs),
     };
   } catch {
@@ -91,4 +95,7 @@ export function priceOf(settings: Settings, variantId: string, fallback: number)
 }
 export function shipOf(settings: Settings, people: number): number {
   return people >= settings.freeFromPeople ? 0 : settings.shippingCop;
+}
+export function tiendaShipOf(settings: Settings): number {
+  return typeof settings.tiendaShippingCop === "number" ? settings.tiendaShippingCop : settings.shippingCop;
 }

@@ -35,6 +35,16 @@ export interface Order {
   transactionId?: string;
   coupon?: string; // código de cupón aplicado
   discount?: number; // descuento en centavos
+  // Compra de Tienda con varios productos (carrito):
+  items?: {
+    productId: string;
+    name: string;
+    design?: string;
+    customText?: string;
+    qty: number;
+    unitCop: number;
+  }[];
+  stockApplied?: boolean; // para no descontar stock dos veces
   // Seguimiento (lo edita el admin):
   fulfillment?: FulfillmentStatus; // estado de preparación/envío
   carrier?: string; // transportadora (Servientrega, Coordinadora…)

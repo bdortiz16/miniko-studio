@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { verifyEventSignature } from "@/lib/wompi";
-import { getOrder, updateOrderStatus, OrderStatus } from "@/lib/orders";
+import { getOrder, updateOrderStatus, saveOrder, OrderStatus } from "@/lib/orders";
 import { sendOrderConfirmation, sendAdminNewOrder } from "@/lib/email";
+import { decrementStock } from "@/lib/products";
 
 // Webhook de eventos de Wompi. Confirma el pago de forma fiable y actualiza
 // el estado del pedido en nuestro almacén. Configura esta URL en el panel de
@@ -42,6 +43,14 @@ export async function POST(request: Request) {
     if (order && status === "APPROVED" && prev?.status !== "APPROVED") {
       await sendOrderConfirmation(order); // al cliente
       await sendAdminNewOrder(order); // a ti (admin)
+      // Descuenta stock de los productos de la Tienda (una sola vez).
+      if (order.items?.length && !order.stockApplied) {
+        try {
+          await decrementStock(order.items.map((i) => ({ productId: i.productId, qty: i.qty })));
+          order.stockApplied = true;
+          await saveOrder(order);
+        } catch {}
+      }
     }
   }
 

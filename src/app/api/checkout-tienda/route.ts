@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSettings, shipOf } from "@/lib/settings";
+import { getSettings, tiendaShipOf } from "@/lib/settings";
 import { buildCheckoutUrl, getSiteUrl, wompiConfigured } from "@/lib/wompi";
 import { saveOrder, Order } from "@/lib/orders";
 import { getProduct } from "@/lib/products";
@@ -14,11 +14,20 @@ function originFromRequest(request: Request): string {
   return getSiteUrl();
 }
 
-interface TiendaPayload {
+interface CartLine {
   productId: string;
   qty?: number;
   designId?: string;
   customText?: string;
+}
+
+interface TiendaPayload {
+  // Compra de un solo producto (compatibilidad) o carrito completo.
+  productId?: string;
+  qty?: number;
+  designId?: string;
+  customText?: string;
+  items?: CartLine[];
   email?: string;
   shipping?: {
     name?: string; phone?: string; address?: string; reference?: string;
@@ -26,7 +35,6 @@ interface TiendaPayload {
   };
 }
 
-// Compra de un producto de la Tienda. Reutiliza el modelo de pedido y Wompi.
 export async function POST(request: Request) {
   if (!wompiConfigured()) {
     return NextResponse.json({ error: "Wompi no está configurado." }, { status: 500 });
@@ -39,34 +47,58 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
 
-  const product = await getProduct(body.productId);
-  if (!product || !product.active) {
-    return NextResponse.json({ error: "Producto no disponible." }, { status: 400 });
+  const lines: CartLine[] = body.items?.length
+    ? body.items
+    : body.productId
+    ? [{ productId: body.productId, qty: body.qty, designId: body.designId, customText: body.customText }]
+    : [];
+  if (lines.length === 0) {
+    return NextResponse.json({ error: "El carrito está vacío." }, { status: 400 });
   }
 
-  const qty = Math.min(20, Math.max(1, Math.floor(body.qty || 1)));
+  const orderItems: NonNullable<Order["items"]> = [];
+  let productsCents = 0;
 
-  // Diseño elegido (si el producto tiene diseños). Valida contra el producto.
-  const design = product.designs?.find((d) => d.id === body.designId);
-  if (product.designs && product.designs.length > 0 && !design) {
-    return NextResponse.json({ error: "Elige un diseño." }, { status: 400 });
+  for (const line of lines) {
+    const product = await getProduct(line.productId);
+    if (!product || !product.active) {
+      return NextResponse.json({ error: "Un producto ya no está disponible." }, { status: 400 });
+    }
+    const qty = Math.min(20, Math.max(1, Math.floor(line.qty || 1)));
+    const design = product.designs?.find((d) => d.id === line.designId);
+    if (product.designs && product.designs.length > 0 && !design) {
+      return NextResponse.json({ error: `Elige un diseño para ${product.name}.` }, { status: 400 });
+    }
+    const customText = (line.customText || "").trim().slice(0, 80);
+    if (design?.customLabel && !customText) {
+      return NextResponse.json({ error: `Falta "${design.customLabel}" en ${product.name}.` }, { status: 400 });
+    }
+    const unitCop = product.priceCop + (design?.extraCop || 0);
+    productsCents += unitCop * qty * 100;
+    orderItems.push({
+      productId: product.id,
+      name: product.name,
+      design: design?.name,
+      customText: customText || undefined,
+      qty,
+      unitCop,
+    });
   }
-  const customText = (body.customText || "").trim().slice(0, 80);
-  if (design?.customLabel && !customText) {
-    return NextResponse.json({ error: `Falta: ${design.customLabel}.` }, { status: 400 });
-  }
-  const unitCop = product.priceCop + (design?.extraCop || 0);
 
   const settings = await getSettings();
-  // Envío: usa la tarifa de 1 figura como base para artículos de la tienda.
-  const shippingCop = shipOf(settings, 1);
-  const amountInCents = Math.max(100, (unitCop * qty + shippingCop) * 100);
+  const shippingCop = tiendaShipOf(settings);
+  const amountInCents = Math.max(100, productsCents + shippingCop * 100);
 
-  // Descripción legible del pedido: diseño + dato personalizado.
-  const parts = [`${qty} und`];
-  if (design) parts.push(design.name);
-  if (customText) parts.push(`"${customText}"`);
-  const composicion = parts.join(" · ");
+  // Descripción legible del pedido.
+  const totalUnits = orderItems.reduce((n, it) => n + it.qty, 0);
+  const composicion =
+    orderItems.length === 1
+      ? [`${orderItems[0].qty} und`, orderItems[0].design, orderItems[0].customText ? `"${orderItems[0].customText}"` : ""]
+          .filter(Boolean)
+          .join(" · ")
+      : `${orderItems.length} productos · ${totalUnits} und`;
+  const estilo = orderItems.length === 1 ? orderItems[0].name : "Compra de tienda";
+  const firstProduct = await getProduct(orderItems[0].productId);
 
   const reference = `miniko-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const s = body.shipping ?? {};
@@ -78,14 +110,15 @@ export async function POST(request: Request) {
     email: body.email || "",
     amount: amountInCents,
     currency: "COP",
-    styleId: `tienda-${product.id}`,
-    estilo: product.name,
+    styleId: "tienda",
+    estilo,
     composicion,
     tipo: "Tienda",
     personas: 0,
     mascotas: 0,
-    photoUrls: product.image ? [product.image] : [],
+    photoUrls: firstProduct?.image ? [firstProduct.image] : [],
     previewUrls: [],
+    items: orderItems,
     shipping: {
       name: s.name,
       phone: s.phone,

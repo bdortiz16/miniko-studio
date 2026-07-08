@@ -67,9 +67,14 @@ export async function POST(request: Request) {
   // costs: si vienen, los validamos con getSettings/merge; si no, conservamos.
   const current = await getSettings();
   const costs = body.costs ? { ...current.costs, ...body.costs } : current.costs;
+  const tiendaShippingCop =
+    Number.isFinite(Number(body.tiendaShippingCop)) && Number(body.tiendaShippingCop) >= 0
+      ? Math.round(Number(body.tiendaShippingCop))
+      : current.tiendaShippingCop;
 
   const settings: Settings = {
-    prices, shippingCop, freeFromPeople, whatsapp, adminEmail, whatsappIcon, supportIcon, costs,
+    prices, shippingCop, freeFromPeople, whatsapp, adminEmail, whatsappIcon, supportIcon,
+    tiendaShippingCop, costs,
   };
 
   try {
