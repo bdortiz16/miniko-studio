@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DEPARTAMENTOS_CO, citiesOf, postalOf, isValidName, isValidCel } from "@/data/colombia";
 
+interface Design {
+  id: string;
+  name: string;
+  emoji?: string;
+  image?: string;
+  extraCop?: number;
+  customLabel?: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -13,6 +22,7 @@ interface Product {
   stock?: number;
   emoji?: string;
   accent?: string;
+  designs?: Design[];
 }
 
 function money(cop: number) {
@@ -74,14 +84,21 @@ export default function TiendaPage() {
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="font-display text-lg font-bold">{p.name}</h3>
                   {p.description && <p className="mt-1 text-sm text-ink/60">{p.description}</p>}
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="font-display text-xl font-extrabold">{money(p.priceCop)}</span>
+                  {p.designs && p.designs.length > 0 && (
+                    <p className="mt-2 text-xs font-semibold text-brand">
+                      {p.designs.length} diseños · personalizable
+                    </p>
+                  )}
+                  <div className="mt-auto flex items-center justify-between pt-4">
+                    <span className="font-display text-xl font-extrabold">
+                      {p.designs && p.designs.length > 0 ? "desde " : ""}{money(p.priceCop)}
+                    </span>
                     <button
                       onClick={() => setBuying(p)}
                       disabled={p.stock === 0}
                       className="btn-primary px-5 py-2 text-sm disabled:opacity-50"
                     >
-                      {p.stock === 0 ? "Agotado" : "Comprar"}
+                      {p.stock === 0 ? "Agotado" : p.designs && p.designs.length > 0 ? "Elegir diseño →" : "Comprar"}
                     </button>
                   </div>
                 </div>
@@ -97,7 +114,10 @@ export default function TiendaPage() {
 }
 
 function BuyModal({ product, onClose }: { product: Product; onClose: () => void }) {
+  const designs = product.designs || [];
   const [qty, setQty] = useState(1);
+  const [designId, setDesignId] = useState("");
+  const [customText, setCustomText] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -109,9 +129,11 @@ function BuyModal({ product, onClose }: { product: Product; onClose: () => void 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const design = designs.find((d) => d.id === designId);
+  const designOk = designs.length === 0 || (!!design && (!design.customLabel || !!customText.trim()));
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const canPay =
-    validEmail && isValidName(name) && isValidCel(phone) && !!department && !!city && !!address.trim();
+    designOk && validEmail && isValidName(name) && isValidCel(phone) && !!department && !!city && !!address.trim();
 
   async function pay() {
     setLoading(true);
@@ -123,6 +145,8 @@ function BuyModal({ product, onClose }: { product: Product; onClose: () => void 
         body: JSON.stringify({
           productId: product.id,
           qty,
+          designId: designId || undefined,
+          customText: customText || undefined,
           email,
           shipping: { name, phone, address, reference: barrio, city, department, zip, country: "Colombia" },
         }),
@@ -137,7 +161,8 @@ function BuyModal({ product, onClose }: { product: Product; onClose: () => void 
   }
 
   const input = "w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-ink";
-  const total = product.priceCop * qty;
+  const unit = product.priceCop + (design?.extraCop || 0);
+  const total = unit * qty;
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
@@ -160,6 +185,42 @@ function BuyModal({ product, onClose }: { product: Product; onClose: () => void 
           </div>
           <button onClick={onClose} className="text-ink/40 hover:text-ink">✕</button>
         </div>
+
+        {/* Diseños del producto (sub-catálogo) */}
+        {designs.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm font-semibold">Elige un diseño</p>
+            <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {designs.map((d) => {
+                const sel = d.id === designId;
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => { setDesignId(d.id); setCustomText(""); }}
+                    className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-center transition ${
+                      sel ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-line hover:border-ink/40"
+                    }`}
+                  >
+                    <span className="text-2xl">{d.emoji || "🎨"}</span>
+                    <span className="text-[11px] font-medium leading-tight">{d.name}</span>
+                    {d.extraCop ? <span className="text-[10px] text-ink/50">+{money(d.extraCop)}</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+            {design?.customLabel && (
+              <label className="mt-3 block text-xs font-medium text-ink/60">
+                {design.customLabel}
+                <input
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value.slice(0, 80))}
+                  placeholder={design.customLabel}
+                  className={`mt-1 ${input}`}
+                />
+              </label>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 flex items-center gap-3">
           <span className="text-sm font-medium text-ink/70">Cantidad</span>

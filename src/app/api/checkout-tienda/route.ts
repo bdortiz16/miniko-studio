@@ -17,6 +17,8 @@ function originFromRequest(request: Request): string {
 interface TiendaPayload {
   productId: string;
   qty?: number;
+  designId?: string;
+  customText?: string;
   email?: string;
   shipping?: {
     name?: string; phone?: string; address?: string; reference?: string;
@@ -43,10 +45,28 @@ export async function POST(request: Request) {
   }
 
   const qty = Math.min(20, Math.max(1, Math.floor(body.qty || 1)));
+
+  // Diseño elegido (si el producto tiene diseños). Valida contra el producto.
+  const design = product.designs?.find((d) => d.id === body.designId);
+  if (product.designs && product.designs.length > 0 && !design) {
+    return NextResponse.json({ error: "Elige un diseño." }, { status: 400 });
+  }
+  const customText = (body.customText || "").trim().slice(0, 80);
+  if (design?.customLabel && !customText) {
+    return NextResponse.json({ error: `Falta: ${design.customLabel}.` }, { status: 400 });
+  }
+  const unitCop = product.priceCop + (design?.extraCop || 0);
+
   const settings = await getSettings();
   // Envío: usa la tarifa de 1 figura como base para artículos de la tienda.
   const shippingCop = shipOf(settings, 1);
-  const amountInCents = Math.max(100, (product.priceCop * qty + shippingCop) * 100);
+  const amountInCents = Math.max(100, (unitCop * qty + shippingCop) * 100);
+
+  // Descripción legible del pedido: diseño + dato personalizado.
+  const parts = [`${qty} und`];
+  if (design) parts.push(design.name);
+  if (customText) parts.push(`"${customText}"`);
+  const composicion = parts.join(" · ");
 
   const reference = `miniko-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const s = body.shipping ?? {};
@@ -60,7 +80,7 @@ export async function POST(request: Request) {
     currency: "COP",
     styleId: `tienda-${product.id}`,
     estilo: product.name,
-    composicion: `${qty} und`,
+    composicion,
     tipo: "Tienda",
     personas: 0,
     mascotas: 0,

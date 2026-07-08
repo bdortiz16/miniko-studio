@@ -1,6 +1,27 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
-import { listProducts, saveProducts, Product } from "@/lib/products";
+import { listProducts, saveProducts, Product, Design } from "@/lib/products";
+
+// Limpia y normaliza los diseños que llegan del panel.
+function cleanDesigns(raw: unknown): Design[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const list = raw
+    .map((d): Design | null => {
+      const o = d as Partial<Design>;
+      const name = (o.name || "").trim();
+      if (!name) return null;
+      return {
+        id: o.id || `d-${Math.random().toString(36).slice(2, 8)}`,
+        name,
+        emoji: (o.emoji || "").trim() || undefined,
+        image: o.image || undefined,
+        extraCop: o.extraCop ? Math.max(0, Math.round(Number(o.extraCop))) : undefined,
+        customLabel: (o.customLabel || "").trim() || undefined,
+      };
+    })
+    .filter((d): d is Design => d !== null);
+  return list.length ? list : undefined;
+}
 
 // Gestión de productos de la Tienda (solo admin).
 export async function GET(request: Request) {
@@ -39,6 +60,7 @@ export async function POST(request: Request) {
       image: body.image || list[idx].image,
       active: body.active !== false,
       stock: typeof body.stock === "number" ? body.stock : list[idx].stock,
+      designs: cleanDesigns(body.designs),
     };
     await saveProducts(list);
     return NextResponse.json({ product: list[idx] });
@@ -52,6 +74,7 @@ export async function POST(request: Request) {
     image: body.image || "",
     active: body.active !== false,
     stock: typeof body.stock === "number" ? body.stock : undefined,
+    designs: cleanDesigns(body.designs),
     createdAt: now,
   };
   list.unshift(product);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Product } from "@/lib/products";
+import type { Product, Design } from "@/lib/products";
 
 function money(cop: number) {
   try {
@@ -168,9 +168,20 @@ function ProductForm({
   const [description, setDescription] = useState(product?.description || "");
   const [image, setImage] = useState(product?.image || "");
   const [stock, setStock] = useState(typeof product?.stock === "number" ? String(product.stock) : "");
+  const [designs, setDesigns] = useState<Design[]>(product?.designs || []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function addDesign() {
+    setDesigns((d) => [...d, { id: `d-${Date.now()}-${d.length}`, name: "", emoji: "" }]);
+  }
+  function updateDesign(i: number, patch: Partial<Design>) {
+    setDesigns((d) => d.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  }
+  function removeDesign(i: number) {
+    setDesigns((d) => d.filter((_, j) => j !== i));
+  }
 
   async function onFile(file: File | null) {
     if (!file) return;
@@ -205,6 +216,7 @@ function ProductForm({
           image,
           stock: stock === "" ? undefined : Number(stock),
           active: product ? product.active : true,
+          designs: designs.filter((d) => d.name.trim()),
         }),
       });
       const data = await res.json();
@@ -259,6 +271,60 @@ function ProductForm({
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] || null)} />
               </label>
             </div>
+          </div>
+
+          {/* Diseños del producto */}
+          <div className="rounded-xl border border-line bg-mist/40 p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">Diseños (opcional)</p>
+              <button type="button" onClick={addDesign} className="text-xs font-semibold text-brand hover:underline">
+                + Agregar diseño
+              </button>
+            </div>
+            <p className="mt-1 text-[11px] text-ink/50">
+              Cada diseño es una opción que ve el cliente (animales, nombres, marcas…). Si pones una
+              etiqueta en “Pide dato”, el cliente escribirá su texto (ej. el nombre a grabar).
+            </p>
+            {designs.length === 0 ? (
+              <p className="mt-2 text-xs text-ink/45">Sin diseños: el producto se compra directo.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {designs.map((d, i) => (
+                  <div key={d.id} className="rounded-lg border border-line bg-white p-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={d.emoji || ""}
+                        onChange={(e) => updateDesign(i, { emoji: e.target.value })}
+                        placeholder="🐶"
+                        className="w-12 rounded-lg border border-line px-2 py-1.5 text-center text-sm outline-none focus:border-ink"
+                      />
+                      <input
+                        value={d.name}
+                        onChange={(e) => updateDesign(i, { name: e.target.value })}
+                        placeholder="Nombre del diseño (ej. Perro)"
+                        className="flex-1 rounded-lg border border-line px-2 py-1.5 text-sm outline-none focus:border-ink"
+                      />
+                      <button type="button" onClick={() => removeDesign(i)} className="px-1 text-ink/40 hover:text-brand" aria-label="Quitar">✕</button>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <input
+                        value={d.extraCop ? String(d.extraCop) : ""}
+                        onChange={(e) => updateDesign(i, { extraCop: Number(e.target.value.replace(/\D/g, "")) || undefined })}
+                        inputMode="numeric"
+                        placeholder="Precio extra (COP)"
+                        className="rounded-lg border border-line px-2 py-1.5 text-sm outline-none focus:border-ink"
+                      />
+                      <input
+                        value={d.customLabel || ""}
+                        onChange={(e) => updateDesign(i, { customLabel: e.target.value })}
+                        placeholder="Pide dato (ej. Nombre a grabar)"
+                        className="rounded-lg border border-line px-2 py-1.5 text-sm outline-none focus:border-ink"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

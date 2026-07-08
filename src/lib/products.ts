@@ -2,6 +2,18 @@ import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 
 // Productos de la Tienda (llaveros y otros artículos 3D). Se guardan en
 // Supabase (config/products.json). El precio está en pesos (no centavos).
+// Un diseño/variante dentro de un producto (ej. en un llavero: "Nombre",
+// "Perrito", "Logo marca"). Puede pedir un dato al cliente (customLabel) y
+// costar un extra sobre el precio base (extraCop).
+export interface Design {
+  id: string;
+  name: string;
+  emoji?: string;
+  image?: string;
+  extraCop?: number;
+  customLabel?: string; // si tiene valor, pide un texto (ej. "Nombre a grabar")
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -12,6 +24,7 @@ export interface Product {
   stock?: number; // opcional; si es undefined, sin control de stock
   emoji?: string; // visual cuando no hay imagen (catálogo de ejemplo)
   accent?: string; // color de fondo del cuadro cuando no hay imagen
+  designs?: Design[]; // sub-catálogo de diseños personalizables
   createdAt: number;
 }
 
@@ -20,13 +33,54 @@ const PATH = "config/products.json";
 // Catálogo de ejemplo (se muestra en /tienda mientras no crees tus propios
 // productos). Puedes cargarlos al panel con "Cargar ejemplos" para editarlos.
 export const DEFAULT_PRODUCTS: Product[] = [
-  { id: "demo-llavero-nombre", name: "Llavero personalizado", description: "Con el nombre o la forma que quieras, impreso en 3D.", priceCop: 12000, image: "", active: true, emoji: "🔑", accent: "#FDE68A", createdAt: 0 },
-  { id: "demo-llavero-mascota", name: "Llavero de tu mascota", description: "La silueta de tu perro o gato en un llavero.", priceCop: 15000, image: "", active: true, emoji: "🐾", accent: "#FBCFE8", createdAt: 0 },
+  {
+    id: "demo-llavero-nombre", name: "Llavero personalizado", description: "Elige un diseño y personalízalo. Impreso en 3D.", priceCop: 12000, image: "", active: true, emoji: "🔑", accent: "#FDE68A", createdAt: 0,
+    designs: [
+      { id: "nombre", name: "Nombre", emoji: "🔤", customLabel: "Nombre a grabar" },
+      { id: "inicial", name: "Inicial", emoji: "🅰️", customLabel: "Letra o inicial" },
+      { id: "marca", name: "Logo / marca", emoji: "™️", extraCop: 3000, customLabel: "Marca o texto del logo" },
+      { id: "corazon", name: "Corazón", emoji: "❤️" },
+      { id: "estrella", name: "Estrella", emoji: "⭐" },
+      { id: "carro", name: "Carrito", emoji: "🚗" },
+    ],
+  },
+  {
+    id: "demo-llavero-mascota", name: "Llavero de tu mascota", description: "El animalito que quieras, con su nombre.", priceCop: 15000, image: "", active: true, emoji: "🐾", accent: "#FBCFE8", createdAt: 0,
+    designs: [
+      { id: "perro", name: "Perro", emoji: "🐶", customLabel: "Nombre de la mascota" },
+      { id: "gato", name: "Gato", emoji: "🐱", customLabel: "Nombre de la mascota" },
+      { id: "conejo", name: "Conejo", emoji: "🐰", customLabel: "Nombre de la mascota" },
+      { id: "ave", name: "Ave", emoji: "🐦", customLabel: "Nombre de la mascota" },
+      { id: "huella", name: "Huella", emoji: "🐾" },
+    ],
+  },
+  {
+    id: "demo-maceta", name: "Maceta decorativa", description: "Maceta geométrica para suculentas y cactus.", priceCop: 28000, image: "", active: true, emoji: "🪴", accent: "#BBF7D0", createdAt: 0,
+    designs: [
+      { id: "blanco", name: "Blanco", emoji: "⚪" },
+      { id: "negro", name: "Negro", emoji: "⚫" },
+      { id: "terracota", name: "Terracota", emoji: "🟠" },
+      { id: "pastel", name: "Pastel", emoji: "🩷" },
+    ],
+  },
+  {
+    id: "demo-iman", name: "Imán de nevera", description: "Detalle personalizado para la nevera.", priceCop: 9000, image: "", active: true, emoji: "🧲", accent: "#FED7AA", createdAt: 0,
+    designs: [
+      { id: "nombre", name: "Nombre", emoji: "🔤", customLabel: "Texto del imán" },
+      { id: "frase", name: "Frase", emoji: "💬", customLabel: "Frase" },
+      { id: "animal", name: "Animalito", emoji: "🐢" },
+    ],
+  },
+  {
+    id: "demo-topper", name: "Topper para torta", description: "Decora tu torta con nombres y figuras 3D.", priceCop: 18000, image: "", active: true, emoji: "🎂", accent: "#FECACA", createdAt: 0,
+    designs: [
+      { id: "nombre-edad", name: "Nombre + edad", emoji: "🎂", customLabel: "Nombre y edad (ej. Sofía 5)" },
+      { id: "tematico", name: "Temático", emoji: "🎉", extraCop: 4000, customLabel: "Tema (ej. fútbol, unicornio)" },
+      { id: "feliz-cumple", name: "Feliz cumpleaños", emoji: "🥳" },
+    ],
+  },
   { id: "demo-soporte-celular", name: "Soporte para celular", description: "Base de escritorio estable para tu teléfono.", priceCop: 22000, image: "", active: true, emoji: "📱", accent: "#BFDBFE", createdAt: 0 },
-  { id: "demo-maceta", name: "Maceta decorativa", description: "Maceta geométrica para suculentas y cactus.", priceCop: 28000, image: "", active: true, emoji: "🪴", accent: "#BBF7D0", createdAt: 0 },
   { id: "demo-portalapices", name: "Portalápices", description: "Organiza tu escritorio con estilo.", priceCop: 20000, image: "", active: true, emoji: "✏️", accent: "#DDD6FE", createdAt: 0 },
-  { id: "demo-iman", name: "Imán de nevera", description: "Detalle personalizado para la nevera.", priceCop: 9000, image: "", active: true, emoji: "🧲", accent: "#FED7AA", createdAt: 0 },
-  { id: "demo-topper", name: "Topper para torta", description: "Decora tu torta con nombres y figuras 3D.", priceCop: 18000, image: "", active: true, emoji: "🎂", accent: "#FECACA", createdAt: 0 },
   { id: "demo-posavasos", name: "Posavasos (juego x4)", description: "Set de 4 posavasos resistentes impresos en 3D.", priceCop: 24000, image: "", active: true, emoji: "🥤", accent: "#A5F3FC", createdAt: 0 },
 ];
 
