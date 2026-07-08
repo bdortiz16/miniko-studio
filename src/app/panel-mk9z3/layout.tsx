@@ -6,11 +6,12 @@ import { Wordmark } from "@/components/Header";
 import AdminAssistant from "@/components/AdminAssistant";
 import AdminIdle from "@/components/AdminIdle";
 import AdminSessionGate from "@/components/AdminSessionGate";
-import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear, MiUser } from "@/components/MiniIcons";
+import { MiGrid, MiBox, MiPeople, MiChart, MiTag, MiTicket, MiMail, MiGear, MiUser, MiBag } from "@/components/MiniIcons";
 
 const NAV = [
   { href: "/panel-mk9z3", label: "Dashboard", Icon: MiGrid },
   { href: "/panel-mk9z3/pedidos", label: "Pedidos", Icon: MiBox },
+  { href: "/panel-mk9z3/tienda", label: "Tienda", Icon: MiBag },
   { href: "/panel-mk9z3/clientes", label: "Clientes", Icon: MiPeople },
   { href: "/panel-mk9z3/contabilidad", label: "Contabilidad", Icon: MiChart },
   { href: "/panel-mk9z3/promociones", label: "Promociones", Icon: MiTicket },
