@@ -142,6 +142,23 @@ export default function AdminPrecios() {
                   Gratis con {settings.freeFromPeople} o más personajes
                 </p>
               </div>
+              <div>
+                <label className="text-sm font-medium">Envío de la Tienda (COP)</label>
+                <input
+                  inputMode="numeric"
+                  value={settings.tiendaShippingCop ?? ""}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      tiendaShippingCop: Number(e.target.value.replace(/\D/g, "")) || 0,
+                    })
+                  }
+                  className={`mt-1.5 ${inputCls}`}
+                />
+                <p className="mt-1 text-xs text-ink/45">
+                  Tarifa para llaveros y productos 3D · {formatCop(settings.tiendaShippingCop ?? 0)}
+                </p>
+              </div>
             </div>
           </section>
 

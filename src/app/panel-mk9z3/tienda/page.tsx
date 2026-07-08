@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Product, Design } from "@/lib/products";
+import { PRODUCT_CATEGORIES } from "@/lib/products";
 
 function money(cop: number) {
   try {
@@ -167,11 +168,59 @@ function ProductForm({
   const [price, setPrice] = useState(product?.priceCop ? String(product.priceCop) : "");
   const [description, setDescription] = useState(product?.description || "");
   const [image, setImage] = useState(product?.image || "");
+  const [images, setImages] = useState<string[]>(product?.images || []);
+  const [category, setCategory] = useState(product?.category || "");
   const [stock, setStock] = useState(typeof product?.stock === "number" ? String(product.stock) : "");
   const [designs, setDesigns] = useState<Design[]>(product?.designs || []);
   const [uploading, setUploading] = useState(false);
+  const [genLoading, setGenLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function uploadFile(file: File): Promise<string> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo subir.");
+    return data.url as string;
+  }
+
+  async function onGalleryFiles(files: FileList | null) {
+    if (!files || !files.length) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const urls: string[] = [];
+      for (const f of Array.from(files).slice(0, 6)) urls.push(await uploadFile(f));
+      setImages((prev) => [...prev, ...urls].slice(0, 6));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al subir.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // Genera la imagen principal con IA a partir del nombre/descripción.
+  async function generateMainImage() {
+    if (!name.trim()) { setError("Escribe el nombre del producto primero."); return; }
+    setGenLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/products/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, description }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo generar.");
+      setImage(data.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al generar.");
+    } finally {
+      setGenLoading(false);
+    }
+  }
 
   function addDesign() {
     setDesigns((d) => [...d, { id: `d-${Date.now()}-${d.length}`, name: "", emoji: "" }]);
@@ -181,6 +230,15 @@ function ProductForm({
   }
   function removeDesign(i: number) {
     setDesigns((d) => d.filter((_, j) => j !== i));
+  }
+  async function onDesignFile(i: number, file: File | null) {
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      updateDesign(i, { image: url });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al subir.");
+    }
   }
 
   async function onFile(file: File | null) {
@@ -214,6 +272,8 @@ function ProductForm({
           priceCop: Number(price),
           description,
           image,
+          images,
+          category,
           stock: stock === "" ? undefined : Number(stock),
           active: product ? product.active : true,
           designs: designs.filter((d) => d.name.trim()),
@@ -241,7 +301,7 @@ function ProductForm({
             Nombre
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Llavero personalizado" className={`mt-1 ${input}`} />
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <label className="block text-xs font-medium text-ink/60">
               Precio (COP)
               <input value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="15000" className={`mt-1 ${input}`} />
@@ -250,14 +310,21 @@ function ProductForm({
               Stock (opcional)
               <input value={stock} onChange={(e) => setStock(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="—" className={`mt-1 ${input}`} />
             </label>
+            <label className="block text-xs font-medium text-ink/60">
+              Categoría
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className={`mt-1 ${input}`}>
+                <option value="">—</option>
+                {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
           </div>
           <label className="block text-xs font-medium text-ink/60">
             Descripción
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Impreso en 3D, resistente, varios colores." className={`mt-1 ${input}`} />
           </label>
           <div>
-            <p className="text-xs font-medium text-ink/60">Imagen</p>
-            <div className="mt-2 flex items-center gap-3">
+            <p className="text-xs font-medium text-ink/60">Imagen principal</p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
                 {image ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -267,9 +334,32 @@ function ProductForm({
                 )}
               </div>
               <label className="cursor-pointer rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink/70 hover:border-ink">
-                {uploading ? "Subiendo…" : image ? "Cambiar imagen" : "Subir imagen"}
+                {uploading ? "Subiendo…" : image ? "Cambiar" : "Subir"}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] || null)} />
               </label>
+              <button type="button" onClick={generateMainImage} disabled={genLoading} className="rounded-full bg-brand/10 px-4 py-2 text-sm font-semibold text-brand hover:bg-brand/20 disabled:opacity-50">
+                {genLoading ? "Generando…" : "✨ Generar con IA"}
+              </button>
+            </div>
+          </div>
+
+          {/* Galería (fotos adicionales) */}
+          <div>
+            <p className="text-xs font-medium text-ink/60">Galería (hasta 6)</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {images.map((u, i) => (
+                <div key={i} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" className="h-16 w-16 rounded-lg border border-line object-cover" />
+                  <button type="button" onClick={() => setImages((p) => p.filter((_, j) => j !== i))} className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-ink text-[10px] text-white">×</button>
+                </div>
+              ))}
+              {images.length < 6 && (
+                <label className="grid h-16 w-16 cursor-pointer place-items-center rounded-lg border border-dashed border-line text-xl text-ink/40 hover:border-ink/40">
+                  +
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => onGalleryFiles(e.target.files)} />
+                </label>
+              )}
             </div>
           </div>
 
@@ -320,6 +410,20 @@ function ProductForm({
                         placeholder="Pide dato (ej. Nombre a grabar)"
                         className="rounded-lg border border-line px-2 py-1.5 text-sm outline-none focus:border-ink"
                       />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      {d.image ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={d.image} alt="" className="h-10 w-10 rounded-lg border border-line object-cover" />
+                          <button type="button" onClick={() => updateDesign(i, { image: undefined })} className="text-xs text-ink/50 hover:text-brand">Quitar foto</button>
+                        </>
+                      ) : (
+                        <label className="cursor-pointer text-xs font-semibold text-brand hover:underline">
+                          📷 Subir foto del diseño
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => onDesignFile(i, e.target.files?.[0] || null)} />
+                        </label>
+                      )}
                     </div>
                   </div>
                 ))}
