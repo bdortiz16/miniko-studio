@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { verifyEventSignature } from "@/lib/wompi";
 import { getOrder, updateOrderStatus, saveOrder, OrderStatus } from "@/lib/orders";
 import { sendOrderConfirmation, sendAdminNewOrder } from "@/lib/email";
-import { decrementStock } from "@/lib/products";
+import { decrementStock, getProduct } from "@/lib/products";
+import { ensurePetForOrder } from "@/lib/pets";
 
 // Webhook de eventos de Wompi. Confirma el pago de forma fiable y actualiza
 // el estado del pedido en nuestro almacén. Configura esta URL en el panel de
@@ -49,6 +50,14 @@ export async function POST(request: Request) {
           await decrementStock(order.items.map((i) => ({ productId: i.productId, qty: i.qty })));
           order.stockApplied = true;
           await saveOrder(order);
+        } catch {}
+      }
+      // Si el pedido incluye una placa NFC, crea la página de la mascota para
+      // que el admin tenga la URL a grabar en el chip desde ya.
+      if (order.items?.length) {
+        try {
+          const products = await Promise.all(order.items.map((i) => getProduct(i.productId)));
+          if (products.some((p) => p?.nfc)) await ensurePetForOrder(order);
         } catch {}
       }
     }

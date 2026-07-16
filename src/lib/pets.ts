@@ -84,6 +84,38 @@ export async function findPetByOrder(reference: string): Promise<Pet | null> {
   return (await listPets()).find((p) => p.orderReference === reference) || null;
 }
 
+// Crea (si no existe) la mascota vacía ligada a un pedido, para que el admin
+// tenga la URL desde que entra el pedido y pueda grabar el NFC antes de enviar.
+export async function ensurePetForOrder(order: {
+  reference: string;
+  email?: string;
+  shipping?: { name?: string; phone?: string; address?: string; city?: string };
+}): Promise<Pet> {
+  const existing = await findPetByOrder(order.reference);
+  if (existing) return existing;
+  const now = Math.floor(Date.now() / 1000);
+  const pet: Pet = {
+    id: newPetId(),
+    ownerEmail: (order.email || "").toLowerCase(),
+    orderReference: order.reference,
+    name: "",
+    photo: "",
+    species: "Perro",
+    breed: "",
+    ownerName: order.shipping?.name || "",
+    ownerPhone: order.shipping?.phone || "",
+    whatsapp: order.shipping?.phone || "",
+    address: [order.shipping?.address, order.shipping?.city].filter(Boolean).join(", "),
+    notes: "",
+    reward: "",
+    lost: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await savePet(pet);
+  return pet;
+}
+
 export async function deletePet(id: string): Promise<void> {
   if (!supabaseAdmin) return;
   await supabaseAdmin.storage.from(SUPABASE_BUCKET).remove([path(id)]);

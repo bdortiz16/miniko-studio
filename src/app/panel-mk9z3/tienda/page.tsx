@@ -170,6 +170,7 @@ function ProductForm({
   const [image, setImage] = useState(product?.image || "");
   const [images, setImages] = useState<string[]>(product?.images || []);
   const [category, setCategory] = useState(product?.category || "");
+  const [nfc, setNfc] = useState(!!product?.nfc);
   const [stock, setStock] = useState(typeof product?.stock === "number" ? String(product.stock) : "");
   const [designs, setDesigns] = useState<Design[]>(product?.designs || []);
   const [uploading, setUploading] = useState(false);
@@ -274,6 +275,7 @@ function ProductForm({
           image,
           images,
           category,
+          nfc,
           stock: stock === "" ? undefined : Number(stock),
           active: product ? product.active : true,
           designs: designs.filter((d) => d.name.trim()),
@@ -321,6 +323,10 @@ function ProductForm({
           <label className="block text-xs font-medium text-ink/60">
             Descripción
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Impreso en 3D, resistente, varios colores." className={`mt-1 ${input}`} />
+          </label>
+          <label className="flex items-center gap-2 rounded-xl border border-line bg-mist/40 p-3 text-sm">
+            <input type="checkbox" checked={nfc} onChange={(e) => setNfc(e.target.checked)} />
+            <span>Es <b>placa NFC</b> (al comprarla genera la página de mascota y su URL en “Mascotas NFC”)</span>
           </label>
           <div>
             <p className="text-xs font-medium text-ink/60">Imagen principal</p>

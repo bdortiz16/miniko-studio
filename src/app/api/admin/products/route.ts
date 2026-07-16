@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       active: body.active !== false,
       stock: typeof body.stock === "number" ? body.stock : list[idx].stock,
       designs: cleanDesigns(body.designs),
+      nfc: !!body.nfc,
     };
     await saveProducts(list);
     return NextResponse.json({ product: list[idx] });
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
     active: body.active !== false,
     stock: typeof body.stock === "number" ? body.stock : undefined,
     designs: cleanDesigns(body.designs),
+    nfc: !!body.nfc,
     createdAt: now,
   };
   list.unshift(product);

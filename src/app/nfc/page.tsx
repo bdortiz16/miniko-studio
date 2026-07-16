@@ -128,7 +128,6 @@ function PetEditor({ pet: initial, editToken, editExp }: { pet: Pet; editToken: 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [qr, setQr] = useState<string>("");
 
   const input = "w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-ink";
   const set = (patch: Partial<Pet>) => setPet((p) => ({ ...p, ...patch }));
@@ -155,12 +154,6 @@ function PetEditor({ pet: initial, editToken, editExp }: { pet: Pet; editToken: 
       if (!res.ok) throw new Error(data.error || "No se pudo guardar.");
       setMsg({ ok: true, text: "✓ Guardado. Tu placa ya está actualizada." });
     } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : "Error." }); } finally { setSaving(false); }
-  }
-
-  async function loadQr() {
-    const res = await fetch(`/api/nfc/qr?id=${pet.id}`);
-    const data = await res.json();
-    if (res.ok) setQr(data.dataUrl);
   }
 
   const publicUrl = typeof window !== "undefined" ? `${window.location.origin}/p/${pet.id}` : `/p/${pet.id}`;
@@ -215,21 +208,11 @@ function PetEditor({ pet: initial, editToken, editExp }: { pet: Pet; editToken: 
         {saving ? "Guardando…" : "Guardar cambios"}
       </button>
 
-      {/* Página pública / QR */}
+      {/* Vista previa de la página pública (lo que ve quien escanea) */}
       <div className="mt-6 rounded-xl border border-line bg-mist/40 p-4">
-        <p className="text-sm font-semibold">Tu página pública</p>
-        <p className="mt-1 break-all text-xs text-brand">{publicUrl}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <a href={publicUrl} target="_blank" rel="noreferrer" className="btn-secondary px-4 py-2 text-xs">Ver como visitante ↗</a>
-          <button onClick={loadQr} className="btn-secondary px-4 py-2 text-xs">Ver código QR</button>
-        </div>
-        {qr && (
-          <div className="mt-3 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qr} alt="QR" className="mx-auto h-44 w-44" />
-            <a href={qr} download={`qr-${pet.name || pet.id}.png`} className="mt-2 inline-block text-xs font-semibold text-brand underline">Descargar QR</a>
-          </div>
-        )}
+        <p className="text-sm font-semibold">Así te verán al escanear la placa 🐾</p>
+        <p className="mt-1 text-xs text-ink/55">Tu placa ya está enlazada a esta página. Cuando guardes, se actualiza al instante.</p>
+        <a href={publicUrl} target="_blank" rel="noreferrer" className="btn-secondary mt-3 inline-block px-4 py-2 text-xs">Ver mi página ↗</a>
       </div>
     </div>
   );

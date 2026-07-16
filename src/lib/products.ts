@@ -27,6 +27,7 @@ export interface Product {
   emoji?: string; // visual cuando no hay imagen (catálogo de ejemplo)
   accent?: string; // color de fondo del cuadro cuando no hay imagen
   designs?: Design[]; // sub-catálogo de diseños personalizables
+  nfc?: boolean; // es placa NFC: genera la página de mascota al comprarla
   createdAt: number;
 }
 
@@ -107,7 +108,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     ],
   },
   {
-    id: "demo-placa-nfc", name: "Placa NFC para mascota", category: "Mascotas", description: "Placa 3D con el nombre de tu mascota + chip NFC y QR. Si se pierde, quien la encuentre escanea y ve tu contacto. Actívala en miniko.com.co/nfc.", priceCop: 35000, image: "", active: true, emoji: "🦴", accent: "#FDE68A", createdAt: 0,
+    id: "demo-placa-nfc", name: "Placa NFC para mascota", category: "Mascotas", description: "Placa 3D con el nombre de tu mascota + chip NFC y QR. Si se pierde, quien la encuentre escanea y ve tu contacto. Actívala en miniko.com.co/nfc.", priceCop: 35000, image: "", active: true, emoji: "🦴", accent: "#FDE68A", nfc: true, createdAt: 0,
     designs: [
       { id: "hueso", name: "Hueso", emoji: "🦴", customLabel: "Nombre de la mascota" },
       { id: "nube", name: "Nube", emoji: "☁️", customLabel: "Nombre de la mascota" },
