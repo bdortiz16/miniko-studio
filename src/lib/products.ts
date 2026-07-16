@@ -106,6 +106,17 @@ export const DEFAULT_PRODUCTS: Product[] = [
       { id: "feliz-cumple", name: "Feliz cumpleaños", emoji: "🥳" },
     ],
   },
+  {
+    id: "demo-placa-nfc", name: "Placa NFC para mascota", category: "Mascotas", description: "Placa 3D con el nombre de tu mascota + chip NFC y QR. Si se pierde, quien la encuentre escanea y ve tu contacto. Actívala en miniko.com.co/nfc.", priceCop: 35000, image: "", active: true, emoji: "🦴", accent: "#FDE68A", createdAt: 0,
+    designs: [
+      { id: "hueso", name: "Hueso", emoji: "🦴", customLabel: "Nombre de la mascota" },
+      { id: "nube", name: "Nube", emoji: "☁️", customLabel: "Nombre de la mascota" },
+      { id: "estrella", name: "Estrella", emoji: "⭐", customLabel: "Nombre de la mascota" },
+      { id: "corazon", name: "Corazón", emoji: "❤️", customLabel: "Nombre de la mascota" },
+      { id: "flor", name: "Flor", emoji: "🌸", customLabel: "Nombre de la mascota" },
+      { id: "rayo", name: "Rayo", emoji: "⚡", customLabel: "Nombre de la mascota" },
+    ],
+  },
   { id: "demo-soporte-celular", name: "Soporte para celular", category: "Escritorio", description: "Base de escritorio estable para tu teléfono.", priceCop: 22000, image: "", active: true, emoji: "📱", accent: "#BFDBFE", createdAt: 0 },
   { id: "demo-portalapices", name: "Portalápices", category: "Escritorio", description: "Organiza tu escritorio con estilo.", priceCop: 20000, image: "", active: true, emoji: "✏️", accent: "#DDD6FE", createdAt: 0 },
   { id: "demo-posavasos", name: "Posavasos (juego x4)", category: "Hogar", description: "Set de 4 posavasos resistentes impresos en 3D.", priceCop: 24000, image: "", active: true, emoji: "🥤", accent: "#A5F3FC", createdAt: 0 },

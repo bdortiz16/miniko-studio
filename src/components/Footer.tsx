@@ -32,8 +32,10 @@ export default function Footer() {
           title="Producto"
           links={[
             { href: "/#estilos", label: "Estilos" },
+            { href: "/tienda", label: "Tienda" },
             { href: "/precios", label: "Precios" },
             { href: "/pedido", label: "Crear mi figura" },
+            { href: "/nfc", label: "Activar placa NFC 🐾" },
           ]}
         />
         <FooterCol
