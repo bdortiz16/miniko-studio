@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useCart, setQty, removeItem, clearCart } from "@/lib/cart";
+import { useCart, addToCart, setQty, removeItem, clearCart } from "@/lib/cart";
+import Upsell from "@/components/Upsell";
 import { DEPARTAMENTOS_CO, citiesOf, postalOf, isValidName, isValidCel } from "@/data/colombia";
 
 function money(cop: number) {
@@ -102,6 +103,10 @@ export default function CarritoPage() {
                 </div>
               ))}
               <button onClick={clearCart} className="text-sm font-semibold text-ink/50 hover:text-brand">Vaciar carrito</button>
+              <Upsell
+                exclude={items.map((i) => i.productId)}
+                onAdd={(p) => addToCart({ productId: p.id, name: p.name, unitCop: p.priceCop, qty: 1, image: p.image, emoji: p.emoji, accent: p.accent })}
+              />
             </div>
 
             {/* Datos + pago */}

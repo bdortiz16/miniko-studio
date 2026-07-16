@@ -4,6 +4,7 @@ import { getSettings, priceOf, shipOf } from "@/lib/settings";
 import { buildCheckoutUrl, getSiteUrl, wompiConfigured } from "@/lib/wompi";
 import { saveOrder, Order } from "@/lib/orders";
 import { findValidCoupon } from "@/lib/coupons";
+import { getProduct } from "@/lib/products";
 
 // Dominio real de ESTA petición. Evita que redirect-url quede como
 // http://localhost:3000 (que el firewall de Wompi bloquea con 403).
@@ -26,6 +27,7 @@ interface OrderPayload {
   mascotas?: number;
   composicion?: string;
   coupon?: string;
+  extras?: { productId: string; qty?: number }[]; // productos adicionales (upsell)
   photoUrls?: string[];
   previewUrls?: string[];
   shipping?: {
@@ -80,8 +82,20 @@ export async function POST(request: Request) {
       discountCents = Math.round(priceCop * (c.percent / 100)) * 100;
     }
   }
+  // Extras (upsell): productos adicionales de la tienda. Precio recalculado
+  // en el servidor (no se confía en el cliente).
+  const extraItems: NonNullable<Order["items"]> = [];
+  let extrasCents = 0;
+  for (const e of body.extras ?? []) {
+    const product = await getProduct(e.productId);
+    if (!product || !product.active) continue;
+    const qty = Math.min(20, Math.max(1, Math.floor(e.qty || 1)));
+    extrasCents += product.priceCop * qty * 100;
+    extraItems.push({ productId: product.id, name: product.name, qty, unitCop: product.priceCop });
+  }
+
   // Wompi usa centavos: COP x100.
-  const amountInCents = Math.max(100, (priceCop + shippingCop) * 100 - discountCents);
+  const amountInCents = Math.max(100, (priceCop + shippingCop) * 100 - discountCents + extrasCents);
 
   const reference = `miniko-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const photoUrls = (body.photoUrls ?? []).slice(0, 8);
@@ -104,6 +118,7 @@ export async function POST(request: Request) {
     mascotas: body.mascotas ?? 0,
     photoUrls,
     previewUrls: (body.previewUrls ?? []).filter((u) => u && !u.startsWith("data:")).slice(0, 8),
+    items: extraItems.length ? extraItems : undefined,
     shipping: {
       name: s.name,
       phone: s.phone,
