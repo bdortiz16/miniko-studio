@@ -98,8 +98,8 @@ export default function Home() {
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  "Los 3 estilos también para mascotas: Clásico, Animado y Realista",
-                  "Tú o tu mascota, o ambos juntos en la misma base",
+                  "Figura 3D para pintar en los 3 estilos: Clásico, Animado y Realista",
+                  "Placa NFC/QR con el nombre: si se pierde, quien la encuentre ve tu contacto",
                   "Un recuerdo único de tu mejor amigo",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-ink/75">
@@ -110,9 +110,14 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link href="/mascotas" className="btn-primary mt-8">
-                Crear la figura de mi mascota →
-              </Link>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/mascotas" className="btn-primary">
+                  Crear la figura de mi mascota →
+                </Link>
+                <Link href="/tienda/demo-placa-nfc" className="btn-secondary">
+                  🦴 Placa NFC de mascota
+                </Link>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
               {MASCOTS.map((m) => (
