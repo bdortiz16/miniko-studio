@@ -104,8 +104,7 @@ export default function CarritoPage() {
               ))}
               <button onClick={clearCart} className="text-sm font-semibold text-ink/50 hover:text-brand">Vaciar carrito</button>
               <Upsell
-                exclude={items.map((i) => i.productId)}
-                onAdd={(p) => addToCart({ productId: p.id, name: p.name, unitCop: p.priceCop, qty: 1, image: p.image, emoji: p.emoji, accent: p.accent })}
+                onAdd={(p, sel) => addToCart({ productId: p.id, name: p.name, unitCop: sel.unitCop, qty: 1, designId: sel.designId, designName: sel.designName, customText: sel.customText, image: p.image, emoji: p.emoji, accent: p.accent })}
               />
             </div>
 

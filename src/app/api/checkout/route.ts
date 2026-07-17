@@ -27,7 +27,7 @@ interface OrderPayload {
   mascotas?: number;
   composicion?: string;
   coupon?: string;
-  extras?: { productId: string; qty?: number }[]; // productos adicionales (upsell)
+  extras?: { productId: string; qty?: number; designId?: string; customText?: string }[]; // productos adicionales (upsell)
   photoUrls?: string[];
   previewUrls?: string[];
   shipping?: {
@@ -90,8 +90,11 @@ export async function POST(request: Request) {
     const product = await getProduct(e.productId);
     if (!product || !product.active) continue;
     const qty = Math.min(20, Math.max(1, Math.floor(e.qty || 1)));
-    extrasCents += product.priceCop * qty * 100;
-    extraItems.push({ productId: product.id, name: product.name, qty, unitCop: product.priceCop });
+    const design = product.designs?.find((d) => d.id === e.designId);
+    const unitCop = product.priceCop + (design?.extraCop || 0);
+    const customText = (e.customText || "").trim().slice(0, 80) || undefined;
+    extrasCents += unitCop * qty * 100;
+    extraItems.push({ productId: product.id, name: product.name, design: design?.name, customText, qty, unitCop });
   }
 
   // Wompi usa centavos: COP x100.

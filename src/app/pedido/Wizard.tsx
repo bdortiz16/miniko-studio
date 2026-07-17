@@ -20,7 +20,7 @@ import {
   shipOf,
 } from "@/lib/settings";
 import StyleImage from "@/components/StyleImage";
-import Upsell, { UpsellProduct } from "@/components/Upsell";
+import Upsell, { UpsellProduct, UpsellSelection } from "@/components/Upsell";
 import { MiFigure, MiBox, MiTruck, MiPeople, MiCamera, MiPaw, MiLock } from "@/components/MiniIcons";
 import { DEPARTAMENTOS_CO, citiesOf, postalOf, isValidName, isValidCel } from "@/data/colombia";
 
@@ -1254,18 +1254,19 @@ function StepPay({
   const [checking, setChecking] = useState(false);
 
   // Extras (upsell "agrega también"): productos adicionales antes de pagar.
-  const [extras, setExtras] = useState<{ product: UpsellProduct; qty: number }[]>([]);
-  function addExtra(p: UpsellProduct) {
+  const [extras, setExtras] = useState<{ product: UpsellProduct; sel: UpsellSelection; qty: number }[]>([]);
+  function addExtra(p: UpsellProduct, sel: UpsellSelection) {
     setExtras((list) => {
-      const found = list.find((e) => e.product.id === p.id);
-      if (found) return list.map((e) => (e.product.id === p.id ? { ...e, qty: e.qty + 1 } : e));
-      return [...list, { product: p, qty: 1 }];
+      const same = (e: (typeof list)[number]) =>
+        e.product.id === p.id && (e.sel.designId || "") === (sel.designId || "") && (e.sel.customText || "") === (sel.customText || "");
+      if (list.some(same)) return list.map((e) => (same(e) ? { ...e, qty: e.qty + 1 } : e));
+      return [...list, { product: p, sel, qty: 1 }];
     });
   }
-  function removeExtra(id: string) {
-    setExtras((list) => list.filter((e) => e.product.id !== id));
+  function removeExtra(idx: number) {
+    setExtras((list) => list.filter((_, i) => i !== idx));
   }
-  const extrasTotal = extras.reduce((n, e) => n + e.product.priceCop * e.qty, 0);
+  const extrasTotal = extras.reduce((n, e) => n + e.sel.unitCop * e.qty, 0);
 
   const discount = Math.round(price * (couponPct / 100));
   const finalTotal = Math.max(0, total - discount) + extrasTotal;
@@ -1313,7 +1314,7 @@ function StepPay({
           personas: counts.people,
           mascotas: counts.pets,
           composicion,
-          extras: extras.map((e) => ({ productId: e.product.id, qty: e.qty })),
+          extras: extras.map((e) => ({ productId: e.product.id, qty: e.qty, designId: e.sel.designId, customText: e.sel.customText })),
         }),
       });
       const data = await res.json();
@@ -1354,13 +1355,14 @@ function StepPay({
           <span className="text-ink/55">Envío</span>
           <span className="font-medium">{shipCents === 0 ? "Gratis" : formatCop(shipCents)}</span>
         </div>
-        {extras.map((e) => (
-          <div key={e.product.id} className={`${row} border-t border-line`}>
+        {extras.map((e, idx) => (
+          <div key={idx} className={`${row} border-t border-line`}>
             <span className="text-ink/55">
-              {e.product.emoji || "📦"} {e.product.name}{e.qty > 1 ? ` ×${e.qty}` : ""}
-              <button onClick={() => removeExtra(e.product.id)} className="ml-2 text-ink/35 hover:text-brand">✕</button>
+              {e.product.emoji || "📦"} {e.product.name}
+              {e.sel.designName ? ` · ${e.sel.designName}` : ""}{e.sel.customText ? ` "${e.sel.customText}"` : ""}{e.qty > 1 ? ` ×${e.qty}` : ""}
+              <button onClick={() => removeExtra(idx)} className="ml-2 text-ink/35 hover:text-brand">✕</button>
             </span>
-            <span className="font-medium">{formatCop(e.product.priceCop * e.qty)}</span>
+            <span className="font-medium">{formatCop(e.sel.unitCop * e.qty)}</span>
           </div>
         ))}
         {couponPct > 0 && (
@@ -1402,7 +1404,7 @@ function StepPay({
               .join(", ")}
           </p>
         )}
-        <Upsell exclude={extras.map((e) => e.product.id)} onAdd={addExtra} />
+        <Upsell onAdd={addExtra} />
       </div>
 
       {error && (
