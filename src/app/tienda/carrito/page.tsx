@@ -58,7 +58,7 @@ export default function CarritoPage() {
 
   return (
     <div className="section">
-      <div className="container-x max-w-4xl">
+      <div className="mx-auto w-full max-w-4xl px-5 sm:px-8">
         <header className="text-center">
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Tu carrito</h1>
           <div className="mx-auto mt-4 h-px w-16 bg-brand/70" />
@@ -89,17 +89,19 @@ export default function CarritoPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{i.name}</p>
-                    <p className="text-xs text-ink/55">
+                    <p className="truncate text-xs text-ink/55">
                       {[i.designName, i.customText ? `"${i.customText}"` : ""].filter(Boolean).join(" · ") || "—"}
                     </p>
-                    <p className="text-sm font-semibold">{money(i.unitCop)}</p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <button onClick={() => setQty(i.key, i.qty - 1)} className="grid h-7 w-7 place-items-center rounded-full border border-line">−</button>
+                      <span className="w-5 text-center text-sm font-semibold">{i.qty}</span>
+                      <button onClick={() => setQty(i.key, i.qty + 1)} className="grid h-7 w-7 place-items-center rounded-full border border-line">+</button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button onClick={() => setQty(i.key, i.qty - 1)} className="grid h-7 w-7 place-items-center rounded-full border border-line">−</button>
-                    <span className="w-5 text-center text-sm font-semibold">{i.qty}</span>
-                    <button onClick={() => setQty(i.key, i.qty + 1)} className="grid h-7 w-7 place-items-center rounded-full border border-line">+</button>
+                  <div className="flex flex-col items-end gap-2">
+                    <button onClick={() => removeItem(i.key)} className="text-ink/40 hover:text-brand" aria-label="Quitar">✕</button>
+                    <span className="whitespace-nowrap font-semibold">{money(i.unitCop * i.qty)}</span>
                   </div>
-                  <button onClick={() => removeItem(i.key)} className="ml-1 text-ink/40 hover:text-brand" aria-label="Quitar">✕</button>
                 </div>
               ))}
               <button onClick={clearCart} className="text-sm font-semibold text-ink/50 hover:text-brand">Vaciar carrito</button>
